@@ -1,0 +1,15 @@
+{
+  "location_id": "new-york",
+  "display_name": "New York, NY",
+  "currency": "USD",
+  "price_multiplier": 1.35,
+  "category_price_multipliers": {
+    "produce": 1.15,
+    "protein": 1.25,
+    "dairy": 1.12,
+    "grains": 1.05,
+    "pantry": 1.08
+  },
+  "supported_postal_prefixes": ["100", "101", "102", "103", "104"],
+  "stores": ["Whole Foods", "Trader Joe's", "Fairway", "ALDI"]
+}

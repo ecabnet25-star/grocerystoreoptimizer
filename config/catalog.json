@@ -1,0 +1,14 @@
+{
+  "items": [
+    {"name": "Brown Rice", "category": "grains", "price": 3.5, "nutrition_score": 7.5, "shelf_life_days": 180, "quantity": 1},
+    {"name": "Black Beans", "category": "protein", "price": 2.0, "nutrition_score": 8.0, "shelf_life_days": 365, "quantity": 2},
+    {"name": "Chicken Breast", "category": "protein", "price": 6.5, "nutrition_score": 9.0, "shelf_life_days": 3, "quantity": 2},
+    {"name": "Greek Yogurt", "category": "dairy", "price": 4.0, "nutrition_score": 8.5, "shelf_life_days": 14, "quantity": 1},
+    {"name": "Apples", "category": "produce", "price": 0.9, "nutrition_score": 7.0, "shelf_life_days": 21, "quantity": 6},
+    {"name": "Broccoli", "category": "produce", "price": 2.2, "nutrition_score": 9.0, "shelf_life_days": 7, "quantity": 2},
+    {"name": "Olive Oil", "category": "pantry", "price": 7.5, "nutrition_score": 6.5, "shelf_life_days": 365, "quantity": 1},
+    {"name": "Whole Wheat Bread", "category": "grains", "price": 3.2, "nutrition_score": 6.5, "shelf_life_days": 5, "quantity": 1},
+    {"name": "Eggs", "category": "protein", "price": 4.1, "nutrition_score": 8.2, "shelf_life_days": 28, "quantity": 1},
+    {"name": "Frozen Berries", "category": "produce", "price": 5.8, "nutrition_score": 8.8, "shelf_life_days": 240, "quantity": 1}
+  ]
+}

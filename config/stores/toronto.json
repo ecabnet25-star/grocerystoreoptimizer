@@ -1,0 +1,52 @@
+{
+  "stores": [
+    {
+      "store_id": "loblaws-downtown-tor",
+      "name": "Loblaws Downtown",
+      "chain": "Loblaws",
+      "address": "12 Carlton St, Toronto, ON M5B 1J3",
+      "postal_code": "M5B1J3",
+      "latitude": 43.6614,
+      "longitude": -79.3791,
+      "price_tier": "mid",
+      "quality_rating": 4.1,
+      "location_id": "toronto"
+    },
+    {
+      "store_id": "metro-lakeshore-tor",
+      "name": "Metro Lakeshore",
+      "chain": "Metro",
+      "address": "2210 Lake Shore Blvd W, Toronto, ON M8V 1A4",
+      "postal_code": "M8V1A4",
+      "latitude": 43.6257,
+      "longitude": -79.4802,
+      "price_tier": "mid",
+      "quality_rating": 4.0,
+      "location_id": "toronto"
+    },
+    {
+      "store_id": "nofrills-danforth-tor",
+      "name": "No Frills Danforth",
+      "chain": "No Frills",
+      "address": "525 Danforth Ave, Toronto, ON M4K 1P7",
+      "postal_code": "M4K1P7",
+      "latitude": 43.6771,
+      "longitude": -79.3512,
+      "price_tier": "budget",
+      "quality_rating": 3.4,
+      "location_id": "toronto"
+    },
+    {
+      "store_id": "wholesaleclub-dufferin-tor",
+      "name": "Wholesale Club Dufferin",
+      "chain": "Wholesale Club",
+      "address": "900 Dufferin St, Toronto, ON M6H 4A9",
+      "postal_code": "M6H4A9",
+      "latitude": 43.6597,
+      "longitude": -79.4301,
+      "price_tier": "budget",
+      "quality_rating": 3.7,
+      "location_id": "toronto"
+    }
+  ]
+}

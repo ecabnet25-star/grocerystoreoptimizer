@@ -1,0 +1,64 @@
+Grocery Optimizer Next Steps
+Generated: 2026-05-21
+
+What is already done locally
+============================
+1. Core API tests pass: python -m pytest -q -> 106 passed.
+2. Frontend syntax checks pass for shared.js, plan.js, saved.js, and account.js.
+3. Browser smoke passes against local servers.
+4. Full Playwright integration passes for account, plan generation, saving, saved-plan reuse, map route rendering, and The Chef.
+5. The backend now has request IDs, structured logs, latency metrics, provider metrics, production readiness checks, local SQLite backups, optional PostgreSQL storage, and per-item route savings.
+
+Exact actions you need to take next
+===================================
+1. Put this folder into a real Git repository.
+   - Commit source, docs, config templates, tests, and scripts.
+   - Do not commit data/*.db, outputs/*, __pycache__ folders, .pytest_cache, or .venv.
+
+2. Install/update local development dependencies.
+   - Run: python -m pip install -e ".[dev]"
+   - Run once for browser tests: python -m playwright install chromium
+
+3. Run the full local verification before deployment work.
+   - Start local API and web servers.
+   - Run: powershell -ExecutionPolicy Bypass -File scripts/verify.ps1 -SkipInstall
+   - Run: python scripts/playwright_integration.py
+
+4. Provision production database storage.
+   - Use managed PostgreSQL, not SQLite, for real production traffic.
+   - Set GROCERY_DATABASE_URL to the PostgreSQL connection string.
+   - Enable managed point-in-time backups.
+   - Set GROCERY_MANAGED_BACKUPS_ENABLED=true after backups are active.
+   - If you need existing local SQLite users/plans in production, migrate those rows intentionally before launch; otherwise start with a clean PostgreSQL database.
+
+5. Lock down production deployment settings.
+   - Set GROCERY_ENV=production.
+   - Set GROCERY_API_CORS_ORIGINS to your exact frontend domain(s), never "*".
+   - Set GROCERY_PUBLIC_BASE_URL to the public HTTPS URL.
+   - Set a long random GROCERY_ADMIN_TOKEN.
+   - Put the API behind HTTPS.
+   - Check readiness with GET /ready and GET /deployment/status.
+
+6. Configure real pricing providers.
+   - Get partner/API access for Flipp/RapidAPI or a retailer catalog provider.
+   - Set LIVE_PRICING_FLIPP_KEY and/or LIVE_PRICING_RETAILER_CATALOG_KEY.
+   - Update config/live_pricing/providers.json with the real retailer base URL, result paths, price paths, currency paths, and required headers.
+   - Run GET /pricing/providers and confirm configured=true for the provider.
+   - Run GET /pricing/live?postal_code=H3A1A1 and confirm live_quote_coverage_percent increases above fallback-only behavior.
+
+7. Connect observability to real infrastructure.
+   - Ship stdout JSON logs to your host logging backend.
+   - Scrape or poll /observability/metrics from trusted infrastructure.
+   - Alert on high 5xx rate, slow p95 latency, provider failures, and database readiness failures.
+
+8. Add CI once the project is in Git.
+   - Run ruff, compileall, pytest, and JS syntax checks on every pull request.
+   - Run Playwright integration in CI with local API/web servers.
+   - Keep provider-key tests mocked; do not require real pricing keys in CI.
+
+9. Product follow-ups after launch basics are stable.
+   - Add password reset and email verification.
+   - Add user-selected favorite stores and single-store mode.
+   - Add more plan presets such as vegetarian, low sodium, diabetic-friendly, and family meal prep.
+   - Add item substitutions when a plan is over budget or unavailable at the selected store.
+   - Add real user analytics for conversion, saved-plan reuse, and Chef usage.

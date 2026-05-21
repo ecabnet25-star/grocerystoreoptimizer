@@ -1,0 +1,28 @@
+{
+  "postal_codes": [
+    {
+      "postal_code": "M5H2N2",
+      "latitude": 43.6532,
+      "longitude": -79.3832,
+      "city": "Toronto",
+      "province_state": "ON",
+      "country": "CA"
+    },
+    {
+      "postal_code": "M4C1B5",
+      "latitude": 43.6950,
+      "longitude": -79.3085,
+      "city": "Toronto",
+      "province_state": "ON",
+      "country": "CA"
+    },
+    {
+      "postal_code": "M6G1B7",
+      "latitude": 43.6672,
+      "longitude": -79.4239,
+      "city": "Toronto",
+      "province_state": "ON",
+      "country": "CA"
+    }
+  ]
+}

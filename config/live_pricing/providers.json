@@ -1,0 +1,87 @@
+{
+  "cache_ttl_seconds": 900,
+  "request_timeout_seconds": 6,
+  "max_live_quotes_per_snapshot": 60,
+  "providers": [
+    {
+      "id": "openfoodfacts_us_ca",
+      "type": "openfoodfacts_partner",
+      "enabled": true,
+      "page_size": 20,
+      "confidence": 0.72
+    },
+    {
+      "id": "flipp_us_ca_partner",
+      "type": "flipp_partner",
+      "enabled": true,
+      "base_url": "https://flipp.p.rapidapi.com/flyers/search",
+      "api_key_env": "LIVE_PRICING_FLIPP_KEY",
+      "api_key_header": "x-rapidapi-key",
+      "host_header_name": "x-rapidapi-host",
+      "host_header_value": "flipp.p.rapidapi.com",
+      "price_path": "results.0.price",
+      "currency_path": "results.0.currency",
+      "confidence": 0.82
+    },
+    {
+      "id": "public_market_benchmark",
+      "type": "public_market",
+      "enabled": true,
+      "benchmark_path": "config/live_pricing/public_benchmarks.json",
+      "world_bank_indicator": "FP.CPI.TOTL.ZG",
+      "inflation_cache_seconds": 43200,
+      "confidence": 0.58
+    },
+    {
+      "id": "rapidapi_retailer_feed",
+      "type": "json_feed",
+      "enabled": false,
+      "base_url": "https://YOUR_RETAILER_API_HOST/prices/search",
+      "api_key_env": "LIVE_PRICING_RAPIDAPI_KEY",
+      "headers": {
+        "x-rapidapi-host": "YOUR_RETAILER_API_HOST"
+      },
+      "query": {
+        "q": "{item_name}",
+        "store": "{store_chain}",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "price_path": "results.0.price",
+      "currency_path": "results.0.currency",
+      "name_path": "results.0.name",
+      "confidence": 0.9
+    },
+    {
+      "id": "retailer_catalog_partner",
+      "type": "retailer_catalog",
+      "enabled": false,
+      "base_url": "https://YOUR_RETAILER_CATALOG_API/products/search",
+      "api_key_env": "LIVE_PRICING_RETAILER_CATALOG_KEY",
+      "api_key_header": "Authorization",
+      "api_key_prefix": "Bearer ",
+      "query": {
+        "q": "{item_name}",
+        "category": "{item_category}",
+        "store": "{store_chain}",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "result_list_path": "products",
+      "item_name_path": "name",
+      "store_chain_path": "store.chain",
+      "price_path": "price.amount",
+      "currency_path": "price.currency",
+      "confidence": 0.88
+    },
+    {
+      "id": "retailer_public_html",
+      "type": "html_regex",
+      "enabled": false,
+      "url_template": "https://YOUR_RETAILER_SITE/search?q={item_name}",
+      "price_regex": "\\\"price\\\"\\s*:\\s*\\\"?(\\d+(?:\\.\\d{1,2})?)",
+      "confidence": 0.6,
+      "allow_scraping": true
+    }
+  ]
+}

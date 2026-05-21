@@ -1,0 +1,28 @@
+{
+  "postal_codes": [
+    {
+      "postal_code": "10001",
+      "latitude": 40.7506,
+      "longitude": -73.9971,
+      "city": "New York",
+      "province_state": "NY",
+      "country": "US"
+    },
+    {
+      "postal_code": "10003",
+      "latitude": 40.7310,
+      "longitude": -73.9896,
+      "city": "New York",
+      "province_state": "NY",
+      "country": "US"
+    },
+    {
+      "postal_code": "10014",
+      "latitude": 40.7341,
+      "longitude": -74.0063,
+      "city": "New York",
+      "province_state": "NY",
+      "country": "US"
+    }
+  ]
+}

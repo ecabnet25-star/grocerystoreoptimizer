@@ -1,0 +1,101 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Grocery Optimizer Tests",
+			"type": "shell",
+			"command": "C:/Users/Ethan/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+			"args": [
+				"-m",
+				"unittest",
+				"discover",
+				"-s",
+				"tests",
+				"-v"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Run Grocery Optimizer CLI",
+			"type": "shell",
+			"command": "C:/Users/Ethan/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+			"args": [
+				"src/main.py",
+				"--strategy",
+				"knapsack",
+				"--budget",
+				"45",
+				"--max-items",
+				"7",
+				"--required-categories",
+				"produce",
+				"protein"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run Grocery Optimizer API",
+			"type": "shell",
+			"command": "C:/Users/Ethan/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+			"args": [
+				"-m",
+				"uvicorn",
+				"grocery_optimizer.api.app:app",
+				"--reload",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"8000"
+			],
+			"options": {
+				"env": {
+					"PYTHONPATH": "src"
+				}
+			},
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Serve Grocery Web Client",
+			"type": "shell",
+			"command": "C:/Users/Ethan/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+			"args": [
+				"-m",
+				"http.server",
+				"8080",
+				"--directory",
+				"web"
+			],
+			"isBackground": true,
+			"group": "build"
+		},
+		{
+			"label": "Run Beta Smoke Checks",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"scripts/beta-smoke.ps1"
+			],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Launch Grocery Optimizer",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"launch.ps1"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

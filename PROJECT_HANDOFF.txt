@@ -1,0 +1,424 @@
+Grocery Optimizer Project Handoff
+Generated: 2026-05-21
+
+Summary
+=======
+I completed a backend, frontend, security, testing, and documentation pass on this project.
+The project now has stronger API validation, bearer-token auth support in the web client,
+production-safe admin endpoint behavior, global security headers, lightweight rate limiting,
+thread-safe live-pricing SQLite handling, a new plan insights feature, CI-ready linting, and
+a repeatable local verification script. The latest UI pass also adds a richer shopping-plan
+hero, faster default plan generation, a custom store map, budget-breakdown visuals by plan
+style, a floating "The Chef" assistant, better saved-plan/account controls, and removes stale
+Leaflet UI code that could cause map glitches.
+
+Latest 2026-05-21 production-readiness pass:
+
+1. Added request IDs, structured JSON logs, endpoint latency metrics, and provider metrics.
+2. Added production readiness checks for CORS, HTTPS URL, admin token, database strategy, and backups.
+3. Added SQLite WAL/timeouts/foreign keys plus a local backup endpoint, and added optional PostgreSQL storage through GROCERY_DATABASE_URL.
+4. Added a retailer catalog pricing adapter and provider metrics/failure tracking.
+5. Reworked route economics to score per-item multi-store savings against travel cost.
+6. Added a full Playwright integration script for account, plan, save, reuse, map, and Chef flows.
+
+Current Verification Status
+===========================
+These checks pass locally:
+
+1. powershell -ExecutionPolicy Bypass -File scripts/verify.ps1 -SkipInstall
+   - ruff lint: passed
+   - Python compile check: passed
+   - pytest: 106 passed
+   - frontend JavaScript syntax checks: passed
+
+2. python -m pytest -q
+   - 106 passed
+
+3. python -m ruff check src tests scripts
+   - All checks passed
+
+4. node --check web/shared.js; node --check web/plan.js; node --check web/saved.js; node --check web/account.js
+   - All frontend JavaScript syntax checks passed
+
+5. FastAPI TestClient sanity check for POST /optimize
+   - status: 200
+   - stores.pricing_mode: instant_estimate
+   - generated item count: 10
+
+6. python scripts/browser_smoke.py
+   - Browser smoke passed
+   - Leaflet map visible
+   - road route visible
+
+7. python scripts/playwright_integration.py
+   - Account create/logout/wrong-password/correct-login flow passed
+   - Plan generation passed
+   - Save/open/reuse flow passed
+   - Map route rendering passed
+   - The Chef chat flow passed
+   - Loads the About page
+   - Generates a plan in Chromium
+   - Verifies the savings celebration renders
+   - Verifies the Leaflet map renders
+   - Verifies the directions link and route marker render
+   - Verifies road-following route geometry renders
+   - Verifies the quick-action board renders
+   - Opens The Chef and receives an assistant response
+
+Important Files Changed or Added
+================================
+Core API
+--------
+- src/grocery_optimizer/api/app.py
+  - Added security headers on all responses.
+  - Added lightweight in-memory rate limiting for auth and expensive endpoints.
+  - Hardened admin endpoints for production.
+  - Added bearer-token support for refresh/logout/save-plan flows.
+  - Added query validation for store, area scan, live pricing, and history endpoints.
+  - Added POST /route/road to proxy validated shopping-route points through OSRM and return normalized road geometry.
+  - Login now returns 401 for failed credential checks.
+
+- src/grocery_optimizer/api/schemas.py
+  - Added validation to OptimizeRequest:
+    - budget must be greater than 0.
+    - max_items must be 1-100.
+    - strategy must be "greedy" or "knapsack".
+    - optimizer weights must be non-negative.
+  - CreateUserRequest and LoginRequest now require passwords.
+
+- src/grocery_optimizer/api/storage.py
+  - Schema version is now 3.
+  - Adds password_hash to users with a migration-safe ALTER TABLE path for v2 databases.
+
+- src/grocery_optimizer/api/service.py
+  - Added plan insights to optimization responses:
+    - budget usage percentage
+    - category spending breakdown
+    - lowest estimated store
+    - estimated store price spread
+    - route distance
+    - next recommended actions
+
+- src/grocery_optimizer/live_pricing/storage.py
+  - Changed live-pricing SQLite handling to use thread-local connections.
+  - Ensures the live-pricing DB directory exists before connecting.
+  - Live-pricing history writes are best-effort and no longer break plan generation when SQLite is locked.
+
+Frontend
+--------
+- web/shared.js
+  - Uses Authorization headers instead of auth_token query strings.
+  - Stores session tokens in sessionStorage instead of localStorage.
+  - Migrates and removes older localStorage session keys if found.
+  - Handles non-JSON API failures without crashing the frontend request helper.
+  - Sends passwords for account creation and sign-in requests.
+
+- web/index.html
+  - Added a Plan Insights section to generated plan results.
+  - Reworked the main planner into a flashier, more guided shopping workspace.
+  - Added plan-style preset controls that update the hero budget-allocation visual.
+  - Added the floating "The Chef" helper entry point.
+  - Adds a savings celebration block after plan generation.
+  - Adds a deal-aware map toolbar and quick-action board.
+
+- web/about.html
+  - Adds the public mission/about/purpose page so first-time users understand the product before planning.
+
+- web/plan.js
+  - Renders plan insights, category spending, and next actions.
+  - Updates the hero budget breakdown when Balanced, Protein, Savings, or Produce presets are selected.
+  - Keeps normal plan generation on instant estimate pricing, while live pricing remains available through the dedicated refresh path.
+  - Replaced the Leaflet-dependent store map path with a lightweight SVG map render to reduce glitchy map behavior.
+  - Implements the floating Chef assistant behavior and context-aware meal suggestions.
+  - Adds a quick-action board for fast dinners, meal prep, shopping-list copy, and freshness guidance.
+  - Adds Chef loading state and makes prompt shortcuts send directly.
+  - Adds a savings celebration after plan generation.
+  - Improves the custom map rendering for single-stop routes, labeled route stores, route animation, and skipped-store messaging.
+  - Uses Leaflet/OpenStreetMap for the primary interactive map, with custom SVG fallback if Leaflet is unavailable.
+  - Shows a map-tile warning if OpenStreetMap tiles are blocked while preserving markers and directions.
+  - Requests road-following route geometry from the backend route endpoint, then falls back to an approximate line only when routing is unavailable.
+
+- src/grocery_optimizer/api/users.py
+  - Saves optimize request payloads with Pydantic model_dump() so saved-plan reuse persists the clean request shape.
+  - Adds PBKDF2-SHA256 password hashing and constant-time password verification.
+  - Account creation stores only password hashes; login requires a valid password before issuing a session token.
+
+- web/saved.js
+  - Shows saved-plan insights when viewing plan details.
+  - Adds client-side search/filtering for loaded saved-plan cards.
+
+- web/styles.css
+  - Added styling for the insights panel and category spending pills.
+  - Adds the redesigned planner, hero breakdown, custom map, Chef widget, saved-plan search, and responsive polish.
+  - Stabilizes planner panel pill sizing and prevents grid stretch when Preferences is toggled.
+  - Adds About page styling, savings celebration styling, animated route markers, and preset board animation.
+
+- web/assets/chef-assistant.png
+  - Adds a generated generic chef clipart asset for The Chef launcher.
+
+- web/account.js
+  - Adds a copy-account-ID action and disables it while signed out.
+  - Requires password entry for account creation and login.
+  - Validates minimum password length before account creation.
+
+- web/account.html
+  - Adds password fields with appropriate autocomplete hints.
+
+- src/grocery_optimizer/assistant.py
+  - Adds intent-aware fallback guidance for fast meals, meal prep, freshness, breakfast, lunch, and dinner requests.
+
+- src/grocery_optimizer/api/service.py
+  - Changes suggested routing from "five closest stores" to a compact deal-aware route.
+  - Extra stops are included only when item-level savings or close best-value pricing justify them.
+
+- scripts/browser_smoke.py
+  - Adds a reusable Playwright browser smoke test for the main plan-generation and Chef flow.
+  - Verifies About, savings, Leaflet map rendering, directions, route markers, and Chef response.
+  - Verifies road-route rendering and flags approximate-route fallback separately.
+
+Tooling and CI
+--------------
+- pyproject.toml
+  - Added dev extras for pytest, ruff, FastAPI, Pydantic, and Uvicorn.
+  - Added ruff configuration.
+
+- .github/workflows/ci.yml
+  - Installs the package with dev dependencies.
+  - Runs ruff.
+  - Runs pytest.
+
+- scripts/verify.ps1
+  - New local quality gate script.
+  - Runs lint, compile, tests, and frontend JS syntax checks.
+
+- .env.example
+  - Added GROCERY_ENV.
+  - Added GROCERY_ADMIN_TOKEN.
+  - Added GROCERY_RATE_LIMIT_ENABLED.
+
+- README.md
+  - Added local verification instructions.
+  - Updated auth guidance to use Authorization headers.
+  - Documented the new insights response behavior.
+
+Security Posture After This Pass
+================================
+Improved
+--------
+1. Tokens are no longer sent in web-client query strings.
+2. Tokens are no longer persisted in browser localStorage.
+3. Admin endpoints fail closed in production if GROCERY_ADMIN_TOKEN is missing.
+4. Admin token comparison uses constant-time comparison.
+5. API responses include basic browser security headers:
+   - X-Content-Type-Options: nosniff
+   - X-Frame-Options: DENY
+   - Referrer-Policy: strict-origin-when-cross-origin
+   - Permissions-Policy: geolocation=(), microphone=(), camera=()
+   - Cache-Control: no-store
+6. Auth and expensive endpoints have lightweight in-memory rate limiting.
+
+Still Not Production-Grade
+--------------------------
+The current auth model is email-only login. Anyone who knows an existing user's email can
+request a token. This is acceptable only for a prototype or private demo.
+
+Before real users:
+1. Replace email-only login with passwordless email links, OAuth, or username/password with
+   password hashing and reset flows.
+2. Move rate limiting to a shared store such as Redis if running more than one API process.
+3. Put the API behind HTTPS only.
+4. Set strict production CORS origins.
+5. Use real observability and alerting.
+
+How To Run Locally
+==================
+1. Create and activate a virtual environment.
+
+   Windows:
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+
+2. Install development dependencies.
+
+   python -m pip install -e ".[dev]"
+
+3. Run the full verification gate.
+
+   powershell -ExecutionPolicy Bypass -File scripts/verify.ps1 -SkipInstall
+
+4. Launch the app.
+
+   powershell -ExecutionPolicy Bypass -File launch.ps1
+
+5. Open the web UI.
+
+   http://127.0.0.1:8080
+
+Production Environment Checklist
+================================
+Set these environment variables in production:
+
+1. GROCERY_ENV=production
+2. GROCERY_ADMIN_TOKEN=<generate a long random secret>
+3. GROCERY_API_CORS_ORIGINS=https://your-real-frontend-domain.example
+4. GROCERY_DB_PATH=<persistent database path>
+5. GROCERY_TOKEN_TTL_MINUTES=<shorter TTL such as 1440 for one day, if appropriate>
+6. GROCERY_RATE_LIMIT_ENABLED=true
+
+If live pricing partners are used:
+1. LIVE_PRICING_FLIPP_KEY=<partner key>
+2. Any other provider-specific keys from config/live_pricing/providers.json
+
+Deployment Notes
+================
+The repository includes Dockerfile.api and docker-compose.yml, but this pass did not perform
+a cloud deployment. Before deploying:
+
+1. Build the API container locally.
+2. Run the API container with production-like environment variables.
+3. Confirm /health and /ready return healthy results.
+4. Confirm web requests use the production API origin.
+5. Confirm CORS blocks untrusted origins.
+6. Confirm admin endpoints require the production admin token.
+
+Recommended Next Work For You
+=============================
+Priority 1: Production Authentication Hardening
+-----------------------------------------------
+Password-backed login is implemented. Remaining production work:
+
+1. Add email verification before allowing long-lived saved-plan accounts.
+2. Add password reset with short-lived reset tokens.
+3. Add account lockout or progressive delay after repeated failed logins.
+4. Consider OAuth with Google, Microsoft, or GitHub.
+5. Consider Argon2/bcrypt if adding a dedicated password-hashing dependency is acceptable.
+
+Priority 2: Frontend Integration Tests
+--------------------------------------
+Add browser tests for:
+
+1. Create account.
+2. Login.
+3. Generate plan.
+4. Save plan.
+5. Rename plan.
+6. Delete plan.
+7. Reuse saved plan.
+8. Verify no auth_token appears in URLs.
+9. Verify preset buttons update the hero budget-breakdown visual.
+10. Verify The Chef opens after plan generation and returns context-aware meal ideas.
+11. Verify saved-plan search filters loaded plans without breaking pagination.
+
+Recommended tool: Playwright.
+
+Priority 3: Production Data Strategy
+------------------------------------
+SQLite is fine for local use and a small demo, but plan for:
+
+1. Automated backups.
+2. Migration scripts.
+3. A managed database if multiple API instances are needed.
+4. Separate databases for app data and live-pricing history.
+
+Priority 4: Live Pricing Reliability
+------------------------------------
+The project has provider abstractions and fallbacks. To improve accuracy:
+
+1. Secure real partner API access.
+2. Add provider-specific tests using recorded fixtures.
+3. Track provider latency and failure rates.
+4. Add a background job queue instead of in-process scheduler for production.
+
+Priority 5: UX and Product Polish
+---------------------------------
+Recommended improvements:
+
+1. Replace The Chef's rule-based responses with a real LLM endpoint once API keys, cost limits,
+   and moderation rules are ready.
+2. Let users pin favorite stores and prefer them during plan generation.
+3. Add more dietary presets such as vegetarian, low-sodium, diabetic-friendly, and budget-staples.
+4. Add per-item substitutions when a plan is over budget or missing a preferred food.
+5. Add "single-store mode" for users without transportation.
+6. Add onboarding examples for each supported city.
+7. Add a mobile-first guided checkout-style flow for users who only want a quick plan.
+
+Priority 6: Observability
+-------------------------
+Completed locally:
+
+1. Structured JSON logs.
+2. Request IDs with X-Request-ID propagation.
+3. Endpoint latency/error metrics at /observability/metrics.
+4. Provider hit/miss/failure metrics attached to provider health.
+
+Still needed in hosted production:
+
+1. Ship logs to a real backend such as Azure Monitor, Datadog, Grafana/Loki, or CloudWatch.
+2. Add alerts for high 5xx rates, provider failure spikes, and database errors.
+3. Put /observability/metrics behind the production admin token and scrape it from trusted infrastructure only.
+
+Priority 7: Repository Hygiene
+------------------------------
+This workspace is not currently a Git repository. Before serious collaboration:
+
+1. Initialize Git or move these files into a real repository.
+2. Commit source files, config templates, docs, and tests.
+3. Do not commit generated artifacts.
+
+The existing .gitignore already excludes:
+- __pycache__/
+- .pytest_cache/
+- .venv/
+- *.db
+- outputs/
+- *.egg-info/
+
+If you want a clean working tree, remove generated local artifacts after confirming you do
+not need their contents:
+- data/*.db
+- outputs/*
+- src/grocery_optimizer.egg-info/
+- __pycache__ directories
+- .pytest_cache/
+
+Do not remove config/*.json or tests/fixtures/*.json; those are project inputs.
+
+Known Limitations
+=================
+1. Authentication now uses password hashes and bearer sessions, but it still needs production additions such as email verification, password reset, account lockout, and optional OAuth.
+2. Rate limiting is in-process and resets when the API restarts.
+3. The web frontend is static JavaScript, so complex browser tests are not yet wired into CI.
+4. Live pricing accuracy depends on provider availability and partner access.
+5. Area scanning depends on public map data and may be incomplete.
+6. Generated local data and outputs exist in this workspace even though .gitignore excludes them.
+
+Suggested Beta Readiness Definition
+===================================
+Consider the project beta-ready when all of these are true:
+
+1. Real auth is implemented.
+2. HTTPS deployment exists.
+3. Production CORS is locked down.
+4. Admin token is configured.
+5. CI passes on every pull request.
+6. Browser integration tests cover core user flows.
+7. Database backups are configured.
+8. Logs and basic alerting are active.
+9. At least one real pricing provider is configured or fallback-only behavior is clearly labeled.
+10. A small set of users can complete:
+    - create account
+    - generate plan
+    - view nearby stores
+    - save plan
+    - reuse plan
+    - sign out
+
+Final Local Command To Recheck Everything
+=========================================
+Run this before you make deployment decisions:
+
+powershell -ExecutionPolicy Bypass -File scripts/verify.ps1
+
+For the full browser flow, start the local API/web servers and run:
+
+python scripts/playwright_integration.py

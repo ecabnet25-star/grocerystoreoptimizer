@@ -1,0 +1,15 @@
+{
+  "location_id": "toronto",
+  "display_name": "Toronto, ON",
+  "currency": "CAD",
+  "price_multiplier": 1.08,
+  "category_price_multipliers": {
+    "produce": 1.05,
+    "protein": 1.10,
+    "dairy": 1.06,
+    "grains": 1.00,
+    "pantry": 1.02
+  },
+  "supported_postal_prefixes": ["M"],
+  "stores": ["Loblaws", "Metro", "No Frills", "Wholesale Club"]
+}

@@ -1,0 +1,43 @@
+{
+  "sources": [
+    {
+      "name": "World Bank Food Price Inflation Indicator",
+      "url": "https://api.worldbank.org/v2/country/{country}/indicator/FP.CPI.TOTL.ZG?format=json",
+      "notes": "Public macro signal used as non-scraping adjustment for blocked stores"
+    }
+  ],
+  "countries": {
+    "CA": {
+      "source_url": "https://api.worldbank.org/v2/country/CA/indicator/FP.CPI.TOTL.ZG?format=json",
+      "baseline_multiplier": 1.0,
+      "tier_multipliers": {
+        "budget": 0.9,
+        "mid": 1.0,
+        "premium": 1.18
+      },
+      "category_multipliers": {
+        "produce": 1.03,
+        "protein": 1.08,
+        "dairy": 1.04,
+        "grains": 0.98,
+        "pantry": 1.01
+      }
+    },
+    "US": {
+      "source_url": "https://api.worldbank.org/v2/country/US/indicator/FP.CPI.TOTL.ZG?format=json",
+      "baseline_multiplier": 1.07,
+      "tier_multipliers": {
+        "budget": 0.88,
+        "mid": 1.0,
+        "premium": 1.24
+      },
+      "category_multipliers": {
+        "produce": 1.06,
+        "protein": 1.12,
+        "dairy": 1.07,
+        "grains": 1.0,
+        "pantry": 1.03
+      }
+    }
+  }
+}

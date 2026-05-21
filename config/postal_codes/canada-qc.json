@@ -1,0 +1,28 @@
+{
+  "postal_codes": [
+    {
+      "postal_code": "H3A1A1",
+      "latitude": 45.5017,
+      "longitude": -73.5673,
+      "city": "Montreal",
+      "province_state": "QC",
+      "country": "CA"
+    },
+    {
+      "postal_code": "H2X1Y5",
+      "latitude": 45.5088,
+      "longitude": -73.5878,
+      "city": "Montreal",
+      "province_state": "QC",
+      "country": "CA"
+    },
+    {
+      "postal_code": "H4B2M9",
+      "latitude": 45.4735,
+      "longitude": -73.6180,
+      "city": "Montreal",
+      "province_state": "QC",
+      "country": "CA"
+    }
+  ]
+}

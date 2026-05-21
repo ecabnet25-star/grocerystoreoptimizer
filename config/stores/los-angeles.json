@@ -1,0 +1,52 @@
+{
+  "stores": [
+    {
+      "store_id": "wholefoods-dtla",
+      "name": "Whole Foods DTLA",
+      "chain": "Whole Foods",
+      "address": "788 S Grand Ave, Los Angeles, CA 90017",
+      "postal_code": "90017",
+      "latitude": 34.0479,
+      "longitude": -118.2588,
+      "price_tier": "premium",
+      "quality_rating": 4.4,
+      "location_id": "los-angeles"
+    },
+    {
+      "store_id": "trader-joes-silverlake",
+      "name": "Trader Joe's Silver Lake",
+      "chain": "Trader Joe's",
+      "address": "2738 Hyperion Ave, Los Angeles, CA 90027",
+      "postal_code": "90027",
+      "latitude": 34.0991,
+      "longitude": -118.2754,
+      "price_tier": "mid",
+      "quality_rating": 4.2,
+      "location_id": "los-angeles"
+    },
+    {
+      "store_id": "ralphs-hollywood",
+      "name": "Ralphs Hollywood",
+      "chain": "Ralphs",
+      "address": "7257 Sunset Blvd, Los Angeles, CA 90046",
+      "postal_code": "90046",
+      "latitude": 34.0978,
+      "longitude": -118.3437,
+      "price_tier": "mid",
+      "quality_rating": 3.9,
+      "location_id": "los-angeles"
+    },
+    {
+      "store_id": "food4less-downtown",
+      "name": "Food 4 Less Downtown",
+      "chain": "Food 4 Less",
+      "address": "2701 W 7th St, Los Angeles, CA 90005",
+      "postal_code": "90005",
+      "latitude": 34.0557,
+      "longitude": -118.2927,
+      "price_tier": "budget",
+      "quality_rating": 3.5,
+      "location_id": "los-angeles"
+    }
+  ]
+}

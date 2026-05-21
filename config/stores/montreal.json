@@ -1,0 +1,64 @@
+{
+  "stores": [
+    {
+      "store_id": "iga-downtown-mtl",
+      "name": "IGA Downtown",
+      "chain": "IGA",
+      "address": "1444 Rue Sainte-Catherine O, Montreal, QC H3G 1R8",
+      "postal_code": "H3G1R8",
+      "latitude": 45.4959,
+      "longitude": -73.5768,
+      "price_tier": "mid",
+      "quality_rating": 4.0,
+      "location_id": "montreal"
+    },
+    {
+      "store_id": "metro-atwater-mtl",
+      "name": "Metro Atwater",
+      "chain": "Metro",
+      "address": "138 Avenue Atwater, Montreal, QC H4C 2G3",
+      "postal_code": "H4C2G3",
+      "latitude": 45.4849,
+      "longitude": -73.5817,
+      "price_tier": "mid",
+      "quality_rating": 4.2,
+      "location_id": "montreal"
+    },
+    {
+      "store_id": "provigo-plateau-mtl",
+      "name": "Provigo Plateau",
+      "chain": "Provigo",
+      "address": "3575 Avenue du Parc, Montreal, QC H2X 3P9",
+      "postal_code": "H2X3P9",
+      "latitude": 45.5101,
+      "longitude": -73.5832,
+      "price_tier": "mid",
+      "quality_rating": 3.8,
+      "location_id": "montreal"
+    },
+    {
+      "store_id": "superc-ndg-mtl",
+      "name": "Super C NDG",
+      "chain": "Super C",
+      "address": "6700 Rue Saint-Jacques, Montreal, QC H4B 1V2",
+      "postal_code": "H4B1V2",
+      "latitude": 45.4716,
+      "longitude": -73.6187,
+      "price_tier": "budget",
+      "quality_rating": 3.5,
+      "location_id": "montreal"
+    },
+    {
+      "store_id": "maxi-lasalle-mtl",
+      "name": "Maxi LaSalle",
+      "chain": "Maxi",
+      "address": "1755 Rue Dollard, Montreal, QC H8N 1S8",
+      "postal_code": "H8N1S8",
+      "latitude": 45.4380,
+      "longitude": -73.6049,
+      "price_tier": "budget",
+      "quality_rating": 3.6,
+      "location_id": "montreal"
+    }
+  ]
+}

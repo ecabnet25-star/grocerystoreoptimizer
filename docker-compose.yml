@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: grocery-optimizer-api
+    environment:
+      GROCERY_DB_PATH: /app/data/grocery_optimizer.db
+      GROCERY_BACKUP_DIR: /app/data/backups
+      GROCERY_API_CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+      GROCERY_TOKEN_TTL_MINUTES: 10080
+      GROCERY_API_VERSION: 0.3.0-beta
+      GROCERY_ROUTE_COST_PER_KM: 0.70
+      GROCERY_ROUTE_MIN_NET_SAVINGS: 1.50
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: grocery-optimizer-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    depends_on:
+      - api

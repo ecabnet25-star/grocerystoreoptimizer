@@ -1,0 +1,15 @@
+{
+  "location_id": "los-angeles",
+  "display_name": "Los Angeles, CA",
+  "currency": "USD",
+  "price_multiplier": 1.20,
+  "category_price_multipliers": {
+    "produce": 1.08,
+    "protein": 1.15,
+    "dairy": 1.10,
+    "grains": 1.02,
+    "pantry": 1.05
+  },
+  "supported_postal_prefixes": ["900", "901", "902"],
+  "stores": ["Whole Foods", "Trader Joe's", "Ralphs", "Food 4 Less"]
+}

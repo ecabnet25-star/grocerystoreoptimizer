@@ -1,0 +1,15 @@
+{
+  "location_id": "montreal",
+  "display_name": "Montreal, QC",
+  "currency": "CAD",
+  "price_multiplier": 1.0,
+  "category_price_multipliers": {
+    "produce": 1.03,
+    "protein": 1.06,
+    "dairy": 1.04,
+    "grains": 0.98,
+    "pantry": 1.01
+  },
+  "supported_postal_prefixes": ["H"],
+  "stores": ["IGA", "Metro", "Provigo", "Super C", "Maxi"]
+}

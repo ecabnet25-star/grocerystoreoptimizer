@@ -1,0 +1,52 @@
+{
+  "stores": [
+    {
+      "store_id": "wholefoods-union-nyc",
+      "name": "Whole Foods Union Square",
+      "chain": "Whole Foods",
+      "address": "95 E Houston St, New York, NY 10002",
+      "postal_code": "10002",
+      "latitude": 40.7239,
+      "longitude": -73.9877,
+      "price_tier": "premium",
+      "quality_rating": 4.5,
+      "location_id": "new-york"
+    },
+    {
+      "store_id": "trader-joes-chelsea-nyc",
+      "name": "Trader Joe's Chelsea",
+      "chain": "Trader Joe's",
+      "address": "675 6th Ave, New York, NY 10010",
+      "postal_code": "10010",
+      "latitude": 40.7422,
+      "longitude": -73.9945,
+      "price_tier": "mid",
+      "quality_rating": 4.3,
+      "location_id": "new-york"
+    },
+    {
+      "store_id": "fairway-upper-west-nyc",
+      "name": "Fairway Upper West Side",
+      "chain": "Fairway",
+      "address": "2328 Broadway, New York, NY 10024",
+      "postal_code": "10024",
+      "latitude": 40.7904,
+      "longitude": -73.9745,
+      "price_tier": "mid",
+      "quality_rating": 4.0,
+      "location_id": "new-york"
+    },
+    {
+      "store_id": "aldi-harlem-nyc",
+      "name": "ALDI Harlem",
+      "chain": "ALDI",
+      "address": "517 E 117th St, New York, NY 10035",
+      "postal_code": "10035",
+      "latitude": 40.7969,
+      "longitude": -73.9320,
+      "price_tier": "budget",
+      "quality_rating": 3.8,
+      "location_id": "new-york"
+    }
+  ]
+}

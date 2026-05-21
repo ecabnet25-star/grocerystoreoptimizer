@@ -1,0 +1,19 @@
+{
+  "interval_seconds": 900,
+  "requests": [
+    {
+      "location": "montreal",
+      "postal_code": "H3A1A1",
+      "budget": 100,
+      "max_items": 8,
+      "strategy": "knapsack"
+    },
+    {
+      "location": "toronto",
+      "postal_code": "M5H2N2",
+      "budget": 120,
+      "max_items": 8,
+      "strategy": "knapsack"
+    }
+  ]
+}

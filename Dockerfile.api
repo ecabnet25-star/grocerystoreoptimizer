@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt ./
+COPY requirements-web.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-web.txt
+
+COPY src ./src
+COPY config ./config
+COPY data ./data
+
+EXPOSE 8000
+
+ENV PYTHONPATH=/app/src
+ENV GROCERY_DB_PATH=/app/data/grocery_optimizer.db
+ENV GROCERY_BACKUP_DIR=/app/data/backups
+ENV GROCERY_API_CORS_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+ENV GROCERY_API_VERSION=0.3.0-beta
+
+CMD ["python", "-m", "uvicorn", "grocery_optimizer.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Account - Grocery Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon" aria-hidden="true">&#x1F966;</span>
+        Grocery Planner
+      </a>
+      <div class="nav-links">
+        <a href="about.html">About</a>
+        <a href="index.html">Plan</a>
+        <a href="saved.html">Saved Plans</a>
+        <a href="account.html" class="active" aria-current="page">Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="hero page-hero account-hero" aria-label="Account header">
+      <div>
+        <p class="eyebrow">Plan across sessions</p>
+        <h1>Your account</h1>
+        <p class="subtitle">Sign in to save plans, reuse shopping targets, and keep your grocery workflow moving.</p>
+      </div>
+      <div class="page-hero-panel" aria-hidden="true">
+        <span>Save</span>
+        <span>Refresh</span>
+        <span>Return</span>
+      </div>
+      <div id="statusBanner" class="status info" role="status" aria-live="polite">Ready when you are.</div>
+    </header>
+
+    <!-- Welcome card (shown when logged in) -->
+    <section class="workspace-card hidden" id="welcomeCard" aria-label="Welcome">
+      <div class="welcome-card">
+        <div class="welcome-avatar" aria-hidden="true">&#x1F44B;</div>
+        <p class="welcome-name" id="welcomeName">Welcome back!</p>
+        <p class="welcome-status">Signed in</p>
+      </div>
+    </section>
+
+    <section class="workspace-card" id="accountInfo" aria-label="Current session info">
+      <h2>Current session</h2>
+      <p class="muted">Your session is stored only for this browser tab. Closing the tab signs you out locally.</p>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Account ID</span>
+          <span class="info-value" id="displayUserId">Not signed in</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Session status</span>
+          <span class="info-value" id="displaySessionStatus">Inactive</span>
+        </div>
+      </div>
+      <button type="button" id="copyAccountIdBtn" class="secondary btn-sm">Copy account ID</button>
+    </section>
+
+    <div class="auth-grid">
+    <form id="createAccountForm" class="workspace-card auth-card" aria-label="Create account form">
+      <p class="eyebrow">New here</p>
+      <h2>Create new account</h2>
+      <p class="muted">Create a lightweight profile for saved grocery plans.</p>
+
+      <label>Your name
+        <input id="createName" type="text" placeholder="Ethan" required />
+      </label>
+
+      <label>Email
+        <input id="createEmail" type="email" placeholder="you@example.com" required />
+      </label>
+
+      <label>Password
+        <input id="createPassword" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required />
+      </label>
+
+      <button type="submit" id="createAccountBtn">Create account</button>
+    </form>
+
+    <form id="loginForm" class="workspace-card auth-card" aria-label="Sign in form">
+      <p class="eyebrow">Welcome back</p>
+      <h2>Sign in</h2>
+      <p class="muted">Access your existing saved plans.</p>
+
+      <label>Email
+        <input id="loginEmail" type="email" placeholder="you@example.com" required />
+      </label>
+
+      <label>Password
+        <input id="loginPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Your password" required />
+      </label>
+
+      <button type="submit" id="loginBtn">Sign in</button>
+    </form>
+    </div>
+
+    <section class="workspace-card" id="sessionActions" aria-label="Session management">
+      <h2>Session management</h2>
+      <p class="muted">Keep your session active or sign out when you are done.</p>
+
+      <div class="row row-inline">
+        <button type="button" id="refreshTokenBtn" class="secondary">Refresh session</button>
+        <button type="button" id="logoutBtn" class="secondary">Sign out</button>
+        <button type="button" id="logoutAllBtn" class="danger">Sign out all devices</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="shared.js"></script>
+  <script src="account.js"></script>
+</body>
+</html>

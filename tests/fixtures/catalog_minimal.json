@@ -1,0 +1,7 @@
+{
+  "items": [
+    {"name": "Oats", "category": "grains", "price": 2.5, "nutrition_score": 8.0, "shelf_life_days": 180, "quantity": 1},
+    {"name": "Lentils", "category": "protein", "price": 3.0, "nutrition_score": 9.0, "shelf_life_days": 365, "quantity": 1},
+    {"name": "Spinach", "category": "produce", "price": 2.0, "nutrition_score": 8.5, "shelf_life_days": 5, "quantity": 1}
+  ]
+}
