@@ -3,18 +3,23 @@ name = "grocery-optimizer"
 version = "0.1.0"
 description = "CLI-based grocery optimization engine"
 requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.109.0",
+    "psycopg[binary]>=3.1.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.27.0",
+]
 
 [project.optional-dependencies]
 dev = [
-    "fastapi>=0.109.0",
     "httpx>=0.27.0",
     "playwright>=1.44.0",
-    "psycopg[binary]>=3.1.0",
-    "pydantic>=2.0.0",
     "pytest>=8.0.0",
     "ruff>=0.6.0",
-    "uvicorn>=0.27.0",
 ]
+
+[tool.vercel]
+entrypoint = "src.grocery_optimizer.api.app:app"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
