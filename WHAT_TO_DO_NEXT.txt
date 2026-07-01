@@ -1,0 +1,302 @@
+What You Need To Do Next
+Generated: 2026-06-26
+
+Current Status
+==============
+The app now includes the useful parts of the Montreal grocery spreadsheet.
+
+Spreadsheet-backed additions now in the project:
+- Montreal retailer research config.
+- API endpoint: /retailer-research/montreal
+- Montreal retailer intelligence panel in plan results.
+- Verified Montreal specialty-store seeds for T&T Ville St-Laurent, Akhavan NDG, and PA du Parc.
+- Expanded Montreal chain support.
+- Disabled provider templates for Loblaw/PC Express, Metro, IGA/Voila, and public flyer OCR.
+- Audit doc: docs/spreadsheet-audit.md
+
+The code now has:
+- Python/API tests in CI.
+- JavaScript syntax checks in CI.
+- Playwright browser integration in CI.
+- Request IDs, structured logs, metrics endpoints, deployment checks, and database backup support.
+- Optional PostgreSQL support through GROCERY_DATABASE_URL.
+- Real pricing-provider adapter templates.
+- Spreadsheet-derived Montreal retailer intelligence.
+
+
+1. Choose where to host it
+==========================
+Pick one production hosting path.
+
+Recommended easiest options:
+- Render
+- Railway
+- Fly.io
+- Azure App Service
+- DigitalOcean App Platform
+
+You need two services:
+1. API service for the FastAPI backend.
+2. Static web service for the /web frontend.
+
+The API start command should be:
+
+python -m uvicorn grocery_optimizer.api.app:app --host 0.0.0.0 --port $PORT --app-dir src
+
+If your host does not provide $PORT, use the port they document.
+
+
+2. Create a production PostgreSQL database
+==========================================
+Do not use SQLite for real production traffic.
+
+Create a managed PostgreSQL database using your host or a database provider such as:
+- Neon
+- Supabase
+- Railway Postgres
+- Render Postgres
+- Azure Database for PostgreSQL
+
+After creating it, copy the connection string. It should look similar to:
+
+postgresql://USER:PASSWORD@HOST:5432/DATABASE
+
+Save that value for the GROCERY_DATABASE_URL environment variable.
+
+Also enable automatic backups or point-in-time recovery in the database provider dashboard.
+
+
+3. Set production environment variables
+=======================================
+Set these on the hosted API service:
+
+GROCERY_ENV=production
+GROCERY_DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+GROCERY_MANAGED_BACKUPS_ENABLED=true
+GROCERY_API_CORS_ORIGINS=https://YOUR-FRONTEND-DOMAIN.com
+GROCERY_PUBLIC_BASE_URL=https://YOUR-API-DOMAIN.com
+GROCERY_ADMIN_TOKEN=MAKE_A_LONG_RANDOM_SECRET
+GROCERY_RATE_LIMIT_ENABLED=true
+GROCERY_TOKEN_TTL_MINUTES=10080
+GROCERY_ROUTE_COST_PER_KM=0.70
+GROCERY_ROUTE_MIN_NET_SAVINGS=1.50
+LIVE_PRICING_FLIPP_KEY=
+LIVE_PRICING_RETAILER_CATALOG_KEY=
+LIVE_PRICING_LOBLAW_KEY=
+LIVE_PRICING_METRO_KEY=
+LIVE_PRICING_IGA_KEY=
+LIVE_PRICING_FLYER_OCR_KEY=
+
+Generate GROCERY_ADMIN_TOKEN as a long random string. Do not reuse a password.
+
+Example PowerShell command to generate one locally:
+
+[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
+
+
+4. Configure frontend API URL if needed
+=======================================
+The current frontend auto-detects local development ports.
+
+For production, you may need to update web/shared.js so API_BASE points to your hosted API domain instead of assuming same-origin.
+
+Look for:
+
+const API_BASE = (function() {
+
+If your frontend and API are on different domains, add your API URL for production, for example:
+
+return "https://YOUR-API-DOMAIN.com";
+
+After editing, run:
+
+node --check web/shared.js
+
+Then commit and push the change.
+
+
+5. Add real grocery pricing provider credentials
+================================================
+The app has provider adapters, but you need real partner/API access for live prices.
+
+Start with one of these:
+- Loblaw/PC Express partner, affiliate, or controlled proxy feed for Maxi, Provigo, and T&T.
+- Metro/Super C partner, affiliate, or controlled proxy feed.
+- IGA/Voila partner, affiliate, or controlled proxy feed.
+- Flipp/RapidAPI grocery or flyer API only if its license/terms are acceptable.
+- A grocery affiliate/partner product feed.
+- A public flyer OCR pipeline for Supermarche PA, Akhavan, and similar ethnic-value stores.
+
+Set the relevant API key as an environment variable:
+
+LIVE_PRICING_FLIPP_KEY=YOUR_KEY
+
+or:
+
+LIVE_PRICING_RETAILER_CATALOG_KEY=YOUR_KEY
+
+Spreadsheet-specific optional keys:
+
+LIVE_PRICING_LOBLAW_KEY=YOUR_KEY
+LIVE_PRICING_METRO_KEY=YOUR_KEY
+LIVE_PRICING_IGA_KEY=YOUR_KEY
+LIVE_PRICING_FLYER_OCR_KEY=YOUR_KEY
+
+Then edit:
+
+config/live_pricing/providers.json
+
+Enable the provider you are using and replace placeholder fields such as:
+- base_url
+- headers
+- result_list_path
+- item_name_path
+- store_chain_path
+- price_path
+- currency_path
+
+After deployment, test:
+
+GET https://YOUR-API-DOMAIN.com/pricing/providers
+
+You want your provider to show:
+
+configured: true
+
+Montreal provider priority from the spreadsheet:
+
+1. Super C and Maxi first.
+2. IGA and Metro next.
+3. Provigo and Walmart after core coverage is stable.
+4. Supermarche PA, Adonis, Kim Phat, T&T, and Akhavan after Tier 1 is working.
+
+Do not enable undocumented or ToS-gray scraping routes until you have reviewed legal/terms risk.
+
+
+5A. Complete Montreal store locator coverage
+============================================
+The spreadsheet includes only a few verified seed coordinates. The full store list still needs a proper locator pull.
+
+Do this before public launch in Montreal:
+
+1. Get a Google Places API key or official store-locator API access.
+2. Pull exact stores for:
+   - Metro
+   - Super C
+   - IGA
+   - IGA Extra
+   - Provigo
+   - Maxi
+   - Walmart
+   - Marche Adonis
+   - T&T
+   - Supermarche PA
+   - Kim Phat
+   - Supermarche Akhavan
+3. Save only verified address, postal code, latitude, and longitude.
+4. Do not publish exact Island location counts until this pull is complete.
+5. Refresh locator data monthly.
+
+
+6. Verify production readiness
+==============================
+After the API is deployed, open:
+
+https://YOUR-API-DOMAIN.com/health
+https://YOUR-API-DOMAIN.com/ready
+
+Then check deployment status using your admin token:
+
+PowerShell:
+
+$headers = @{ Authorization = "Bearer YOUR_GROCERY_ADMIN_TOKEN" }
+Invoke-RestMethod -Headers $headers https://YOUR-API-DOMAIN.com/deployment/status
+
+The response should show:
+
+ready: true
+errors: []
+
+Warnings are acceptable during early beta, but errors need to be fixed before launch.
+
+
+7. Verify observability
+=======================
+Check metrics using the admin token:
+
+$headers = @{ Authorization = "Bearer YOUR_GROCERY_ADMIN_TOKEN" }
+Invoke-RestMethod -Headers $headers https://YOUR-API-DOMAIN.com/observability/metrics
+
+Then configure your hosting platform to capture stdout logs.
+
+You should alert on:
+- API 5xx errors.
+- Slow p95 request latency.
+- Provider failure spikes.
+- Database readiness failures.
+
+
+8. Test the live site manually
+==============================
+On the deployed frontend:
+
+1. Open the About page.
+2. Create an account.
+3. Generate a plan with a postal code.
+4. Confirm the Montreal retailer intelligence panel appears.
+5. Confirm the map renders.
+6. Confirm route directions appear.
+7. Save the plan.
+8. Open Saved Plans.
+9. Reuse the saved plan.
+10. Ask The Chef for a meal idea.
+11. Log out and log back in.
+
+
+9. Keep local development clean
+===============================
+Do not commit local database files or generated outputs.
+
+Before committing future changes, run:
+
+git status --short
+
+If you see data/*.db, data/*.db-wal, data/*.db-shm, outputs/*, __pycache__, or .pytest_cache, do not commit them.
+
+Before pushing future code changes, run:
+
+python -m ruff check src tests scripts
+python -m compileall -q src tests scripts
+python -m pytest -q
+node --check web/shared.js
+node --check web/plan.js
+node --check web/saved.js
+node --check web/account.js
+
+
+10. Product improvements after deployment
+=========================================
+After production hosting is stable, build these next:
+
+1. Password reset by email.
+2. Email verification.
+3. Favorite stores.
+4. Single-store mode for users without transportation.
+5. More meal-plan presets: vegetarian, low sodium, diabetic-friendly, family meal prep.
+6. Better live grocery coverage in more cities.
+7. Real usage analytics for account creation, plan generation, saved-plan reuse, and Chef usage.
+8. Admin UI showing provider coverage by retailer tier.
+9. Weekly Thursday flyer refresh for Tier 1 Montreal retailers.
+10. Flyer OCR pipeline for public ethnic-value flyers.
+
+
+Immediate Next Move
+===================
+Do this first:
+
+1. Choose a host.
+2. Create a managed PostgreSQL database.
+3. Set the production environment variables.
+4. Deploy the API.
+5. Deploy the frontend.
+6. Open /deployment/status and make sure ready=true.

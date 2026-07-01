@@ -137,6 +137,13 @@ class TestFindNearbyStores(unittest.TestCase):
         location_ids = {store.location_id for store, _ in nearby}
         self.assertIn("montreal", location_ids)
 
+    def test_montreal_includes_spreadsheet_seed_stores(self):
+        stores = load_stores(base_dir=_STORES_DIR)
+        ids = {store.store_id for store in stores}
+        self.assertIn("tnt-vsl-mtl", ids)
+        self.assertIn("akhavan-ndg-mtl", ids)
+        self.assertIn("pa-du-parc-mtl", ids)
+
 
 class TestOptimizeRoute(unittest.TestCase):
     """Tests for optimize_route()."""

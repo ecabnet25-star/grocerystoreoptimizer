@@ -66,6 +66,9 @@ coverage.xml
 
 # SQLite databases
 *.db
+*.db-shm
+*.db-wal
+data/
 
 # Pytest cache
 .pytest_cache/

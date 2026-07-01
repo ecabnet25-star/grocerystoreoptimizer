@@ -75,6 +75,88 @@
       "confidence": 0.88
     },
     {
+      "id": "loblaw_pc_express_partner",
+      "type": "retailer_catalog",
+      "enabled": false,
+      "base_url": "https://YOUR_PC_EXPRESS_PARTNER_OR_PROXY/products/search",
+      "api_key_env": "LIVE_PRICING_LOBLAW_KEY",
+      "api_key_header": "Authorization",
+      "api_key_prefix": "Bearer ",
+      "query": {
+        "q": "{item_name}",
+        "store": "{store_chain}",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "result_list_path": "products",
+      "item_name_path": "name",
+      "store_chain_path": "store.chain",
+      "price_path": "price.amount",
+      "currency_path": "price.currency",
+      "confidence": 0.9
+    },
+    {
+      "id": "metro_ecommerce_partner",
+      "type": "retailer_catalog",
+      "enabled": false,
+      "base_url": "https://YOUR_METRO_PARTNER_OR_PROXY/products/search",
+      "api_key_env": "LIVE_PRICING_METRO_KEY",
+      "api_key_header": "Authorization",
+      "api_key_prefix": "Bearer ",
+      "query": {
+        "q": "{item_name}",
+        "store": "{store_chain}",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "result_list_path": "products",
+      "item_name_path": "name",
+      "store_chain_path": "store.chain",
+      "price_path": "price.amount",
+      "currency_path": "price.currency",
+      "confidence": 0.88
+    },
+    {
+      "id": "iga_voila_partner",
+      "type": "retailer_catalog",
+      "enabled": false,
+      "base_url": "https://YOUR_IGA_VOILA_PARTNER_OR_PROXY/products/search",
+      "api_key_env": "LIVE_PRICING_IGA_KEY",
+      "api_key_header": "Authorization",
+      "api_key_prefix": "Bearer ",
+      "query": {
+        "q": "{item_name}",
+        "store": "{store_chain}",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "result_list_path": "products",
+      "item_name_path": "name",
+      "store_chain_path": "store.chain",
+      "price_path": "price.amount",
+      "currency_path": "price.currency",
+      "confidence": 0.88
+    },
+    {
+      "id": "public_flyer_ocr_pipeline",
+      "type": "json_feed",
+      "enabled": false,
+      "base_url": "https://YOUR_FLYER_OCR_PIPELINE/prices/search",
+      "api_key_env": "LIVE_PRICING_FLYER_OCR_KEY",
+      "api_key_header": "Authorization",
+      "headers": {},
+      "query": {
+        "q": "{item_name}",
+        "store": "{store_chain}",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "price_path": "results.0.unit_price",
+      "currency_path": "results.0.currency",
+      "name_path": "results.0.item_name",
+      "confidence": 0.72
+    },
+    {
       "id": "retailer_public_html",
       "type": "html_regex",
       "enabled": false,

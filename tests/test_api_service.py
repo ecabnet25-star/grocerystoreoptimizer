@@ -39,6 +39,8 @@ class TestApiService(unittest.TestCase):
         self.assertIn("provider_health", result["stores"])
         self.assertIn("live_quote_coverage_percent", result["stores"])
         self.assertIn("providers_with_live_quotes", result["stores"])
+        self.assertIn("retailer_research", result["stores"])
+        self.assertGreaterEqual(len(result["stores"]["retailer_research"]["top_priority_retailers"]), 6)
         self.assertIn("insights", result)
         self.assertGreaterEqual(result["insights"]["budget_used_percent"], 0)
         self.assertIsInstance(result["insights"]["category_breakdown"], list)

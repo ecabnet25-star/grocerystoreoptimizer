@@ -135,6 +135,22 @@ class TestAPIEndpoints(unittest.TestCase):
         self.assertIn("locations", data)
         self.assertIsInstance(data["locations"], list)
         self.assertGreater(len(data["locations"]), 0)
+        montreal = next((loc for loc in data["locations"] if loc["location_id"] == "montreal"), None)
+        self.assertIsNotNone(montreal)
+        self.assertIn("retailer_research", montreal)
+        self.assertIn("top_priority_retailers", montreal["retailer_research"])
+
+    def test_retailer_research_returns_montreal_payload(self):
+        response = self.client.get("/retailer-research/montreal")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["research"]["location_id"], "montreal")
+        self.assertGreaterEqual(len(data["summary"]["top_priority_retailers"]), 6)
+        self.assertGreaterEqual(data["summary"]["verified_seed_count"], 3)
+
+    def test_retailer_research_unknown_location_returns_404(self):
+        response = self.client.get("/retailer-research/unknown")
+        self.assertEqual(response.status_code, 404)
 
     # ------------------------------------------------------------------
     # GET /sample-request

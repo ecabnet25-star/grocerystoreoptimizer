@@ -59,6 +59,42 @@
       "price_tier": "budget",
       "quality_rating": 3.6,
       "location_id": "montreal"
+    },
+    {
+      "store_id": "tnt-vsl-mtl",
+      "name": "T&T Ville St-Laurent",
+      "chain": "T&T Supermarket",
+      "address": "300 Ave Ste-Croix, Montreal, QC H4N 0A1",
+      "postal_code": "H4N0A1",
+      "latitude": 45.51,
+      "longitude": -73.68,
+      "price_tier": "mid",
+      "quality_rating": 4.1,
+      "location_id": "montreal"
+    },
+    {
+      "store_id": "akhavan-ndg-mtl",
+      "name": "Akhavan NDG",
+      "chain": "Supermarche Akhavan",
+      "address": "6400 Rue St-Jacques O, Montreal, QC H4B 1T6",
+      "postal_code": "H4B1T6",
+      "latitude": 45.46,
+      "longitude": -73.62,
+      "price_tier": "budget",
+      "quality_rating": 3.9,
+      "location_id": "montreal"
+    },
+    {
+      "store_id": "pa-du-parc-mtl",
+      "name": "PA du Parc",
+      "chain": "Supermarche PA",
+      "address": "5242 Ave du Parc, Montreal, QC H2V 4G7",
+      "postal_code": "H2V4G7",
+      "latitude": 45.52,
+      "longitude": -73.6,
+      "price_tier": "budget",
+      "quality_rating": 4.0,
+      "location_id": "montreal"
     }
   ]
 }

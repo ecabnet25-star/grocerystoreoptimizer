@@ -1,0 +1,327 @@
+{
+  "location_id": "montreal",
+  "source_workbook": "C:\\Users\\Ethan\\Downloads\\grocery_2.xlsx",
+  "compiled_at": "2026-06",
+  "purpose": "Engineering-ready Montreal grocery retailer research for student-focused grocery optimization.",
+  "scope": {
+    "market": "Island of Montreal",
+    "audience": "Montreal university students",
+    "strategy": "Prioritize retailers with digital flyer, catalog, or pricing surfaces. Exclude long-tail stores with no durable price surface from MVP data pipelines."
+  },
+  "useful": [
+    {
+      "category": "retailer_coverage",
+      "summary": "Use retailer master data to expand Montreal chain awareness beyond the original five chains.",
+      "implementation": "Adds supported Montreal chains and a retailer intelligence endpoint/UI panel."
+    },
+    {
+      "category": "verified_store_seeds",
+      "summary": "Use verified anchor stores with coordinates as routing/store seeds.",
+      "implementation": "Adds T&T Ville St-Laurent, Akhavan NDG, and Supermarche PA du Parc to Montreal stores."
+    },
+    {
+      "category": "integration_priority",
+      "summary": "Use weighted priority ranking to guide provider order and UI messaging.",
+      "implementation": "Ranks Maxi, Super C, IGA, Metro, Provigo, and Walmart as Tier 1."
+    },
+    {
+      "category": "acquisition_strategy",
+      "summary": "Use tiered source strategy to separate MVP pricing coverage from later ethnic/niche coverage.",
+      "implementation": "Adds provider templates and launch checklist items for official/partner feeds."
+    }
+  ],
+  "not_useful_for_direct_build": [
+    {
+      "category": "unverified_counts",
+      "reason": "Island store counts are estimates and should not drive routing or user-facing exact claims."
+    },
+    {
+      "category": "undocumented_or_tos_gray_scraping",
+      "reason": "The workbook identifies some high-leverage routes as ToS-gray or unstable. These should stay disabled until partner/legal review."
+    },
+    {
+      "category": "excluded_mvp_sources",
+      "reason": "Costco, Dollarama, H Mart, public markets, and unverified Newon/Hawaii entries are not strong MVP data surfaces."
+    },
+    {
+      "category": "hand_maintained_full_store_counts",
+      "reason": "Full store coordinates should come from official locators or Google Places rather than manual estimates."
+    }
+  ],
+  "priority_weights": {
+    "student_relevance": 0.25,
+    "store_density": 0.15,
+    "price_competitiveness": 0.15,
+    "data_accessibility": 0.25,
+    "ease_of_maintenance": 0.1,
+    "promo_coverage": 0.1
+  },
+  "priority_retailers": [
+    {
+      "retailer": "Maxi",
+      "tier": 1,
+      "weighted_score": 4.4,
+      "rank": 2,
+      "student_relevance": 5,
+      "store_density": 4,
+      "price_competitiveness": 5,
+      "data_accessibility": 4,
+      "ease_of_maintenance": 3,
+      "promo_coverage": 5,
+      "recommended_surface": "Loblaw PC Express plus flyer feed"
+    },
+    {
+      "retailer": "Super C",
+      "tier": 1,
+      "weighted_score": 4.5,
+      "rank": 1,
+      "student_relevance": 5,
+      "store_density": 4,
+      "price_competitiveness": 5,
+      "data_accessibility": 4,
+      "ease_of_maintenance": 4,
+      "promo_coverage": 5,
+      "recommended_surface": "Metro/Super C flyer and promo feed"
+    },
+    {
+      "retailer": "IGA / IGA Extra",
+      "tier": 1,
+      "weighted_score": 4.1,
+      "rank": 3,
+      "student_relevance": 4,
+      "store_density": 5,
+      "price_competitiveness": 3,
+      "data_accessibility": 4,
+      "ease_of_maintenance": 4,
+      "promo_coverage": 5,
+      "recommended_surface": "IGA/Voila e-commerce and flyer feed"
+    },
+    {
+      "retailer": "Metro",
+      "tier": 1,
+      "weighted_score": 4.1,
+      "rank": 3,
+      "student_relevance": 4,
+      "store_density": 5,
+      "price_competitiveness": 3,
+      "data_accessibility": 4,
+      "ease_of_maintenance": 4,
+      "promo_coverage": 5,
+      "recommended_surface": "Metro.ca e-commerce and flyer feed"
+    },
+    {
+      "retailer": "Provigo",
+      "tier": 1,
+      "weighted_score": 3.85,
+      "rank": 5,
+      "student_relevance": 4,
+      "store_density": 4,
+      "price_competitiveness": 3,
+      "data_accessibility": 4,
+      "ease_of_maintenance": 3,
+      "promo_coverage": 5,
+      "recommended_surface": "Loblaw PC Express plus flyer feed"
+    },
+    {
+      "retailer": "Walmart",
+      "tier": 1,
+      "weighted_score": 3.55,
+      "rank": 6,
+      "student_relevance": 4,
+      "store_density": 3,
+      "price_competitiveness": 5,
+      "data_accessibility": 3,
+      "ease_of_maintenance": 2,
+      "promo_coverage": 4,
+      "recommended_surface": "Partner/commercial catalog feed preferred"
+    },
+    {
+      "retailer": "Supermarche PA",
+      "tier": 2,
+      "weighted_score": 3.25,
+      "rank": 7,
+      "student_relevance": 4,
+      "store_density": 2,
+      "price_competitiveness": 4,
+      "data_accessibility": 3,
+      "ease_of_maintenance": 2,
+      "promo_coverage": 4,
+      "recommended_surface": "Own-site flyer and OCR pipeline"
+    },
+    {
+      "retailer": "Marche Adonis",
+      "tier": 2,
+      "weighted_score": 3.25,
+      "rank": 7,
+      "student_relevance": 3,
+      "store_density": 3,
+      "price_competitiveness": 4,
+      "data_accessibility": 3,
+      "ease_of_maintenance": 3,
+      "promo_coverage": 4,
+      "recommended_surface": "Own e-commerce/flyer surface"
+    },
+    {
+      "retailer": "Kim Phat",
+      "tier": 2,
+      "weighted_score": 3.0,
+      "rank": 9,
+      "student_relevance": 3,
+      "store_density": 2,
+      "price_competitiveness": 4,
+      "data_accessibility": 3,
+      "ease_of_maintenance": 2,
+      "promo_coverage": 4,
+      "recommended_surface": "Own locator and weekly flyer"
+    },
+    {
+      "retailer": "T&T Supermarket",
+      "tier": 2,
+      "weighted_score": 2.85,
+      "rank": 10,
+      "student_relevance": 3,
+      "store_density": 2,
+      "price_competitiveness": 3,
+      "data_accessibility": 3,
+      "ease_of_maintenance": 3,
+      "promo_coverage": 3,
+      "recommended_surface": "T&T/Loblaw catalog or flyer feed"
+    },
+    {
+      "retailer": "Supermarche Akhavan",
+      "tier": 2,
+      "weighted_score": 2.9,
+      "rank": 10,
+      "student_relevance": 3,
+      "store_density": 2,
+      "price_competitiveness": 4,
+      "data_accessibility": 3,
+      "ease_of_maintenance": 2,
+      "promo_coverage": 3,
+      "recommended_surface": "Own-site public flyer"
+    }
+  ],
+  "acquisition_tiers": [
+    {
+      "tier": "tier_1_mvp",
+      "label": "Tier 1 - MVP",
+      "retailers": ["Maxi", "Super C", "IGA", "Metro", "Provigo", "Walmart"],
+      "cadence": "Weekly flyer refresh plus nightly staple price re-check",
+      "method": "Use official/partner feed where possible. Keep undocumented flyer backends disabled unless reviewed.",
+      "why": "Highest student relevance, cheapest baskets, and broadest coverage per integration."
+    },
+    {
+      "tier": "tier_2_ethnic_value",
+      "label": "Tier 2 - Ethnic value",
+      "retailers": ["Adonis", "Supermarche PA", "Kim Phat", "T&T", "Akhavan"],
+      "cadence": "Weekly flyer cadence",
+      "method": "Own e-commerce, public flyers, OCR extraction, and store locator refresh.",
+      "why": "Differentiates the app with produce, meat, and cultural-staple value near campuses."
+    },
+    {
+      "tier": "tier_3_niche_organic",
+      "label": "Tier 3 - Niche / organic",
+      "retailers": ["Rachelle-Bery", "Avril", "Bulk Barn", "Marche Tau"],
+      "cadence": "Weekly or bi-weekly",
+      "method": "Own e-commerce/flyer pages and partner feeds where present.",
+      "why": "Useful for completeness, but lower student volume and often higher prices."
+    }
+  ],
+  "flyer_sources": [
+    {
+      "retailer": "Metro",
+      "primary_route": "Own site plus partner flyer feed",
+      "url": "metro.ca/en/flyer",
+      "cadence": "Weekly Thursday",
+      "format": "HTML, interactive flyer, PDF"
+    },
+    {
+      "retailer": "Super C",
+      "primary_route": "Own site plus partner flyer feed",
+      "url": "superc.ca/en/flyer",
+      "cadence": "Weekly Thursday",
+      "format": "HTML and interactive flyer"
+    },
+    {
+      "retailer": "IGA / IGA Extra",
+      "primary_route": "Own site plus partner flyer feed",
+      "url": "iga.net/en/flyer",
+      "cadence": "Weekly Thursday",
+      "format": "HTML and interactive flyer"
+    },
+    {
+      "retailer": "Provigo",
+      "primary_route": "Own site plus partner flyer feed",
+      "url": "provigo.ca",
+      "cadence": "Weekly Thursday",
+      "format": "HTML and PDF"
+    },
+    {
+      "retailer": "Maxi",
+      "primary_route": "Own site plus partner flyer feed",
+      "url": "maxi.ca",
+      "cadence": "Weekly Thursday",
+      "format": "HTML and interactive flyer"
+    },
+    {
+      "retailer": "Walmart",
+      "primary_route": "Partner/commercial data provider preferred",
+      "url": "walmart.ca",
+      "cadence": "Weekly flyer and regular price checks",
+      "format": "Structured catalog if partner access is available"
+    },
+    {
+      "retailer": "Supermarche PA",
+      "primary_route": "Own public flyer",
+      "url": "supermarchepa.com",
+      "cadence": "Weekly",
+      "format": "Public flyer / OCR candidate"
+    },
+    {
+      "retailer": "Supermarche Akhavan",
+      "primary_route": "Own public flyer",
+      "url": "akhavanfood.com",
+      "cadence": "Weekly",
+      "format": "Public flyer / OCR candidate"
+    }
+  ],
+  "verified_store_seeds": [
+    {
+      "retailer": "T&T Supermarket",
+      "store_name": "T&T Ville St-Laurent",
+      "address": "300 Ave Ste-Croix, Montreal, QC",
+      "postal_code": "H4N0A1",
+      "area": "Saint-Laurent",
+      "latitude": 45.51,
+      "longitude": -73.68,
+      "source": "tntsupermarket.com/store-locator"
+    },
+    {
+      "retailer": "Supermarche Akhavan",
+      "store_name": "Akhavan NDG",
+      "address": "6400 Rue St-Jacques O, Montreal, QC",
+      "postal_code": "H4B1T6",
+      "area": "CDN-NDG",
+      "latitude": 45.46,
+      "longitude": -73.62,
+      "source": "akhavanfood.com"
+    },
+    {
+      "retailer": "Supermarche PA",
+      "store_name": "PA du Parc",
+      "address": "5242 Ave du Parc, Montreal, QC",
+      "postal_code": "H2V4G7",
+      "area": "Plateau / Mile End",
+      "latitude": 45.52,
+      "longitude": -73.6,
+      "source": "supermarchepa.com / Google Places"
+    }
+  ],
+  "launch_tasks_from_workbook": [
+    "Confirm exact Island-of-Montreal counts from official store locators before publishing count claims.",
+    "Choose official or licensed pricing data before enabling ToS-gray flyer/scraper routes.",
+    "Use Google Places API or official locator JSON for full store coordinate refresh.",
+    "Implement weekly Thursday flyer refresh for Tier 1 retailers.",
+    "Add OCR/PDF flyer extraction only after Tier 1 e-commerce/flyer provider coverage is stable."
+  ]
+}

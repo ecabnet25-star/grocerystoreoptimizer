@@ -698,6 +698,39 @@ function renderStoreCards(stores, itemQuotes, currency) {
     .join("");
 }
 
+function renderRetailerIntel(research) {
+  const panel = document.getElementById("retailerIntelPanel");
+  const summary = document.getElementById("retailerIntelSummary");
+  const chips = document.getElementById("retailerIntelChips");
+  if (!panel || !summary || !chips) {
+    return;
+  }
+
+  const topRetailers = Array.isArray(research?.top_priority_retailers) ? research.top_priority_retailers : [];
+  const tiers = Array.isArray(research?.acquisition_tiers) ? research.acquisition_tiers : [];
+  if (!topRetailers.length && !tiers.length) {
+    panel.classList.add("hidden");
+    return;
+  }
+
+  const tierOne = tiers.find((tier) => String(tier.tier || "").includes("tier_1"));
+  const tierTwo = tiers.find((tier) => String(tier.tier || "").includes("tier_2"));
+  const seedCount = Number(research?.verified_seed_count || 0);
+  summary.textContent = [
+    tierOne?.label ? `${tierOne.label}: ${(tierOne.retailers || []).slice(0, 6).join(", ")}` : "",
+    tierTwo?.label ? `${tierTwo.label}: ${(tierTwo.retailers || []).slice(0, 5).join(", ")}` : "",
+    seedCount ? `${seedCount} verified specialty-store seed(s) added from research` : "",
+  ].filter(Boolean).join(" · ");
+
+  chips.innerHTML = topRetailers.slice(0, 8).map((retailer) => `
+    <span class="retailer-chip">
+      <strong>${escapeHtml(retailer.retailer || "Retailer")}</strong>
+      <small>Tier ${escapeHtml(retailer.tier || "-")} · score ${escapeHtml(retailer.weighted_score || "-")}</small>
+    </span>
+  `).join("");
+  panel.classList.remove("hidden");
+}
+
 function buildItemStorePlan(items, itemQuotes, routeAssignments = []) {
   const routeStoreByItem = new Map();
   (Array.isArray(routeAssignments) ? routeAssignments : []).forEach((assignment) => {
@@ -836,6 +869,7 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
 
   const storeComparisonData = Array.isArray(stores.comparison) ? stores.comparison : [];
   renderStoreCards(storeComparisonData, stores.item_quotes || [], lastLocationCurrency);
+  renderRetailerIntel(stores.retailer_research || {});
 
   // Hidden data holders (kept for compatibility)
   storeDataSource.textContent = stores.data_source || "N/A";

@@ -11,6 +11,7 @@ from ..geo_discovery import discover_food_places, geocode_address, geocode_posta
 from ..live_pricing import build_store_live_pricing_snapshot, get_live_pricing_engine
 from ..location import apply_location_pricing, list_available_locations, load_location_profile
 from ..optimizer import OptimizationWeights, optimize_grocery_list
+from ..retailer_research import summarize_retailer_research
 from ..stores import (
     Store,
     find_nearby_stores,
@@ -716,6 +717,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
     engine = get_live_pricing_engine()
     provider_health = engine.provider_health()
     providers_live = list(pricing_meta.get("providers_with_live_quotes", []))
+    retailer_research = summarize_retailer_research(profile.location_id)
     avg_confidence = round(
         sum(float(store.get("confidence_score", 0.0)) for store in store_comparison) / len(store_comparison),
         2,
@@ -796,6 +798,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             "item_quotes": pricing_meta.get("item_quotes", []),
             "alerts": pricing_meta.get("alerts", []),
             "auto_discovery_used": any(str(s.get("store_id", "")).startswith("scan-") for s in nearby_stores),
+            "retailer_research": retailer_research,
         },
         "route": route_info,
         "insights": insights,

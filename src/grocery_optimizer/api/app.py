@@ -26,6 +26,7 @@ from ..observability import (
     reset_request_id,
     set_request_id,
 )
+from ..retailer_research import load_retailer_research, summarize_retailer_research
 from .schemas import CreateUserRequest, LoginRequest, OptimizeRequest, SavePlanRequest
 from .service import optimize_from_request
 from .storage import backup_database, database_strategy, get_schema_version
@@ -356,6 +357,7 @@ def root() -> dict[str, Any]:
         "pricing_scheduler_status": "/pricing/scheduler/status",
         "observability_metrics": "/observability/metrics",
         "deployment_status": "/deployment/status",
+        "retailer_research": "/retailer-research/montreal",
     }
 
 
@@ -378,11 +380,21 @@ def locations() -> dict[str, Any]:
                 "category_price_multipliers": profile.category_price_multipliers,
                 "supported_postal_prefixes": profile.supported_postal_prefixes,
                 "store_chains": profile.stores,
+                "retailer_research": summarize_retailer_research(profile.location_id),
             })
         except Exception:
             pass
 
     return {"locations": details}
+
+
+@app.get("/retailer-research/{location_id}")
+def retailer_research(location_id: str) -> dict[str, Any]:
+    """Return market-specific retailer research imported from planning workbooks."""
+    research = load_retailer_research(location_id)
+    if not research:
+        raise HTTPException(status_code=404, detail="Retailer research is not available for this location")
+    return {"research": research, "summary": summarize_retailer_research(location_id)}
 
 
 @app.get("/stores")
