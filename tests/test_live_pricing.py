@@ -36,6 +36,10 @@ class _JsonResponse:
 
 
 class TestLivePricingParsing(unittest.TestCase):
+    def test_vercel_uses_writable_tmp_price_history(self):
+        with patch.dict("os.environ", {"VERCEL": "1"}, clear=False):
+            self.assertEqual(storage._default_price_db_path(), "/tmp/grocery_optimizer_live_pricing.db")
+
     def test_parse_deal_two_for_price(self):
         self.assertEqual(_parse_deal_unit_price("2/$5"), 2.5)
         self.assertEqual(_parse_deal_unit_price("3 for $9"), 3.0)

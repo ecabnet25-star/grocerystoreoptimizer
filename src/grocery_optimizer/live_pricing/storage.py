@@ -5,14 +5,21 @@ import sqlite3
 import threading
 from typing import Any
 
-PRICE_DB_PATH = os.getenv("GROCERY_LIVE_PRICING_DB", "data/live_pricing.db")
+
+def _default_price_db_path() -> str:
+    if os.getenv("VERCEL", "").strip().lower() in {"1", "true", "yes"}:
+        return "/tmp/grocery_optimizer_live_pricing.db"
+    return "data/live_pricing.db"
+
+
+PRICE_DB_PATH = os.getenv("GROCERY_LIVE_PRICING_DB", _default_price_db_path())
 
 _thread_local = threading.local()
 
 
 def _get_price_db() -> sqlite3.Connection:
     """Return a thread-local SQLite connection, creating the table on first use."""
-    db_path = os.getenv("GROCERY_LIVE_PRICING_DB", PRICE_DB_PATH)
+    db_path = os.getenv("GROCERY_LIVE_PRICING_DB", _default_price_db_path())
     conn = getattr(_thread_local, "conn", None)
     conn_path = getattr(_thread_local, "path", None)
     if conn is None or conn_path != db_path:
