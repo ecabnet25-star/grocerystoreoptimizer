@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saved Plans - Grocery Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon" aria-hidden="true">&#x1F966;</span>
+        Grocery Planner
+      </a>
+      <div class="nav-links">
+        <a href="about.html">About</a>
+        <a href="index.html">Plan</a>
+        <a href="saved.html" class="active" aria-current="page">Saved Plans</a>
+        <a href="account.html">Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="hero page-hero saved-hero" aria-label="Saved plans header">
+      <div>
+        <p class="eyebrow">Your grocery vault</p>
+        <h1>Your saved plans</h1>
+        <p class="subtitle">Browse, reuse, export, or tune grocery plans you already like.</p>
+      </div>
+      <div class="page-hero-panel" aria-hidden="true">
+        <span>Reuse</span>
+        <span>Compare</span>
+        <span>Print</span>
+      </div>
+      <div id="statusBanner" class="status info" role="status" aria-live="polite">Sign in to see your plans.</div>
+    </header>
+
+    <section id="plansList" class="workspace-card hidden" aria-label="Plans list">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Library</p>
+          <h2>Saved grocery plans</h2>
+        </div>
+        <label class="search-label" aria-label="Search saved plans">
+          Search
+          <input id="planSearch" type="search" placeholder="Plan name, item, category..." />
+        </label>
+      </div>
+      <div id="savedPlansList" class="saved-plans-list"></div>
+      <div id="paginationInfo" class="muted"></div>
+      <button type="button" id="loadMoreBtn" class="secondary btn-sm hidden">Load more</button>
+    </section>
+
+    <section id="planDetail" class="workspace-card hidden" aria-label="Plan details">
+      <div class="result-header">
+        <div>
+          <p class="eyebrow">Plan detail</p>
+          <h2>Review and reuse</h2>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="printPlanBtn" class="secondary btn-sm">Print</button>
+          <button type="button" id="exportPlanCsvBtn" class="secondary btn-sm">Export CSV</button>
+          <button type="button" id="backToListBtn" class="secondary btn-sm">Back to list</button>
+        </div>
+      </div>
+      <div id="planDetailContent"></div>
+    </section>
+
+    <!-- Hidden elements for backward compatibility -->
+    <button type="button" id="loadPlansBtn" class="hidden" aria-hidden="true">Load</button>
+    <input id="plansLimit" type="hidden" value="20" />
+    <input id="plansOffset" type="hidden" value="0" />
+    <input id="planIdToFetch" type="hidden" />
+    <button type="button" id="fetchPlanBtn" class="hidden" aria-hidden="true">Fetch</button>
+    <input id="planIdToModify" type="hidden" />
+    <input id="planNewLabel" type="hidden" />
+    <button type="button" id="renamePlanBtn" class="hidden" aria-hidden="true">Rename</button>
+    <button type="button" id="deletePlanBtn" class="hidden" aria-hidden="true">Delete</button>
+    <pre id="planDetailRaw" class="hidden"></pre>
+  </main>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="shared.js"></script>
+  <script src="saved.js"></script>
+</body>
+</html>

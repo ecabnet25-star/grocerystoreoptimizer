@@ -36,6 +36,11 @@ jobs:
           node --check web/saved.js
           node --check web/account.js
 
+      - name: Verify Vercel public assets are synchronized
+        run: |
+          python scripts/prepare_vercel_public.py
+          git diff --exit-code -- public
+
       - name: Run tests
         env:
           PYTHONPATH: src

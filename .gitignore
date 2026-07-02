@@ -76,7 +76,4 @@ data/
 # Report outputs
 outputs/
 
-# Generated Vercel static assets
-public/
-
 # End of file

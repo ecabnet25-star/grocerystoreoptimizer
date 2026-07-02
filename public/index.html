@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grocery Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <span class="brand-icon" aria-hidden="true">&#x1F966;</span>
+        Grocery Planner
+      </a>
+      <div class="nav-links">
+        <a href="about.html">About</a>
+        <a href="index.html" class="active" aria-current="page">Plan</a>
+        <a href="saved.html">Saved Plans</a>
+        <a href="account.html">Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="hero hero-planner" aria-label="Welcome section">
+      <div class="hero-copy">
+        <p class="eyebrow">Budget smart · shop faster</p>
+        <h1>Build a grocery plan that actually fits your week.</h1>
+        <p class="subtitle">
+          Balance cost, nutrition, freshness, nearby store estimates, and route planning in one pass.
+        </p>
+        <div class="hero-actions" aria-label="Common planning presets">
+          <button type="button" class="preset-chip active" data-preset="balanced">Balanced</button>
+          <button type="button" class="preset-chip" data-preset="budget">Budget saver</button>
+          <button type="button" class="preset-chip" data-preset="protein">High protein</button>
+          <button type="button" class="preset-chip" data-preset="fresh">Fresh produce</button>
+        </div>
+      </div>
+      <div class="hero-panel" aria-hidden="true">
+        <div class="produce-board" id="presetBreakdownBoard">
+          <div class="board-header">
+            <span id="breakdownTitle">Balanced split</span>
+            <strong id="breakdownTotal">$50</strong>
+          </div>
+          <div class="breakdown-row tile-large" data-breakdown="produce">
+            <span>Leafy greens</span>
+            <div class="breakdown-track"><i style="width: 34%"></i></div>
+            <strong>34%</strong>
+          </div>
+          <div class="breakdown-row" data-breakdown="protein">
+            <span>Protein</span>
+            <div class="breakdown-track"><i style="width: 30%"></i></div>
+            <strong>30%</strong>
+          </div>
+          <div class="breakdown-row" data-breakdown="grains">
+            <span>Grains</span>
+            <div class="breakdown-track"><i style="width: 18%"></i></div>
+            <strong>18%</strong>
+          </div>
+          <div class="breakdown-row accent" data-breakdown="savings">
+            <span>Savings</span>
+            <div class="breakdown-track"><i style="width: 12%"></i></div>
+            <strong>12%</strong>
+          </div>
+          <div class="breakdown-row" data-breakdown="pantry">
+            <span>Pantry</span>
+            <div class="breakdown-track"><i style="width: 6%"></i></div>
+            <strong>6%</strong>
+          </div>
+        </div>
+      </div>
+      <div id="statusBanner" class="status info hero-status" role="status" aria-live="polite">Ready when you are.</div>
+    </header>
+
+    <form id="optForm" class="planner-workspace pos-relative" aria-label="Grocery plan configuration">
+      <!-- Loading Overlay -->
+      <div id="formLoadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <span class="loading-text">Building your shopping plan...</span>
+      </div>
+
+      <div class="planner-toolbar">
+        <div>
+          <p class="eyebrow">Step 1</p>
+          <h2>Set your shopping target</h2>
+        </div>
+        <span id="planPreviewPill" class="preview-pill">$50 · 8 items · Best value</span>
+      </div>
+
+      <div class="planner-grid">
+        <section class="planner-panel primary-panel">
+          <div class="panel-kicker">Money and location</div>
+          <div class="form-row">
+            <label id="budgetLabel" aria-label="Budget amount">
+              <span id="budgetLabelText">Budget (CAD)</span>
+              <input id="budget" type="number" min="1" step="0.01" value="50" />
+            </label>
+
+            <label aria-label="Maximum items">
+              Max items
+              <input id="maxItems" type="number" min="1" step="1" value="8" />
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label aria-label="Plan strategy">
+              Plan style
+              <select id="strategy">
+                <option value="greedy">Quick pick</option>
+                <option value="knapsack" selected>Best value</option>
+              </select>
+            </label>
+
+            <label aria-label="City selection">
+              City
+              <select id="location">
+                <option value="montreal" selected>Montreal</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label aria-label="Postal code">
+              Postal code <small>(for nearby stores)</small>
+              <input id="postalCode" type="text" placeholder="H3A 1A1 or 10001" />
+            </label>
+
+            <label aria-label="Street address">
+              Address <small>(optional)</small>
+              <input id="address" type="text" placeholder="123 Main St, Montreal" />
+            </label>
+          </div>
+        </section>
+
+        <section class="planner-panel preference-panel">
+          <div class="panel-kicker">Preferences</div>
+          <div class="collapsible-header" id="prefsToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="prefsBody">
+            <h3>Fine-tune preferences</h3>
+            <span class="collapsible-chevron" id="prefsChevron" aria-hidden="true">&#9660;</span>
+          </div>
+
+          <div class="collapsible-body" id="prefsBody">
+            <label aria-label="Required food categories">
+              Must-have categories
+              <input id="requiredCategories" type="text" value="produce,protein" placeholder="produce, protein, grains" />
+            </label>
+
+            <label aria-label="Excluded food categories">
+              Avoid categories
+              <input id="excludedCategories" type="text" value="dairy" placeholder="dairy, frozen" />
+            </label>
+
+            <label aria-label="Preferred foods">
+              Foods you like
+              <input id="likes" type="text" placeholder="rice, chicken, berries" />
+            </label>
+
+            <label aria-label="Foods to avoid">
+              Foods to avoid
+              <input id="dislikes" type="text" placeholder="peanuts, lactose" />
+            </label>
+
+            <label aria-label="Health goals">
+              Health goals
+              <input id="healthGoals" type="text" placeholder="muscle gain, heart health, low sodium" />
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <div class="form-footer">
+        <div class="confidence-strip" aria-hidden="true">
+          <span>Budget</span>
+          <span>Freshness</span>
+          <span>Stores</span>
+        </div>
+        <button type="submit" id="generateBtn" class="primary-cta">Generate plan</button>
+      </div>
+
+      <!-- Hidden elements for compatibility -->
+      <div id="locationPricingDetails" class="hidden"></div>
+    </form>
+
+    <section id="result" class="card result-card hidden" aria-label="Plan results">
+      <div class="result-header">
+        <div>
+          <p class="eyebrow">Step 2</p>
+          <h2>Your optimized plan</h2>
+        </div>
+        <div class="result-actions">
+          <button type="button" id="printCurrentPlanBtn" class="secondary btn-sm">Print</button>
+          <button type="button" id="exportCurrentPlanCsvBtn" class="secondary btn-sm">Export CSV</button>
+          <button type="button" id="savePlanBtn" class="secondary btn-sm">Save plan</button>
+          <button type="button" id="refreshPricingBtn" class="secondary btn-sm">Refresh prices</button>
+        </div>
+      </div>
+
+      <div id="summaryCards" class="summary-grid"></div>
+      <section id="savingsCelebration" class="savings-celebration hidden" aria-live="polite">
+        <div>
+          <p class="eyebrow">Smart-shop win</p>
+          <h3 id="savingsCelebrationTitle">Congratulations</h3>
+          <p id="savingsCelebrationText"></p>
+        </div>
+        <button type="button" id="dismissSavingsBtn" class="secondary btn-sm">Dismiss</button>
+      </section>
+
+      <section id="planInsights" class="insights-panel hidden" aria-label="Plan insights">
+        <div>
+          <h3>Plan insights</h3>
+          <p id="insightsOverview" class="muted"></p>
+        </div>
+        <div id="categoryBreakdown" class="category-breakdown"></div>
+        <ul id="nextActions" class="insight-actions"></ul>
+      </section>
+
+      <section id="planActionBoard" class="plan-action-board" aria-label="Quick plan actions">
+        <button type="button" class="action-tile" data-chef-auto="Give me three fast dinners from this plan.">
+          <span>Fast dinners</span>
+          <strong>Ask The Chef</strong>
+        </button>
+        <button type="button" class="action-tile" data-chef-auto="Make a meal prep schedule for these groceries.">
+          <span>Meal prep</span>
+          <strong>Build schedule</strong>
+        </button>
+        <button type="button" id="copyShoppingListBtn" class="action-tile">
+          <span>Shopping list</span>
+          <strong>Copy items</strong>
+        </button>
+        <button type="button" class="action-tile" data-chef-auto="What should I cook first so nothing spoils?">
+          <span>Freshness</span>
+          <strong>Use first</strong>
+        </button>
+      </section>
+
+      <h3>Shopping list</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Qty</th>
+              <th>Cost</th>
+              <th>Best Store</th>
+            </tr>
+          </thead>
+          <tbody id="resultItemsBody"></tbody>
+        </table>
+      </div>
+
+      <div id="storeComparison" class="hidden mt-section">
+        <h3>Nearby stores</h3>
+        <p class="muted" id="storeComparisonMeta"></p>
+        <section id="retailerIntelPanel" class="retailer-intel hidden" aria-label="Retailer coverage intelligence">
+          <div>
+            <p class="eyebrow">Montreal retailer intelligence</p>
+            <h4>Coverage priorities</h4>
+            <p id="retailerIntelSummary" class="muted"></p>
+          </div>
+          <div id="retailerIntelChips" class="retailer-intel-chips"></div>
+        </section>
+
+        <div id="mapSection" class="map-section">
+          <div class="map-toolbar">
+            <div>
+              <p class="eyebrow">Deal-aware route</p>
+              <h4 id="mapRouteTitle">Recommended shopping path</h4>
+            </div>
+            <div class="map-actions">
+              <a id="openDirectionsLink" class="secondary btn-sm hidden" href="#" target="_blank" rel="noopener">Open directions</a>
+              <span id="mapRouteBadge" class="preview-pill">Best value</span>
+            </div>
+          </div>
+          <div id="storeMap"></div>
+          <p id="roadRouteStatus" class="map-note hidden">Loading road route...</p>
+          <p id="storeMapEmpty" class="muted hidden">Enter a postal code to see stores on the map.</p>
+        </div>
+
+        <div id="storeCards" class="stack-list"></div>
+      </div>
+
+      <div id="routeInfo" class="hidden mt-section">
+        <h3>Suggested route</h3>
+        <p class="muted"><strong>From:</strong> <span id="routeOriginLabel">-</span> &mdash; <strong>Total:</strong> <span id="routeTotalDistance"></span> km</p>
+        <div id="routeStops"></div>
+      </div>
+
+      <!-- Inline Save Modal -->
+      <div id="saveModal" class="save-modal">
+        <label for="savePlanName">Name your plan</label>
+        <input type="text" id="savePlanName" placeholder="My grocery plan" />
+        <div class="save-modal-actions">
+          <button type="button" id="saveModalConfirm">Save</button>
+          <button type="button" id="saveModalCancel" class="secondary">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Hidden elements for compatibility -->
+      <div id="livePricingStatus" class="hidden"></div>
+      <div id="storeDataSource" class="hidden"></div>
+      <input type="checkbox" id="autoRefreshPricing" checked class="hidden" aria-hidden="true" />
+      <pre id="resultText" class="hidden"></pre>
+    </section>
+
+    <aside id="chefWidget" class="chef-widget hidden" aria-label="The Chef meal assistant">
+      <button type="button" id="chefLauncher" class="chef-launcher" aria-expanded="false" aria-controls="chefPanel">
+        <span class="chef-face" aria-hidden="true"><img src="assets/chef-assistant.png" alt="" /></span>
+        <span class="chef-launch-text">Ask The Chef</span>
+      </button>
+      <section id="chefPanel" class="chef-panel hidden">
+        <div class="chef-panel-header">
+          <div>
+            <p class="eyebrow">Meal helper</p>
+            <h3>The Chef</h3>
+          </div>
+          <button type="button" id="chefCloseBtn" class="secondary btn-sm" aria-label="Close The Chef">Close</button>
+        </div>
+        <p class="muted">Tell The Chef what you want to cook from your current plan.</p>
+        <div class="chef-prompts" aria-label="Chef prompt shortcuts">
+          <button type="button" class="secondary btn-sm chef-prompt" data-prompt="Give me three fast dinners from this plan.">Fast dinners</button>
+          <button type="button" class="secondary btn-sm chef-prompt" data-prompt="Make a meal prep schedule for these groceries.">Meal prep</button>
+          <button type="button" class="secondary btn-sm chef-prompt" data-prompt="What should I cook first so nothing spoils?">Use fresh items first</button>
+        </div>
+        <div id="assistantMessages" class="assistant-messages chef-messages"></div>
+        <div class="chef-input-row">
+          <input id="assistantInput" type="text" placeholder="Ask The Chef for meal ideas..." aria-label="Ask The Chef" />
+          <button type="button" id="assistantSendBtn" class="btn-sm">Send</button>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="shared.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="plan.js"></script>
+</body>
+</html>
