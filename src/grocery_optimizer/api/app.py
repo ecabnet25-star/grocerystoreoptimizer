@@ -13,7 +13,7 @@ from urllib.request import urlopen
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from ..assistant import build_meal_assistant_response
@@ -340,8 +340,7 @@ def ready() -> dict[str, Any]:
         raise HTTPException(status_code=503, detail=f"Readiness failed: {exc}") from exc
 
 
-@app.get("/")
-def root() -> dict[str, Any]:
+def _service_metadata() -> dict[str, Any]:
     return {
         "service": "grocery-optimizer-api",
         "status": "ok",
@@ -359,6 +358,18 @@ def root() -> dict[str, Any]:
         "deployment_status": "/deployment/status",
         "retailer_research": "/retailer-research/montreal",
     }
+
+
+@app.get("/")
+def root() -> Any:
+    if os.getenv("VERCEL", "").strip().lower() in {"1", "true", "yes"}:
+        return RedirectResponse(url="/index.html", status_code=307)
+    return _service_metadata()
+
+
+@app.get("/api")
+def api_root() -> dict[str, Any]:
+    return _service_metadata()
 
 
 @app.get("/locations")

@@ -125,6 +125,17 @@ class TestAPIEndpoints(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["service"], "grocery-optimizer-api")
 
+    def test_api_root_returns_service_metadata(self):
+        response = self.client.get("/api")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["service"], "grocery-optimizer-api")
+
+    def test_vercel_root_redirects_to_frontend(self):
+        with patch.dict(os.environ, {"VERCEL": "1"}, clear=False):
+            response = self.client.get("/", follow_redirects=False)
+        self.assertEqual(response.status_code, 307)
+        self.assertEqual(response.headers["location"], "/index.html")
+
     # ------------------------------------------------------------------
     # GET /locations
     # ------------------------------------------------------------------
