@@ -21,6 +21,9 @@ dev = [
 [tool.vercel]
 entrypoint = "src.grocery_optimizer.api.app:app"
 
+[tool.vercel.scripts]
+build = "python scripts/prepare_vercel_public.py"
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
