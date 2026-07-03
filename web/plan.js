@@ -274,7 +274,7 @@ function renderStoreMapSvg(mapEl, points, route) {
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="url(#mapBg)" />
-      <path d="M 28 ${height - 52} C ${width * 0.25} ${height - 118}, ${width * 0.42} ${height - 16}, ${width - 30} 54" stroke="#d1fae5" stroke-width="20" fill="none" opacity="0.75" />
+      <path d="M 28 ${height - 52} C ${width * 0.25} ${height - 118}, ${width * 0.42} ${height - 16}, ${width - 30} 54" stroke="#ffe3e6" stroke-width="20" fill="none" opacity="0.75" />
       <path d="M 46 58 C ${width * 0.28} 24, ${width * 0.62} 124, ${width - 42} 98" stroke="#dbeafe" stroke-width="16" fill="none" opacity="0.78" />
       ${routePath ? `<path class="map-route-line" d="${routePath}" stroke="#ed1b2f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />` : ""}
       ${markers}
