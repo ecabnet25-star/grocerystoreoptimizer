@@ -10,6 +10,7 @@ class OptimizeRequest(BaseModel):
     max_items: int = Field(default=10, ge=1, le=100)
     strategy: Literal["greedy", "knapsack"] = "greedy"
     required_categories: list[str] = Field(default_factory=list)
+    must_have_items: list[str] = Field(default_factory=list)
     excluded_categories: list[str] = Field(default_factory=list)
     nutrition_weight: float = Field(default=1.0, ge=0)
     shelf_life_weight: float = Field(default=0.25, ge=0)

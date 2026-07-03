@@ -123,7 +123,7 @@ def _build_ollama_prompt(
 
     return (
         "You are The Chef, a practical, upbeat grocery meal-planning helper inside a grocery planner app. "
-        "Return concise guidance and 3 meal ideas grounded in the provided groceries. "
+        "Return direct, concise guidance and exactly 3 meal ideas grounded in the provided groceries. "
         "Respect dislikes and health goals. Avoid ingredients the user dislikes.\n\n"
         f"Groceries: {items_text}\n"
         f"Likes: {likes_text}\n"
@@ -131,9 +131,10 @@ def _build_ollama_prompt(
         f"Health goals: {goals_text}\n"
         f"User request: {user_text}\n\n"
         "Format:\n"
-        "1) Start with 'The Chef says:' and one short paragraph of advice.\n"
-        "2) Exactly 3 meal ideas as bullet lines using '-' and include key ingredients from the list.\n"
-        "3) End with one prep tip under 15 words."
+        "Use at most 90 words total. No introduction, repetition, or filler.\n"
+        "1) Start with one sentence beginning 'Chef:'\n"
+        "2) Give exactly 3 bullet meals; each bullet must name the meal and key groceries.\n"
+        "3) End with one prep tip under 12 words."
     )
 
 
@@ -148,7 +149,7 @@ def _ollama_generate_response(prompt: str) -> tuple[str | None, str]:
         "stream": False,
         "options": {
             "temperature": 0.6,
-            "num_predict": 350,
+            "num_predict": 180,
         },
     }
 
@@ -200,13 +201,11 @@ def build_meal_assistant_response(
     goal_tips = _goal_tips(normalized_goals)
     intent_tip = _intent_tip(msg)
     fallback_response = (
-        "The Chef says: here are meal ideas based on your current cart."
+        "Chef: these ideas use your current cart."
         + preference_line
         + (f" Goal tip: {goal_tips[0]}" if goal_tips else "")
         + f" Plan tip: {intent_tip}"
     )
-    if msg:
-        fallback_response += f" You asked: '{msg}'."
 
     assistant_mode = os.getenv("GROCERY_ASSISTANT_MODE", "hybrid").strip().lower()
     llm_text: str | None = None

@@ -8,9 +8,10 @@ from typing import Any, cast
 
 from ..data_io import load_items_from_json
 from ..geo_discovery import discover_food_places, geocode_address, geocode_postal_code
-from ..live_pricing import build_store_live_pricing_snapshot, get_live_pricing_engine
+from ..live_pricing import build_store_live_pricing_snapshot, get_live_price_history, get_live_pricing_engine
 from ..location import apply_location_pricing, list_available_locations, load_location_profile
 from ..optimizer import OptimizationWeights, optimize_grocery_list
+from ..price_prediction import predict_price_drops
 from ..retailer_research import summarize_retailer_research
 from ..stores import (
     Store,
@@ -227,7 +228,7 @@ def _apply_auto_discovery(
     and a postal code is provided.  Duplicate stores (same name + distance) are
     skipped.  Returns the updated *nearby* list.
     """
-    auto_discovery_enabled = os.getenv("GROCERY_ENABLE_AUTO_DISCOVERY", "false").lower() == "true"
+    auto_discovery_enabled = os.getenv("GROCERY_ENABLE_AUTO_DISCOVERY", "true").lower() == "true"
     auto_scan: dict[str, Any] = (
         discover_food_places(request.postal_code, radius_km=12.0)
         if request.postal_code and auto_discovery_enabled
@@ -671,6 +672,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             budget=request.budget,
             max_items=request.max_items,
             required_categories=required_categories,
+            required_item_names=set(request.must_have_items),
             excluded_categories=set(request.excluded_categories),
             strategy=request.strategy,
             weights=OptimizationWeights(
@@ -686,7 +688,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             return None, []
         origin, nearby = _resolve_origin(request, postal_codes, profile, all_stores)
         nearby = _apply_auto_discovery(request, nearby, normalized_postal)
-        nearby = _prioritize_stores(nearby, profile, max_candidate_stores=15)
+        nearby = _prioritize_stores(nearby, profile, max_candidate_stores=50)
         return origin, nearby
 
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -729,6 +731,9 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
         store_comparison=store_comparison,
         route_info=route_info,
         currency=profile.currency,
+    )
+    price_forecast = predict_price_drops(
+        get_live_price_history(normalized_postal, limit=1000) if normalized_postal else []
     )
     route_assignments = [
         cast(dict[str, Any], row)
@@ -801,6 +806,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             "retailer_research": retailer_research,
         },
         "route": route_info,
+        "price_forecast": price_forecast,
         "insights": insights,
     }
 

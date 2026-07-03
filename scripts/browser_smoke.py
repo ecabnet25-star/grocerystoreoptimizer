@@ -22,7 +22,7 @@ def main() -> int:
         page.on("pageerror", lambda exc: errors.append(f"pageerror:{exc}"))
 
         page.goto("http://127.0.0.1:8080/about.html", wait_until="networkidle")
-        page.wait_for_selector("text=Make food planning clearer", timeout=5_000)
+        page.wait_for_selector("text=Make every grocery dollar work harder", timeout=5_000)
         page.goto("http://127.0.0.1:8080/account.html", wait_until="networkidle")
         page.fill("#createName", "Browser Smoke")
         page.fill("#createEmail", smoke_email)

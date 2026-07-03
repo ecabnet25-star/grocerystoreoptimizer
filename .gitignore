@@ -75,5 +75,6 @@ data/
 
 # Report outputs
 outputs/
+test-results/
 
 # End of file

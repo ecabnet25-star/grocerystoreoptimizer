@@ -67,6 +67,24 @@ class TestOptimizer(unittest.TestCase):
         self.assertLessEqual(result.total_cost, 15.0)
         self.assertGreaterEqual(result.total_cost, 12.0)
 
+    def test_optimizer_includes_exact_required_items(self):
+        items = [
+            GroceryItem("Chicken Breast", "protein", 8.0, 9.0, 4, 1),
+            GroceryItem("Beans", "protein", 2.0, 8.0, 200, 1),
+            GroceryItem("Rice", "grains", 3.0, 7.0, 100, 1),
+        ]
+
+        result = optimize_grocery_list(
+            items,
+            budget=12.0,
+            max_items=2,
+            required_item_names={"chicken breast"},
+            strategy="knapsack",
+        )
+
+        self.assertIn("Chicken Breast", {item.name for item in result.selected_items})
+        self.assertLessEqual(result.total_cost, 12.0)
+
 
 if __name__ == "__main__":
     unittest.main()

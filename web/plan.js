@@ -244,7 +244,7 @@ function renderStoreMapSvg(mapEl, points, route) {
     .map((store) => {
       const [x, y] = project(Number(store.latitude), Number(store.longitude));
       const isRouteStop = routeStoreIds.has(String(store.store_id || ""));
-      const fill = isRouteStop ? "#16a34a" : "#94a3b8";
+      const fill = isRouteStop ? "#ed1b2f" : "#64748b";
       const radius = isRouteStop ? 8 : 5;
       const label = isRouteStop
         ? `<text x="${(x + 12).toFixed(1)}" y="${(y - 10).toFixed(1)}" class="map-label">${escapeHtml(store.name)}</text>`
@@ -261,22 +261,22 @@ function renderStoreMapSvg(mapEl, points, route) {
   let originMarker = "";
   if (route && route.origin && Number.isFinite(Number(route.origin.latitude)) && Number.isFinite(Number(route.origin.longitude))) {
     const [ox, oy] = project(Number(route.origin.latitude), Number(route.origin.longitude));
-    originMarker = `<rect x="${(ox - 5).toFixed(1)}" y="${(oy - 5).toFixed(1)}" width="10" height="10" fill="#166534"><title>Start</title></rect>`;
+    originMarker = `<rect x="${(ox - 5).toFixed(1)}" y="${(oy - 5).toFixed(1)}" width="10" height="10" fill="#111827"><title>Start</title></rect>`;
   }
 
   mapEl.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" role="img" aria-label="Store map">
       <defs>
         <linearGradient id="mapBg" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stop-color="#ecfdf5" />
-          <stop offset="0.52" stop-color="#eff6ff" />
-          <stop offset="1" stop-color="#fff7ed" />
+          <stop offset="0" stop-color="#fff5f5" />
+          <stop offset="0.52" stop-color="#f8fafc" />
+          <stop offset="1" stop-color="#ffffff" />
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="url(#mapBg)" />
       <path d="M 28 ${height - 52} C ${width * 0.25} ${height - 118}, ${width * 0.42} ${height - 16}, ${width - 30} 54" stroke="#d1fae5" stroke-width="20" fill="none" opacity="0.75" />
       <path d="M 46 58 C ${width * 0.28} 24, ${width * 0.62} 124, ${width - 42} 98" stroke="#dbeafe" stroke-width="16" fill="none" opacity="0.78" />
-      ${routePath ? `<path class="map-route-line" d="${routePath}" stroke="#16a34a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />` : ""}
+      ${routePath ? `<path class="map-route-line" d="${routePath}" stroke="#ed1b2f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />` : ""}
       ${markers}
       ${originMarker}
     </svg>
@@ -421,7 +421,7 @@ function renderStoreMapLeaflet(mapEl, points, route) {
       title: store.name,
       icon: L.divIcon({
         className: isRouteStop ? "leaflet-store-marker route-stop-marker" : "leaflet-store-marker",
-        html: `<span>${isRouteStop ? "Deal" : "Store"}</span>`,
+        html: `<span>${isRouteStop ? String(routeStops.findIndex((stop) => String(stop.store_id) === String(store.store_id)) + 1) : ""}</span>`,
         iconSize: [48, 28],
         iconAnchor: [24, 14],
       }),
@@ -455,7 +455,7 @@ function renderStoreMapLeaflet(mapEl, points, route) {
       if (roadRoute.length >= 2) {
         L.polyline(roadRoute, {
           className: "road-route-line",
-          color: "#16a34a",
+          color: "#ed1b2f",
           weight: 6,
           opacity: 0.92,
           lineCap: "round",
@@ -563,6 +563,9 @@ function applyReusePlanPrefill() {
     if (Array.isArray(req.required_categories)) {
       document.getElementById("requiredCategories").value = req.required_categories.join(",");
     }
+    if (Array.isArray(req.must_have_items)) {
+      document.getElementById("mustHaveItems").value = req.must_have_items.join(",");
+    }
     if (Array.isArray(req.excluded_categories)) {
       document.getElementById("excludedCategories").value = req.excluded_categories.join(",");
     }
@@ -600,7 +603,7 @@ function getTierBadgeClass(tier) {
   return "tier-badge tier-badge-mid";
 }
 
-function renderStoreCards(stores, itemQuotes, currency) {
+function renderStoreCards(stores, itemQuotes, currency, route) {
   const container = document.getElementById("storeCards");
   const meta = document.getElementById("storeComparisonMeta");
   if (!container || !meta) {
@@ -620,8 +623,9 @@ function renderStoreCards(stores, itemQuotes, currency) {
     return Number(a.estimated_total || 0) - Number(b.estimated_total || 0);
   });
 
-  const displayed = sortedStores.slice(0, 8);
-  meta.textContent = `${displayed.length} of ${sortedStores.length} nearby stores, sorted by estimated cost.`;
+  const displayed = sortedStores;
+  const routeIds = new Set((route?.stops || []).map((stop) => String(stop.store_id || "")));
+  meta.textContent = `${displayed.length} nearby stores found. Red cards are recommended shopping stops.`;
 
   if (!displayed.length) {
     container.innerHTML = '<p class="muted">No nearby store pricing available yet.</p>';
@@ -680,19 +684,15 @@ function renderStoreCards(stores, itemQuotes, currency) {
       const tierBadgeClass = getTierBadgeClass(store.price_tier);
 
       return `
-        <details class="store-card" ${idx === 0 ? "open" : ""}>
-          <summary>
-            <span><strong>${escapeHtml(store.name)}</strong> <small class="muted">(${escapeHtml(store.chain)})</small></span>
-            <span>${store.distance_km} km &bull; ${formatCurrency(store.estimated_total, currency)}</span>
-          </summary>
-          <div class="store-card-content">
-            <p class="muted">
-              <span class="${tierBadgeClass}">${escapeHtml(store.price_tier)}</span>
-              Quality: ${store.quality_rating}/5.0
-            </p>
-            ${checklistPanel}
+        <article class="store-card simple-store-card ${routeIds.has(String(store.store_id || "")) ? "recommended-store" : ""}">
+          <div class="store-card-heading">
+            <div><strong>${escapeHtml(store.name)}</strong><small>${escapeHtml(store.chain)}</small></div>
+            ${routeIds.has(String(store.store_id || "")) ? '<span class="route-badge">Route stop</span>' : ""}
           </div>
-        </details>
+          <div class="store-facts"><span>${store.distance_km} km</span><span>${formatCurrency(store.estimated_total, currency)}</span><span class="${tierBadgeClass}">${escapeHtml(store.price_tier)}</span></div>
+          <p class="muted">Quality ${store.quality_rating}/5</p>
+          <details class="item-checklist-details"><summary>View item prices</summary>${checklistPanel}</details>
+        </article>
       `;
     })
     .join("");
@@ -813,6 +813,24 @@ function renderPlanInsights(insights, currency) {
   panel.classList.remove("hidden");
 }
 
+function renderPriceForecast(forecast, currency) {
+  const panel = document.getElementById("priceForecast");
+  const title = document.getElementById("priceForecastTitle");
+  const text = document.getElementById("priceForecastText");
+  const drops = document.getElementById("priceForecastDrops");
+  const disclaimer = document.getElementById("priceForecastDisclaimer");
+  if (!panel || !title || !text || !drops || !disclaimer) return;
+  const data = forecast || {};
+  title.textContent = data.action === "wait" ? "A short wait may pay off" : "Today is a reasonable day to shop";
+  text.textContent = data.recommendation || "Use current nearby-store estimates before shopping.";
+  const candidates = Array.isArray(data.drops) ? data.drops : [];
+  drops.innerHTML = candidates.map((row) => `
+    <span><strong>${escapeHtml(row.item_name)}</strong> ${formatCurrency(row.current_price, currency)} &rarr; ${formatCurrency(row.predicted_price, currency)} <small>${escapeHtml(row.change_percent)}%</small></span>
+  `).join("");
+  disclaimer.textContent = data.disclaimer || "Price timing is an estimate based on observed data.";
+  panel.classList.remove("hidden");
+}
+
 function renderOptimizationResult(data, caption = "Plan generated.") {
   const summary = data.summary || {};
   const items = Array.isArray(data.items) ? data.items : [];
@@ -847,6 +865,7 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
 
   renderPlanInsights(data.insights || {}, lastLocationCurrency);
   renderSavingsCelebration(data.insights || {}, lastLocationCurrency);
+  renderPriceForecast(data.price_forecast || {}, lastLocationCurrency);
 
   const plannedItems = buildItemStorePlan(items, stores.item_quotes || [], route?.item_assignments || []);
   resultItemsBody.innerHTML = plannedItems
@@ -868,7 +887,7 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   storeComparison.classList.remove("hidden");
 
   const storeComparisonData = Array.isArray(stores.comparison) ? stores.comparison : [];
-  renderStoreCards(storeComparisonData, stores.item_quotes || [], lastLocationCurrency);
+  renderStoreCards(storeComparisonData, stores.item_quotes || [], lastLocationCurrency, route);
   renderRetailerIntel(stores.retailer_research || {});
 
   // Hidden data holders (kept for compatibility)
@@ -880,7 +899,7 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const mapRouteTitle = document.getElementById("mapRouteTitle");
   const mapRouteBadge = document.getElementById("mapRouteBadge");
   if (mapRouteTitle && mapRouteBadge) {
-    mapRouteTitle.textContent = route?.selection_reason || "Recommended shopping path";
+    mapRouteTitle.textContent = `${stores.nearby?.length || 0} nearby stores · ${route?.stops?.length || 0} recommended stop(s)`;
     mapRouteBadge.textContent = route?.skipped_store_count
       ? `${route.skipped_store_count} store(s) skipped`
       : "Best value";
@@ -1081,15 +1100,11 @@ async function sendAssistantPrompt(messageOverride = "") {
   }
 
   const suggestions = Array.isArray(result.data.suggestions) ? result.data.suggestions : [];
-  const tip = Array.isArray(result.data.goal_tips) && result.data.goal_tips.length ? ` Tip: ${result.data.goal_tips[0]}` : "";
   const responseText = String(result.data.response || "");
-  const planTip = result.data.plan_tip && !responseText.toLowerCase().includes("plan tip")
-    ? ` Plan: ${result.data.plan_tip}`
-    : "";
   const suggestionText = suggestions.length
-    ? ` Try: ${suggestions.map((s) => `${s.title} (${s.uses})`).join(" | ")}`
+    ? `\n${suggestions.slice(0, 3).map((s) => `• ${s.title}: ${s.uses}`).join("\n")}`
     : "";
-  addAssistantMessage("assistant", `${responseText}${suggestionText}${tip}${planTip}`.trim());
+  addAssistantMessage("assistant", `${responseText}${suggestionText}`.trim());
 }
 
 // Loading state helpers
@@ -1110,35 +1125,6 @@ function setFormLoading(loading) {
     generateBtn.textContent = loading ? "Generating..." : "Generate plan";
   }
 }
-
-// Collapsible preferences section
-(function initCollapsible() {
-  const toggle = document.getElementById("prefsToggle");
-  const body = document.getElementById("prefsBody");
-  const chevron = document.getElementById("prefsChevron");
-
-  if (!toggle || !body || !chevron) return;
-
-  toggle.addEventListener("click", () => {
-    const isOpen = body.classList.contains("open");
-    if (isOpen) {
-      body.classList.remove("open");
-      chevron.classList.remove("open");
-      toggle.setAttribute("aria-expanded", "false");
-    } else {
-      body.classList.add("open");
-      chevron.classList.add("open");
-      toggle.setAttribute("aria-expanded", "true");
-    }
-  });
-
-  toggle.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      toggle.click();
-    }
-  });
-})();
 
 document.querySelectorAll(".preset-chip").forEach((button) => {
   button.addEventListener("click", () => {
@@ -1227,6 +1213,7 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
     postal_code: document.getElementById("postalCode").value.trim().replace(/\s+/g, ""),
     address: document.getElementById("address").value.trim(),
     required_categories: splitList(document.getElementById("requiredCategories").value),
+    must_have_items: splitList(document.getElementById("mustHaveItems").value),
     excluded_categories: splitList(document.getElementById("excludedCategories").value),
     likes: splitList(document.getElementById("likes").value),
     dislikes: splitList(document.getElementById("dislikes").value),

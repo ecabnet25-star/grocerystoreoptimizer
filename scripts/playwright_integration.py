@@ -23,8 +23,8 @@ def _generate_plan(page: Page, *, budget: str = "46", max_items: str = "8") -> N
     page.goto(f"{WEB_URL}/index.html", wait_until="domcontentloaded")
     page.wait_for_selector("#budget", timeout=10_000)
     page.fill("#budget", budget)
+    page.locator("#prefsBody").evaluate("element => { element.open = true; }")
     page.fill("#maxItems", max_items)
-    page.select_option("#strategy", "knapsack")
     page.fill("#postalCode", "H3A1A1")
     page.fill("#requiredCategories", "produce,protein")
     page.fill("#healthGoals", "high protein, savings")
@@ -57,7 +57,7 @@ def main() -> int:
 
         try:
             page.goto(f"{WEB_URL}/about.html", wait_until="domcontentloaded")
-            page.wait_for_selector("text=Make food planning clearer", timeout=5_000)
+            page.wait_for_selector("text=Make every grocery dollar work harder", timeout=5_000)
             assert page.locator('nav a[href="about.html"]').count() == 1
 
             page.goto(f"{WEB_URL}/account.html", wait_until="domcontentloaded")

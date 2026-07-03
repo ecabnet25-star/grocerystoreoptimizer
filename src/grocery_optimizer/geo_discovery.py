@@ -231,8 +231,9 @@ def discover_food_places(
     query = f"""
 [out:json][timeout:25];
 (
-  node["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace"](around:{radius_m},{point.latitude},{point.longitude});
-  way["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace"](around:{radius_m},{point.latitude},{point.longitude});
+  node["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace|deli|seafood|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
+  way["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace|deli|seafood|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
+  relation["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace|deli|seafood|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
   node["amenity"="marketplace"](around:{radius_m},{point.latitude},{point.longitude});
 );
 out center tags;

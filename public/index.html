@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grocery Planner</title>
+  <title>unibite.click | Smart grocery planning</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -14,8 +14,8 @@
   <nav class="navbar" aria-label="Main navigation">
     <div class="nav-container">
       <a href="index.html" class="nav-brand">
-        <span class="brand-icon" aria-hidden="true">&#x1F966;</span>
-        Grocery Planner
+        <img src="assets/unibite-logo.png" alt="" class="brand-logo" />
+        <span>unibite<span class="brand-dot">.click</span></span>
       </a>
       <div class="nav-links">
         <a href="about.html">About</a>
@@ -30,7 +30,7 @@
     <header class="hero hero-planner" aria-label="Welcome section">
       <div class="hero-copy">
         <p class="eyebrow">Budget smart · shop faster</p>
-        <h1>Build a grocery plan that actually fits your week.</h1>
+        <h1>Spend less. Eat well. Know where to shop.</h1>
         <p class="subtitle">
           Balance cost, nutrition, freshness, nearby store estimates, and route planning in one pass.
         </p>
@@ -92,59 +92,34 @@
         <span id="planPreviewPill" class="preview-pill">$50 · 8 items · Best value</span>
       </div>
 
-      <div class="planner-grid">
-        <section class="planner-panel primary-panel">
-          <div class="panel-kicker">Money and location</div>
-          <div class="form-row">
-            <label id="budgetLabel" aria-label="Budget amount">
-              <span id="budgetLabelText">Budget (CAD)</span>
-              <input id="budget" type="number" min="1" step="0.01" value="50" />
-            </label>
+      <section class="planner-panel quick-plan-panel">
+        <div class="quick-plan-grid">
+          <label id="budgetLabel" aria-label="Budget amount">
+            <span id="budgetLabelText">Budget (CAD)</span>
+            <input id="budget" type="number" min="1" step="0.01" value="50" />
+          </label>
+          <label aria-label="Postal code">
+            Postal code
+            <input id="postalCode" type="text" placeholder="H3A 1A1" autocomplete="postal-code" />
+          </label>
+          <label aria-label="Must-have groceries">
+            Must-have groceries
+            <input id="mustHaveItems" type="text" placeholder="Chicken Breast, Brown Rice" />
+          </label>
+        </div>
+        <p class="field-help">Separate must-haves with commas. We include exact catalog matches when your budget allows.</p>
 
+        <details class="more-options" id="prefsBody">
+          <summary id="prefsToggle" aria-controls="optionalFields">More options</summary>
+          <div id="optionalFields" class="optional-fields">
             <label aria-label="Maximum items">
-              Max items
+              Maximum items
               <input id="maxItems" type="number" min="1" step="1" value="8" />
             </label>
-          </div>
-
-          <div class="form-row">
-            <label aria-label="Plan strategy">
-              Plan style
-              <select id="strategy">
-                <option value="greedy">Quick pick</option>
-                <option value="knapsack" selected>Best value</option>
-              </select>
-            </label>
-
-            <label aria-label="City selection">
-              City
-              <select id="location">
-                <option value="montreal" selected>Montreal</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="form-row">
-            <label aria-label="Postal code">
-              Postal code <small>(for nearby stores)</small>
-              <input id="postalCode" type="text" placeholder="H3A 1A1 or 10001" />
-            </label>
-
             <label aria-label="Street address">
-              Address <small>(optional)</small>
-              <input id="address" type="text" placeholder="123 Main St, Montreal" />
+              Street address
+              <input id="address" type="text" placeholder="123 Main St, Montreal" autocomplete="street-address" />
             </label>
-          </div>
-        </section>
-
-        <section class="planner-panel preference-panel">
-          <div class="panel-kicker">Preferences</div>
-          <div class="collapsible-header" id="prefsToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="prefsBody">
-            <h3>Fine-tune preferences</h3>
-            <span class="collapsible-chevron" id="prefsChevron" aria-hidden="true">&#9660;</span>
-          </div>
-
-          <div class="collapsible-body" id="prefsBody">
             <label aria-label="Required food categories">
               Must-have categories
               <input id="requiredCategories" type="text" value="produce,protein" placeholder="produce, protein, grains" />
@@ -169,9 +144,11 @@
               Health goals
               <input id="healthGoals" type="text" placeholder="muscle gain, heart health, low sodium" />
             </label>
+            <input id="strategy" type="hidden" value="knapsack" />
+            <input id="location" type="hidden" value="montreal" />
           </div>
-        </section>
-      </div>
+        </details>
+      </section>
 
       <div class="form-footer">
         <div class="confidence-strip" aria-hidden="true">
@@ -217,6 +194,17 @@
         </div>
         <div id="categoryBreakdown" class="category-breakdown"></div>
         <ul id="nextActions" class="insight-actions"></ul>
+      </section>
+
+      <section id="priceForecast" class="price-forecast hidden" aria-label="Price drop forecast">
+        <div class="forecast-icon" aria-hidden="true">&#8595;</div>
+        <div>
+          <p class="eyebrow">7-day price outlook</p>
+          <h3 id="priceForecastTitle">Best time to shop</h3>
+          <p id="priceForecastText" class="muted"></p>
+          <div id="priceForecastDrops" class="forecast-drops"></div>
+          <small id="priceForecastDisclaimer"></small>
+        </div>
       </section>
 
       <section id="planActionBoard" class="plan-action-board" aria-label="Quick plan actions">
@@ -270,7 +258,7 @@
           <div class="map-toolbar">
             <div>
               <p class="eyebrow">Deal-aware route</p>
-              <h4 id="mapRouteTitle">Recommended shopping path</h4>
+              <h4 id="mapRouteTitle">Nearby stores and recommended route</h4>
             </div>
             <div class="map-actions">
               <a id="openDirectionsLink" class="secondary btn-sm hidden" href="#" target="_blank" rel="noopener">Open directions</a>
@@ -278,6 +266,7 @@
             </div>
           </div>
           <div id="storeMap"></div>
+          <div class="map-legend" aria-label="Map legend"><span><i class="legend-dot nearby"></i> Nearby store</span><span><i class="legend-dot route"></i> Recommended stop</span></div>
           <p id="roadRouteStatus" class="map-note hidden">Loading road route...</p>
           <p id="storeMapEmpty" class="muted hidden">Enter a postal code to see stores on the map.</p>
         </div>
@@ -335,6 +324,8 @@
       </section>
     </aside>
   </main>
+
+  <footer class="site-footer"><span>unibite.click</span><span>Created by <a href="https://www.linkedin.com/in/ethancabnet/" target="_blank" rel="noopener">Ethan Cabnet</a> and <a href="https://www.linkedin.com/in/bhavishlowtun/" target="_blank" rel="noopener">Bhavish Lowtun</a></span></footer>
 
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 

@@ -173,6 +173,7 @@ def optimize_grocery_list(
     budget: float,
     max_items: int | None = None,
     required_categories: set[str] | None = None,
+    required_item_names: set[str] | None = None,
     excluded_categories: set[str] | None = None,
     strategy: str = "greedy",
     weights: OptimizationWeights | None = None,
@@ -182,15 +183,28 @@ def optimize_grocery_list(
         return OptimizationResult([], 0.0, 0.0, 0, round(budget, 2), 0.0, strategy)
 
     required_categories = required_categories or set()
+    required_item_names = {name.strip().lower() for name in (required_item_names or set()) if name.strip()}
     excluded_categories = excluded_categories or set()
     weights = weights or OptimizationWeights()
 
     eligible_items = [item for item in items if item.category not in excluded_categories]
+    required_items = [item for item in eligible_items if item.name.strip().lower() in required_item_names]
+    required_cost = round(sum(item.total_cost for item in required_items), 2)
+    if required_cost > budget or (max_items is not None and len(required_items) > max_items):
+        required_items = []
+
+    remaining_items = [item for item in eligible_items if item not in required_items]
+    remaining_budget = max(0.0, budget - sum(item.total_cost for item in required_items))
+    remaining_limit = None if max_items is None else max(0, max_items - len(required_items))
 
     if strategy == "knapsack":
-        selected, spent, ordered_candidates = _knapsack_select(eligible_items, budget, max_items, weights)
+        selected, spent, ordered_candidates = _knapsack_select(remaining_items, remaining_budget, remaining_limit, weights)
     else:
-        selected, spent, ordered_candidates = _greedy_select(eligible_items, budget, max_items)
+        selected, spent, ordered_candidates = _greedy_select(remaining_items, remaining_budget, remaining_limit)
+
+    selected = required_items + selected
+    spent += sum(item.total_cost for item in required_items)
+    ordered_candidates = required_items + ordered_candidates
 
     selected, spent = _try_fill_required_categories(
         selected=selected,
