@@ -67,6 +67,7 @@ function applyLanguage(language) {
   currentLanguage = language === "fr" ? "fr" : "en";
   document.documentElement.lang = currentLanguage;
   const copy = getUiCopy();
+  document.title = currentLanguage === "fr" ? "unibite.click | Planification d'épicerie" : "unibite.click | Smart grocery planning";
   const prefsToggle = document.getElementById("prefsToggle");
   const generateBtn = document.getElementById("generateBtn");
   const printBtn = document.getElementById("printCurrentPlanBtn");
@@ -110,7 +111,6 @@ function applyLanguage(language) {
   if (heroSubtitle) heroSubtitle.textContent = currentLanguage === "fr" ? "Équilibrez le coût, la nutrition, la fraîcheur, les estimations des magasins proches et le trajet en une seule étape." : "Balance cost, nutrition, freshness, nearby store estimates, and route planning in one pass.";
   if (stepEyebrow) stepEyebrow.textContent = currentLanguage === "fr" ? "Étape 1" : "Step 1";
   if (stepTitle) stepTitle.textContent = currentLanguage === "fr" ? "Définissez votre panier" : "Set your shopping target";
-
   if (prefsToggle) prefsToggle.textContent = copy.moreOptions;
   if (generateBtn) generateBtn.textContent = copy.generatePlan;
   if (printBtn) printBtn.textContent = copy.print;
@@ -1092,7 +1092,6 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const storeComparison = document.getElementById("storeComparison");
   storeComparison.classList.remove("hidden");
 
-  renderStoreCards(storeComparisonData, stores.item_quotes || [], lastLocationCurrency, route);
   renderRetailerIntel(stores.retailer_research || {});
 
   // Hidden data holders (kept for compatibility)
@@ -1432,17 +1431,17 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
     health_goals: splitList(document.getElementById("healthGoals").value),
   };
 
-  lastOptimizationPayload = payload;
-
-  // Show loading state
-  setFormLoading(true);
-  showStatus("Generating your plan...", "info");
-
-  const result = await optimizePlan(payload);
+      const sortedStores = [...(Array.isArray(stores) ? stores : [])].sort((a, b) => {
+        const distanceDelta = Number(a.distance_km || 0) - Number(b.distance_km || 0);
+        if (Math.abs(distanceDelta) > 0.001) {
+          return distanceDelta;
+        }
+        return Number(a.estimated_total || 0) - Number(b.estimated_total || 0);
+      });
 
   // Hide loading state
   setFormLoading(false);
-
+      meta.textContent = `${displayed.length} nearby stores found. Ordered by distance first, then estimated price. Open each card to compare branch-specific prices and pickup details.`;
   if (result.ok) {
     lastOptimizationResult = result.data;
     renderOptimizationResult(result.data, "Plan ready. You can save it if you like it.");
@@ -1509,44 +1508,7 @@ document.getElementById("assistantInput").addEventListener("keydown", (event) =>
   }
 });
 
-document.getElementById("storeCards").addEventListener("change", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLInputElement)) {
-    return;
-  }
-  if (!target.classList.contains("store-check-item")) {
-    return;
-  }
-
-  const storeKey = target.dataset.storeKey || "";
-  const itemKey = target.dataset.itemKey || "";
-  storeChecklistState.set(`${storeKey}::${itemKey}`, !!target.checked);
-  updateChecklistProgress(target.closest(".store-checklist"));
-});
-
-document.getElementById("storeCards").addEventListener("click", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) {
-    return;
-  }
-
-  if (target.classList.contains("checklist-select-all") || target.classList.contains("checklist-clear")) {
-    const list = target.closest(".store-checklist");
-    if (!list) {
-      return;
-    }
-    const shouldSelect = target.classList.contains("checklist-select-all");
-    const checks = [...list.querySelectorAll("input.store-check-item")];
-    checks.forEach((input) => {
-      const checkbox = input;
-      checkbox.checked = shouldSelect;
-      const storeKey = checkbox.dataset.storeKey || "";
-      const itemKey = checkbox.dataset.itemKey || "";
-      storeChecklistState.set(`${storeKey}::${itemKey}`, shouldSelect);
-    });
-    updateChecklistProgress(list);
-  }
-});
+// Nearby store card checklist interactions removed with card UI.
 
 // Save plan button — show inline modal instead of prompt()
 document.getElementById("savePlanBtn").addEventListener("click", async () => {

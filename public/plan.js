@@ -1092,7 +1092,6 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const storeComparison = document.getElementById("storeComparison");
   storeComparison.classList.remove("hidden");
 
-  renderStoreCards(storeComparisonData, stores.item_quotes || [], lastLocationCurrency, route);
   renderRetailerIntel(stores.retailer_research || {});
 
   // Hidden data holders (kept for compatibility)
@@ -1509,44 +1508,7 @@ document.getElementById("assistantInput").addEventListener("keydown", (event) =>
   }
 });
 
-document.getElementById("storeCards").addEventListener("change", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLInputElement)) {
-    return;
-  }
-  if (!target.classList.contains("store-check-item")) {
-    return;
-  }
-
-  const storeKey = target.dataset.storeKey || "";
-  const itemKey = target.dataset.itemKey || "";
-  storeChecklistState.set(`${storeKey}::${itemKey}`, !!target.checked);
-  updateChecklistProgress(target.closest(".store-checklist"));
-});
-
-document.getElementById("storeCards").addEventListener("click", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) {
-    return;
-  }
-
-  if (target.classList.contains("checklist-select-all") || target.classList.contains("checklist-clear")) {
-    const list = target.closest(".store-checklist");
-    if (!list) {
-      return;
-    }
-    const shouldSelect = target.classList.contains("checklist-select-all");
-    const checks = [...list.querySelectorAll("input.store-check-item")];
-    checks.forEach((input) => {
-      const checkbox = input;
-      checkbox.checked = shouldSelect;
-      const storeKey = checkbox.dataset.storeKey || "";
-      const itemKey = checkbox.dataset.itemKey || "";
-      storeChecklistState.set(`${storeKey}::${itemKey}`, shouldSelect);
-    });
-    updateChecklistProgress(list);
-  }
-});
+// Nearby store card checklist interactions removed with card UI.
 
 // Save plan button — show inline modal instead of prompt()
 document.getElementById("savePlanBtn").addEventListener("click", async () => {
