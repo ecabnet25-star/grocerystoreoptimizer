@@ -9,6 +9,8 @@ class OptimizeRequest(BaseModel):
     budget: float = Field(default=50.0, gt=0)
     max_items: int = Field(default=10, ge=1, le=100)
     strategy: Literal["greedy", "knapsack"] = "greedy"
+    transportation_mode: Literal["walk", "transit", "drive"] = "transit"
+    country_hint: str = ""
     required_categories: list[str] = Field(default_factory=list)
     must_have_items: list[str] = Field(default_factory=list)
     excluded_categories: list[str] = Field(default_factory=list)

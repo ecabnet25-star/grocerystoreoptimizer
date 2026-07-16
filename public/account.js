@@ -12,27 +12,27 @@ function updateAccountDisplay() {
 
   if (Session.isActive()) {
     displayUserId.textContent = Session.userId;
-    displaySessionStatus.textContent = "Active";
+    displaySessionStatus.textContent = tr("Active", "Active");
     displaySessionStatus.style.color = "var(--brand)";
     if (copyAccountIdBtn) copyAccountIdBtn.disabled = false;
-    showStatus(`Signed in as ${Session.userName || "user"}.`, "success");
+    showStatus(`${tr("Signed in as", "Connecte en tant que")} ${Session.userName || tr("user", "utilisateur")}.`, "success");
 
     // Show welcome card, hide auth forms
     if (welcomeCard) {
       welcomeCard.classList.remove("hidden");
       if (welcomeName) {
-        welcomeName.textContent = `Welcome back, ${Session.userName || "user"}!`;
+        welcomeName.textContent = `${tr("Welcome back", "Bon retour")}, ${Session.userName || tr("user", "utilisateur")}!`;
       }
     }
     if (createAccountForm) createAccountForm.classList.add("hidden");
     if (loginForm) loginForm.classList.add("hidden");
     if (sessionActions) sessionActions.classList.remove("hidden");
   } else {
-    displayUserId.textContent = "Not signed in";
-    displaySessionStatus.textContent = "Inactive";
+    displayUserId.textContent = tr("Not signed in", "Non connecte");
+    displaySessionStatus.textContent = tr("Inactive", "Inactif");
     displaySessionStatus.style.color = "var(--muted)";
     if (copyAccountIdBtn) copyAccountIdBtn.disabled = true;
-    showStatus("Create an account or sign in to manage plans.", "info");
+    showStatus(tr("Create an account or sign in to manage plans.", "Creez un compte ou connectez-vous pour gerer vos plans."), "info");
 
     // Hide welcome card and session actions, show auth forms
     if (welcomeCard) welcomeCard.classList.add("hidden");
@@ -46,7 +46,7 @@ function updateAccountDisplay() {
 function setButtonLoading(btn, loading, originalText) {
   if (!btn) return;
   btn.disabled = loading;
-  btn.textContent = loading ? "Working..." : originalText;
+  btn.textContent = loading ? tr("Working...", "Traitement...") : originalText;
 }
 
 // Create account form
@@ -59,24 +59,24 @@ document.getElementById("createAccountForm").addEventListener("submit", async (e
   const btn = document.getElementById("createAccountBtn");
 
   if (!name || !email || !password) {
-    showStatus("Please enter name, email, and password.", "error");
+    showStatus(tr("Please enter name, email, and password.", "Veuillez entrer nom, courriel et mot de passe."), "error");
     return;
   }
   if (password.length < 8) {
-    showStatus("Password must be at least 8 characters.", "error");
+    showStatus(tr("Password must be at least 8 characters.", "Le mot de passe doit contenir au moins 8 caracteres."), "error");
     return;
   }
 
-  setButtonLoading(btn, true, "Create account");
-  showStatus("Creating account...", "info");
+  setButtonLoading(btn, true, tr("Create account", "Creer un compte"));
+  showStatus(tr("Creating account...", "Creation du compte..."), "info");
   const result = await createUser(name, email, password);
-  setButtonLoading(btn, false, "Create account");
+  setButtonLoading(btn, false, tr("Create account", "Creer un compte"));
 
   if (result.ok) {
     updateAccountDisplay();
     document.getElementById("createAccountForm").reset();
   } else {
-    showStatus(result.data.detail || "Account creation failed.", "error");
+    showStatus(result.data.detail || tr("Account creation failed.", "La creation du compte a echoue."), "error");
   }
 });
 
@@ -89,67 +89,67 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
   const btn = document.getElementById("loginBtn");
 
   if (!email || !password) {
-    showStatus("Please enter your email and password.", "error");
+    showStatus(tr("Please enter your email and password.", "Veuillez entrer votre courriel et mot de passe."), "error");
     return;
   }
 
-  setButtonLoading(btn, true, "Sign in");
-  showStatus("Signing in...", "info");
+  setButtonLoading(btn, true, tr("Sign in", "Se connecter"));
+  showStatus(tr("Signing in...", "Connexion..."), "info");
   const result = await loginUser(email, password);
-  setButtonLoading(btn, false, "Sign in");
+  setButtonLoading(btn, false, tr("Sign in", "Se connecter"));
 
   if (result.ok) {
     updateAccountDisplay();
     document.getElementById("loginForm").reset();
   } else {
-    showStatus(result.data.detail || "Sign in failed.", "error");
+    showStatus(result.data.detail || tr("Sign in failed.", "Echec de connexion."), "error");
   }
 });
 
 // Refresh token button
 document.getElementById("refreshTokenBtn").addEventListener("click", async () => {
   if (!Session.isActive()) {
-    showStatus("Please sign in first.", "error");
+    showStatus(tr("Please sign in first.", "Veuillez d'abord vous connecter."), "error");
     return;
   }
 
   const btn = document.getElementById("refreshTokenBtn");
-  setButtonLoading(btn, true, "Refresh session");
-  showStatus("Refreshing session...", "info");
+  setButtonLoading(btn, true, tr("Refresh session", "Actualiser la session"));
+  showStatus(tr("Refreshing session...", "Actualisation de la session..."), "info");
   const result = await refreshToken();
-  setButtonLoading(btn, false, "Refresh session");
+  setButtonLoading(btn, false, tr("Refresh session", "Actualiser la session"));
 
   if (result.ok) {
-    showStatus("Session refreshed successfully.", "success");
+    showStatus(tr("Session refreshed successfully.", "Session actualisee avec succes."), "success");
   } else {
-    showStatus(result.data.detail || "Could not refresh session.", "error");
+    showStatus(result.data.detail || tr("Could not refresh session.", "Impossible d'actualiser la session."), "error");
   }
 });
 
 // Logout button
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   if (!Session.isActive()) {
-    showStatus("You are already signed out.", "info");
+    showStatus(tr("You are already signed out.", "Vous etes deja deconnecte."), "info");
     return;
   }
 
   const btn = document.getElementById("logoutBtn");
-  setButtonLoading(btn, true, "Sign out");
-  showStatus("Signing out...", "info");
+  setButtonLoading(btn, true, tr("Sign out", "Se deconnecter"));
+  showStatus(tr("Signing out...", "Deconnexion..."), "info");
   const result = await logoutUser();
-  setButtonLoading(btn, false, "Sign out");
+  setButtonLoading(btn, false, tr("Sign out", "Se deconnecter"));
 
   if (result.ok) {
     updateAccountDisplay();
   } else {
-    showStatus(result.data.detail || "Sign out failed.", "error");
+    showStatus(result.data.detail || tr("Sign out failed.", "Echec de deconnexion."), "error");
   }
 });
 
 // Logout all button
 document.getElementById("logoutAllBtn").addEventListener("click", async () => {
   if (!Session.isActive()) {
-    showStatus("You are already signed out.", "info");
+    showStatus(tr("You are already signed out.", "Vous etes deja deconnecte."), "info");
     return;
   }
 
@@ -157,27 +157,27 @@ document.getElementById("logoutAllBtn").addEventListener("click", async () => {
   const btn = document.getElementById("logoutAllBtn");
   if (btn.dataset.confirming === "true") {
     btn.dataset.confirming = "";
-    btn.textContent = "Sign out all devices";
+    btn.textContent = tr("Sign out all devices", "Deconnecter tous les appareils");
     btn.classList.remove("danger-confirm");
     btn.classList.add("danger");
 
-    setButtonLoading(btn, true, "Sign out all devices");
-    showStatus("Signing out from all devices...", "info");
+    setButtonLoading(btn, true, tr("Sign out all devices", "Deconnecter tous les appareils"));
+    showStatus(tr("Signing out from all devices...", "Deconnexion de tous les appareils..."), "info");
     const result = await logoutAllSessions();
-    setButtonLoading(btn, false, "Sign out all devices");
+    setButtonLoading(btn, false, tr("Sign out all devices", "Deconnecter tous les appareils"));
 
     if (result.ok) {
       updateAccountDisplay();
-      showStatus("Signed out from all devices.", "success");
+      showStatus(tr("Signed out from all devices.", "Deconnecte de tous les appareils."), "success");
     } else {
-      showStatus(result.data.detail || "Sign out failed.", "error");
+      showStatus(result.data.detail || tr("Sign out failed.", "Echec de deconnexion."), "error");
     }
     return;
   }
 
   // First click — show confirmation state
   btn.dataset.confirming = "true";
-  btn.textContent = "Click again to confirm";
+  btn.textContent = tr("Click again to confirm", "Cliquez encore pour confirmer");
   btn.classList.remove("danger");
   btn.classList.add("danger-confirm");
 
@@ -185,7 +185,7 @@ document.getElementById("logoutAllBtn").addEventListener("click", async () => {
   setTimeout(() => {
     if (btn.dataset.confirming === "true") {
       btn.dataset.confirming = "";
-      btn.textContent = "Sign out all devices";
+      btn.textContent = tr("Sign out all devices", "Deconnecter tous les appareils");
       btn.classList.remove("danger-confirm");
       btn.classList.add("danger");
     }
@@ -194,15 +194,15 @@ document.getElementById("logoutAllBtn").addEventListener("click", async () => {
 
 document.getElementById("copyAccountIdBtn")?.addEventListener("click", async () => {
   if (!Session.isActive()) {
-    showStatus("Sign in before copying your account ID.", "error");
+    showStatus(tr("Sign in before copying your account ID.", "Connectez-vous avant de copier votre identifiant."), "error");
     return;
   }
 
   try {
     await navigator.clipboard.writeText(Session.userId);
-    showStatus("Account ID copied.", "success");
+    showStatus(tr("Account ID copied.", "Identifiant copie."), "success");
   } catch {
-    showStatus("Could not copy automatically. Select the account ID manually.", "error");
+    showStatus(tr("Could not copy automatically. Select the account ID manually.", "Copie automatique impossible. Selectionnez l'identifiant manuellement."), "error");
   }
 });
 

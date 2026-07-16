@@ -25,6 +25,15 @@
         <a href="saved.html">Saved Plans</a>
         <a href="account.html">Account</a>
       </div>
+      <div class="nav-tools">
+        <label class="nav-language-switcher" aria-label="Language">
+          <span>Language</span>
+          <select id="languageSelect">
+            <option value="en" selected>English</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
+      </div>
     </div>
   </nav>
 
@@ -106,50 +115,60 @@
           </label>
           <label aria-label="Must-have groceries">
             Must-have groceries
-            <input id="mustHaveItems" type="text" placeholder="Chicken Breast, Brown Rice" />
+            <input id="mustHaveItems" type="text" placeholder="Chicken breast, 900 g; apples; oats" />
           </label>
         </div>
-        <p class="field-help">Separate must-haves with commas. We include exact catalog matches when your budget allows.</p>
-
-        <details class="more-options" id="prefsBody">
-          <summary id="prefsToggle" aria-controls="optionalFields">More options</summary>
-          <div id="optionalFields" class="optional-fields">
-            <label aria-label="Maximum items">
-              Maximum items
-              <input id="maxItems" type="number" min="1" step="1" value="8" />
-            </label>
-            <label aria-label="Street address">
-              Street address
-              <input id="address" type="text" placeholder="123 Main St, Montreal" autocomplete="street-address" />
-            </label>
-            <label aria-label="Required food categories">
-              Must-have categories
-              <input id="requiredCategories" type="text" value="produce,protein" placeholder="produce, protein, grains" />
-            </label>
-
-            <label aria-label="Excluded food categories">
-              Avoid categories
-              <input id="excludedCategories" type="text" value="dairy" placeholder="dairy, frozen" />
-            </label>
-
-            <label aria-label="Preferred foods">
-              Foods you like
-              <input id="likes" type="text" placeholder="rice, chicken, berries" />
-            </label>
-
-            <label aria-label="Foods to avoid">
-              Foods to avoid
-              <input id="dislikes" type="text" placeholder="peanuts, lactose" />
-            </label>
-
-            <label aria-label="Health goals">
-              Health goals
-              <input id="healthGoals" type="text" placeholder="muscle gain, heart health, low sodium" />
-            </label>
-            <input id="strategy" type="hidden" value="knapsack" />
-            <input id="location" type="hidden" value="montreal" />
-          </div>
-        </details>
+        <p class="field-help">Separate must-haves with commas. Use the exact item you want to buy, for example: chicken breast, oats, apples.</p>
+        <div class="step-one-grid" id="optionalFields">
+          <label aria-label="Maximum items">
+            Maximum items
+            <input id="maxItems" type="number" min="1" step="1" value="8" />
+          </label>
+          <label aria-label="Street address">
+            Street address
+            <input id="address" type="text" placeholder="123 Main St, Montreal" autocomplete="street-address" />
+          </label>
+          <label aria-label="Travel mode">
+            Travel mode
+            <select id="travelMode">
+              <option value="transit" selected>Transit / metro</option>
+              <option value="walk">Walk only</option>
+              <option value="drive">Drive</option>
+            </select>
+          </label>
+          <label aria-label="Search region">
+            Search region
+            <select id="countryHint">
+              <option value="">Auto</option>
+              <option value="Canada">Canada</option>
+              <option value="USA">United States</option>
+              <option value="Global">Global</option>
+            </select>
+          </label>
+          <label aria-label="Required food categories">
+            Must-have categories
+            <input id="requiredCategories" type="text" value="produce,protein" placeholder="produce, protein, grains" />
+          </label>
+          <label aria-label="Excluded food categories">
+            Avoid categories
+            <input id="excludedCategories" type="text" value="dairy" placeholder="dairy, frozen" />
+          </label>
+          <label aria-label="Preferred foods">
+            Foods you like
+            <input id="likes" type="text" placeholder="rice, chicken, berries" />
+          </label>
+          <label aria-label="Foods to avoid">
+            Foods to avoid
+            <input id="dislikes" type="text" placeholder="peanuts, lactose" />
+          </label>
+          <label aria-label="Health goals">
+            Health goals
+            <input id="healthGoals" type="text" placeholder="muscle gain, heart health, low sodium" />
+          </label>
+        </div>
+        <p class="field-help optional-help">Postal code is the main location signal. Street address is optional and is used when the postal code is missing or ambiguous.</p>
+        <input id="strategy" type="hidden" value="knapsack" />
+        <input id="location" type="hidden" value="montreal" />
       </section>
 
       <div class="form-footer">
@@ -174,6 +193,7 @@
         <div class="result-actions">
           <button type="button" id="printCurrentPlanBtn" class="secondary btn-sm">Print</button>
           <button type="button" id="exportCurrentPlanCsvBtn" class="secondary btn-sm">Export CSV</button>
+          <button type="button" id="copyShoppingListBtn" class="secondary btn-sm">Copy items</button>
           <button type="button" id="savePlanBtn" class="secondary btn-sm">Save plan</button>
           <button type="button" id="refreshPricingBtn" class="secondary btn-sm">Refresh prices</button>
         </div>
@@ -218,10 +238,6 @@
           <span>Meal prep</span>
           <strong>Build schedule</strong>
         </button>
-        <button type="button" id="copyShoppingListBtn" class="action-tile">
-          <span>Shopping list</span>
-          <strong>Copy items</strong>
-        </button>
         <button type="button" class="action-tile" data-chef-auto="What should I cook first so nothing spoils?">
           <span>Freshness</span>
           <strong>Use first</strong>
@@ -236,8 +252,9 @@
               <th>Item</th>
               <th>Category</th>
               <th>Qty</th>
-              <th>Cost</th>
-              <th>Best Store</th>
+              <th>Store price</th>
+              <th>Savings</th>
+              <th>Buy at</th>
             </tr>
           </thead>
           <tbody id="resultItemsBody"></tbody>
@@ -270,7 +287,7 @@
           <div id="storeMap"></div>
           <div class="map-legend" aria-label="Map legend"><span><i class="legend-dot nearby"></i> Nearby store</span><span><i class="legend-dot route"></i> Recommended stop</span></div>
           <p id="roadRouteStatus" class="map-note hidden">Loading road route...</p>
-          <p id="storeMapEmpty" class="muted hidden">Enter a postal code to see stores on the map.</p>
+          <p id="storeMapEmpty" class="muted hidden">Enter a postal code or street address to see stores on the map.</p>
         </div>
 
         <div id="storeCards" class="stack-list"></div>
@@ -279,6 +296,7 @@
       <div id="routeInfo" class="hidden mt-section">
         <h3>Suggested route</h3>
         <p class="muted"><strong>From:</strong> <span id="routeOriginLabel">-</span> &mdash; <strong>Total:</strong> <span id="routeTotalDistance"></span> km</p>
+        <p id="routeTradeoffText" class="muted"></p>
         <div id="routeStops"></div>
       </div>
 

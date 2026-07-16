@@ -1,0 +1,41 @@
+{
+  "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+  "retailers": [
+    {
+      "chain": "Metro",
+      "search_url_template": "https://www.metro.ca/en/online-grocery/search?filter={item_name}",
+      "currency": "CAD",
+      "confidence": 0.78
+    },
+    {
+      "chain": "IGA",
+      "search_url_template": "https://www.iga.net/en/search?query={item_name}",
+      "currency": "CAD",
+      "confidence": 0.77
+    },
+    {
+      "chain": "Maxi",
+      "search_url_template": "https://www.maxi.ca/search?search-bar={item_name}",
+      "currency": "CAD",
+      "confidence": 0.75
+    },
+    {
+      "chain": "Provigo",
+      "search_url_template": "https://www.provigo.ca/search?search-bar={item_name}",
+      "currency": "CAD",
+      "confidence": 0.75
+    },
+    {
+      "chain": "Super C",
+      "search_url_template": "https://www.superc.ca/en/aisles/search?filter={item_name}",
+      "currency": "CAD",
+      "confidence": 0.75
+    }
+  ],
+  "flyer": {
+    "enabled": true,
+    "search_url_template": "https://flipp.com/search/{item_name}?locale=en-ca&postal_code={postal_code}",
+    "currency": "CAD",
+    "confidence": 0.68
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "generated_at_utc": "2026-07-16T22:26:26.227615Z",
+  "source": "free-scraper",
+  "quote_count": 3,
+  "quotes": [
+    {
+      "item_name": "Broccoli",
+      "item_category": "produce",
+      "store_chain": "Metro",
+      "postal_code": "H2X1Y5",
+      "country": "CA",
+      "currency": "CAD",
+      "unit_price": 0.44,
+      "confidence": 0.78,
+      "source_url": "https://www.metro.ca/en/online-grocery/search?filter=Broccoli",
+      "fetched_at_utc": "2026-07-16T22:25:39.035308Z"
+    },
+    {
+      "item_name": "Eggs",
+      "item_category": "protein",
+      "store_chain": "Metro",
+      "postal_code": "H2X1Y5",
+      "country": "CA",
+      "currency": "CAD",
+      "unit_price": 0.32,
+      "confidence": 0.78,
+      "source_url": "https://www.metro.ca/en/online-grocery/search?filter=Eggs",
+      "fetched_at_utc": "2026-07-16T22:25:40.199558Z"
+    },
+    {
+      "item_name": "Apples",
+      "item_category": "produce",
+      "store_chain": "Metro",
+      "postal_code": "H4B2M9",
+      "country": "CA",
+      "currency": "CAD",
+      "unit_price": 0.1,
+      "confidence": 0.78,
+      "source_url": "https://www.metro.ca/en/online-grocery/search?filter=Apples",
+      "fetched_at_utc": "2026-07-16T22:25:41.620191Z"
+    }
+  ]
+}

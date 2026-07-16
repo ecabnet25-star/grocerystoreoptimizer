@@ -249,6 +249,23 @@ Shows suggested shopping route:
 - Total route distance
 - Visual styling with brand color highlights
 
+#### Current Deals Browser
+
+Shows the best verified savings from the current live pricing snapshot:
+
+- Top items sorted by savings spread across nearby stores
+- Store-specific branch addresses
+- Unit pricing for faster value comparison
+- A clear savings-vs-travel tradeoff explanation when multi-store routing is worthwhile
+
+#### Planning Guidance
+
+Improved form guidance now clarifies:
+
+- Postal code is the primary location signal
+- Street address is optional fallback input
+- Travel mode can be set to walking, transit, or driving to influence routing radius and savings thresholds
+
 ### JavaScript Modules
 
 Updated modules:
@@ -259,6 +276,7 @@ Updated modules:
   - Added postal code to optimization request
   - Added store comparison rendering
   - Added route visualization
+  - Added unit pricing, sale browsing, and route tradeoff summaries
 
 ## Configuration Files Added
 

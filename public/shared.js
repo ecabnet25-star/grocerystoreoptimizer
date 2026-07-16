@@ -18,6 +18,131 @@ const API_BASE = (function() {
   return window.location.origin;
 })();
 
+const LANGUAGE_STORAGE_KEY = "grocery_lang";
+
+function getCurrentLanguage() {
+  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  return stored === "fr" ? "fr" : "en";
+}
+
+function setCurrentLanguage(language) {
+  const normalized = language === "fr" ? "fr" : "en";
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+  document.documentElement.lang = normalized;
+  return normalized;
+}
+
+function tr(english, french) {
+  return getCurrentLanguage() === "fr" ? french : english;
+}
+
+window.getCurrentLanguage = getCurrentLanguage;
+window.setCurrentLanguage = setCurrentLanguage;
+window.tr = tr;
+
+function applyGlobalPageLanguage(language) {
+  const lang = setCurrentLanguage(language);
+  const select = document.getElementById("languageSelect");
+  if (select && select.value !== lang) {
+    select.value = lang;
+  }
+
+  const languageLabel = document.querySelector(".nav-language-switcher span");
+  if (languageLabel) {
+    languageLabel.textContent = lang === "fr" ? "Langue" : "Language";
+  }
+
+  const page = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
+  if (page === "index.html" || page === "") {
+    return;
+  }
+
+  const copyByPage = {
+    "about.html": [
+      ["title", "About | unibite.click", "A propos | unibite.click"],
+      [".nav-links a[href='about.html']", "About", "A propos"],
+      [".nav-links a[href='index.html']", "Plan", "Planifier"],
+      [".nav-links a[href='saved.html']", "Saved Plans", "Plans sauvegardes"],
+      [".nav-links a[href='account.html']", "Account", "Compte"],
+      [".about-hero-v2 .eyebrow", "Built in Montreal", "Construit a Montreal"],
+      [".about-hero-v2 h1", "Make every grocery dollar work harder.", "Faites travailler chaque dollar d'epicerie."],
+      [".about-hero-v2 .subtitle", "unibite.click turns your budget, food needs, nearby prices, and travel time into one clear shopping plan.", "unibite.click transforme votre budget, vos besoins, les prix proches et le temps de trajet en un plan clair."],
+      [".about-hero-v2 .button-link", "Start a plan", "Commencer un plan"],
+      [".purpose-band div:nth-child(1) h2", "Plan", "Planifier"],
+      [".purpose-band div:nth-child(1) p", "Set a budget, location, and the foods you cannot leave without.", "Definissez un budget, une zone et les aliments indispensables."],
+      [".purpose-band div:nth-child(2) h2", "Compare", "Comparer"],
+      [".purpose-band div:nth-child(2) p", "See nearby stores, estimated totals, and the strongest per-item deals.", "Comparez les magasins proches, les totaux estimes et les meilleurs rabais."],
+      [".purpose-band div:nth-child(3) h2", "Go", "Y aller"],
+      [".purpose-band div:nth-child(3) p", "Follow a practical road route only when another stop is worth the trip.", "Suivez un trajet pratique seulement si l'arret supplementaire vaut le coup."],
+      [".mission-band .eyebrow", "Our purpose", "Notre mission"],
+      [".mission-band h2", "Clearer choices before checkout.", "Des choix plus clairs avant de payer."],
+      [".mission-band p:last-child", "Food costs are hard enough without juggling flyers, maps, nutrition goals, and five open tabs. We built unibite.click to do that comparison work quickly and explain the result plainly. Price forecasts and store totals are estimates, so the app shows confidence and favors practical guidance over false certainty.", "Le cout alimentaire est deja difficile sans jongler entre circulaires, cartes, objectifs nutritionnels et onglets. Nous avons cree unibite.click pour comparer rapidement et expliquer clairement. Les previsions et totaux restent des estimations; l'app affiche la confiance et privilegie des conseils pratiques."],
+    ],
+    "account.html": [
+      ["title", "Your Account | unibite.click", "Votre compte | unibite.click"],
+      [".nav-links a[href='about.html']", "About", "A propos"],
+      [".nav-links a[href='index.html']", "Plan", "Planifier"],
+      [".nav-links a[href='saved.html']", "Saved Plans", "Plans sauvegardes"],
+      [".nav-links a[href='account.html']", "Account", "Compte"],
+      [".account-hero .eyebrow", "Plan across sessions", "Planifiez sur plusieurs sessions"],
+      [".account-hero h1", "Your account", "Votre compte"],
+      [".account-hero .subtitle", "Sign in to save plans, reuse shopping targets, and keep your grocery workflow moving.", "Connectez-vous pour sauvegarder vos plans et reutiliser vos objectifs de courses."],
+      ["#accountInfo h2", "Current session", "Session actuelle"],
+      ["#accountInfo .muted", "Your session is stored only for this browser tab. Closing the tab signs you out locally.", "Votre session est conservee seulement dans cet onglet. Fermer l'onglet vous deconnecte."],
+      ["#createAccountForm .eyebrow", "New here", "Nouveau ici"],
+      ["#createAccountForm h2", "Create new account", "Creer un compte"],
+      ["#loginForm .eyebrow", "Welcome back", "Bon retour"],
+      ["#loginForm h2", "Sign in", "Se connecter"],
+      ["#sessionActions h2", "Session management", "Gestion de session"],
+    ],
+    "saved.html": [
+      ["title", "Saved Plans | unibite.click", "Plans sauvegardes | unibite.click"],
+      [".nav-links a[href='about.html']", "About", "A propos"],
+      [".nav-links a[href='index.html']", "Plan", "Planifier"],
+      [".nav-links a[href='saved.html']", "Saved Plans", "Plans sauvegardes"],
+      [".nav-links a[href='account.html']", "Account", "Compte"],
+      [".saved-hero .eyebrow", "Your grocery vault", "Votre coffre d'epicerie"],
+      [".saved-hero h1", "Your saved plans", "Vos plans sauvegardes"],
+      [".saved-hero .subtitle", "Browse, reuse, export, or tune grocery plans you already like.", "Parcourez, reutilisez, exportez ou ajustez vos plans preferes."],
+      ["#plansList .section-heading .eyebrow", "Library", "Bibliotheque"],
+      ["#plansList .section-heading h2", "Saved grocery plans", "Plans d'epicerie sauvegardes"],
+      ["#planDetail .eyebrow", "Plan detail", "Detail du plan"],
+      ["#planDetail h2", "Review and reuse", "Revoir et reutiliser"],
+    ],
+  };
+
+  const rows = copyByPage[page] || [];
+  rows.forEach(([selector, en, fr]) => {
+    if (selector === "title") {
+      document.title = lang === "fr" ? fr : en;
+      return;
+    }
+    const node = document.querySelector(selector);
+    if (!node) return;
+    node.textContent = lang === "fr" ? fr : en;
+  });
+}
+
+function initGlobalLanguage() {
+  const select = document.getElementById("languageSelect");
+  const language = getCurrentLanguage();
+  applyGlobalPageLanguage(language);
+  if (!select) {
+    return;
+  }
+  select.value = language;
+  select.addEventListener("change", (event) => {
+    const chosen = event.target.value === "fr" ? "fr" : "en";
+    applyGlobalPageLanguage(chosen);
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initGlobalLanguage);
+} else {
+  initGlobalLanguage();
+}
+
 // HTML escaping — MUST be used for ALL user data rendered into HTML
 function escapeHtml(value) {
   return String(value || "")
@@ -311,15 +436,18 @@ function buildPlanCsvRows(plan) {
   const location = result.location || {};
   const currency = location.currency || result.insights?.currency || "CAD";
   const items = Array.isArray(result.items) ? result.items : [];
-  const rows = [["Item", "Category", "Quantity", "Cost", "Currency", "Recommended Store"]];
+  const rows = [["Item", "Category", "Quantity", "Purchase Price", "Unit Price", "Savings", "Currency", "Recommended Store", "Store Address"]];
   items.forEach((item) => {
     rows.push([
       item.name || "",
       item.category || "",
       String(item.quantity ?? ""),
-      String(item.total_cost ?? ""),
+      String(item.purchase_price ?? item.total_cost ?? ""),
+      String(item.recommended_store_unit_price ?? ""),
+      String(item.store_savings ?? ""),
       currency,
       item.recommended_store || "",
+      item.recommended_store_address || "",
     ]);
   });
   return rows;
@@ -422,6 +550,8 @@ async function loadLivePricing(payload) {
   params.set("budget", String(payload.budget ?? 50));
   params.set("max_items", String(payload.max_items ?? 8));
   params.set("strategy", payload.strategy || "knapsack");
+  params.set("transportation_mode", payload.transportation_mode || "transit");
+  params.set("country_hint", payload.country_hint || "");
 
   const result = await apiRequest(`/pricing/live?${params.toString()}`);
   if (result.ok) {

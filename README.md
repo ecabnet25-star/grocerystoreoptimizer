@@ -93,6 +93,18 @@ powershell -ExecutionPolicy Bypass -File launch.ps1
 
 The project supports real third-party pricing sources through configurable providers.
 
+### Pricing pipeline
+
+UniBite/UniBite.click gets current prices from enabled live-pricing providers first, then falls back to store-tier estimates when a provider cannot return a quote.
+
+Current provider types include:
+
+- public benchmark feeds for generic live validation
+- retailer/provider adapters configured in `config/live_pricing/providers.json`
+- opt-in scraping adapters for feeds that are only exposed through flyer pages or retailer web endpoints
+
+The live snapshot endpoint used by the web app is `GET /pricing/live`. The app also exposes `GET /pricing/providers` so you can verify which providers are enabled and returning quotes. For route planning and map discovery, the app can combine those live prices with public location data and local store catalogs as a fallback.
+
 1. Edit `config/live_pricing/providers.json`.
 2. Enable at least one provider: set `"enabled": true`.
 3. If the provider requires API keys, set env vars before launch.
@@ -124,6 +136,93 @@ Notes:
 - If no provider returns quotes, the system automatically falls back to store-tier estimates.
 - HTML scraping is opt-in and requires `LIVE_PRICING_ALLOW_SCRAPING=true`.
 - Respect each retailer's terms of service and robots policy when enabling scraping.
+
+## Free-Only Live Pricing (No Paid APIs)
+
+The project now supports a free-only pipeline by default:
+
+- Free retailer page scraping for Metro, IGA, Maxi, Provigo, and Super C
+- Free Flipp public search-page scraping for flyer deal hints
+- Free Open Food Facts quote coverage (`openfoodfacts_us_ca`)
+- Free benchmark fallback (`public_market_benchmark`)
+
+Scraper source config:
+
+- `config/live_pricing/free_scrape_sources.json`
+
+Snapshot output used by live providers:
+
+- `config/live_pricing/snapshots/latest.json`
+
+Run scraper locally:
+
+```powershell
+python scripts/scrape_free_prices.py --max-items 30
+```
+
+### GitHub Actions Auto-Refresh (Free Scheduler)
+
+Workflow:
+
+- `.github/workflows/free-live-pricing.yml`
+
+It runs every 6 hours and commits snapshot updates back to the repo.
+
+One-time step you need to do in GitHub:
+
+1. Repository Settings -> Actions -> General
+2. Set Workflow permissions to **Read and write permissions**
+
+Without this setting, the workflow cannot push updated snapshot commits.
+
+### Retailer-Specific Scraper Jobs (Metro, IGA, Maxi, Provigo)
+
+Dedicated provider entries and scheduled jobs are now preconfigured:
+
+- Providers: `metro_qc_html_scraper`, `iga_qc_html_scraper`, `maxi_qc_html_scraper`, `provigo_qc_html_scraper`
+- Jobs file: `config/live_pricing/jobs.json`
+- Job runner: `scripts/run_live_pricing_jobs.py`
+
+Run all due jobs once:
+
+```powershell
+$env:LIVE_PRICING_ALLOW_SCRAPING = "true"
+python scripts/run_live_pricing_jobs.py --once
+```
+
+Force-run all enabled jobs once (ignores schedule intervals):
+
+```powershell
+python scripts/run_live_pricing_jobs.py --once --force --reload-providers
+```
+
+Register recurring Windows Task Scheduler job:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/register_live_pricing_jobs.ps1 -IntervalMinutes 30
+```
+
+Remove scheduled task:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/register_live_pricing_jobs.ps1 -Remove
+```
+
+### No-Paid-API Mode
+
+For strict free-only operation, keep paid/managed providers disabled in `config/live_pricing/providers.json`.
+The default configuration already keeps those entries disabled.
+
+### Historical Median Sanity Filtering
+
+Transient spikes are filtered using historical medians per item + store chain + postal code.
+
+Config knobs in `config/live_pricing/providers.json`:
+
+- `history_min_samples`
+- `history_min_confidence`
+- `history_max_rows`
+- `history_max_deviation_ratio`
 
 ## Free Local AI Assistant (Ollama)
 

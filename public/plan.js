@@ -26,6 +26,144 @@ const PRESET_BREAKDOWNS = {
   },
 };
 
+let currentLanguage = "en";
+
+const UI_COPY = {
+  en: {
+    moreOptions: "More options",
+    generatePlan: "Generate plan",
+    print: "Print",
+    exportCsv: "Export CSV",
+    savePlan: "Save plan",
+    refreshPrices: "Refresh prices",
+    copyItems: "Copy items",
+    mustHaveHint: "Enter the exact item name when possible, then add commas for multiple items.",
+    routeTradeoffPrefix: "Travel tradeoff:",
+    routeTradeoffDefault: "We only split stores when the savings beat the extra trip cost.",
+    retailerCoverage: "Coverage priorities show which chains we price first and which sources back them.",
+    mapEmpty: "Enter a postal code or street address to see stores on the map.",
+  },
+  fr: {
+    moreOptions: "Plus d'options",
+    generatePlan: "Générer le plan",
+    print: "Imprimer",
+    exportCsv: "Exporter CSV",
+    savePlan: "Enregistrer le plan",
+    refreshPrices: "Actualiser les prix",
+    copyItems: "Copier les articles",
+    mustHaveHint: "Saisissez si possible le nom exact de l'article, puis utilisez des virgules pour plusieurs articles.",
+    routeTradeoffPrefix: "Compromis trajet :",
+    routeTradeoffDefault: "Nous séparons les magasins seulement si l'économie dépasse le coût du trajet supplémentaire.",
+    retailerCoverage: "Les priorités de couverture montrent quelles enseignes sont évaluées en premier et quelles sources les soutiennent.",
+    mapEmpty: "Entrez un code postal ou une adresse pour voir les magasins sur la carte.",
+  },
+};
+
+function getUiCopy() {
+  return UI_COPY[currentLanguage] || UI_COPY.en;
+}
+
+function applyLanguage(language) {
+  currentLanguage = language === "fr" ? "fr" : "en";
+  document.documentElement.lang = currentLanguage;
+  const copy = getUiCopy();
+  document.title = currentLanguage === "fr" ? "unibite.click | Planification d'épicerie" : "unibite.click | Smart grocery planning";
+  const prefsToggle = document.getElementById("prefsToggle");
+  const generateBtn = document.getElementById("generateBtn");
+  const printBtn = document.getElementById("printCurrentPlanBtn");
+  const exportBtn = document.getElementById("exportCurrentPlanCsvBtn");
+  const saveBtn = document.getElementById("savePlanBtn");
+  const refreshBtn = document.getElementById("refreshPricingBtn");
+  const copyBtn = document.getElementById("copyShoppingListBtn");
+  const mustHave = document.getElementById("mustHaveItems");
+  const mapEmpty = document.getElementById("storeMapEmpty");
+  const languageLabel = document.querySelector(".nav-language-switcher span");
+  const heroEyebrow = document.querySelector(".hero-copy .eyebrow");
+  const heroTitle = document.querySelector(".hero-copy h1");
+  const heroSubtitle = document.querySelector(".hero-copy .subtitle");
+  const stepEyebrow = document.querySelector(".planner-toolbar .eyebrow");
+  const stepTitle = document.querySelector(".planner-toolbar h2");
+  const resultTitle = document.querySelector("#result h2");
+  const insightsTitle = document.querySelector("#planInsights h3");
+  const forecastEyebrow = document.querySelector("#priceForecast .eyebrow");
+  const forecastTitle = document.getElementById("priceForecastTitle");
+  const nearbyTitle = document.querySelector("#storeComparison h3");
+  const retailerTitle = document.querySelector("#retailerIntelPanel h4");
+  const routeTitle = document.querySelector("#routeInfo h3");
+  const routeInfoLine = document.querySelector("#routeInfo .muted");
+  const saveLabel = document.querySelector("#saveModal label");
+  const saveConfirm = document.getElementById("saveModalConfirm");
+  const saveCancel = document.getElementById("saveModalCancel");
+  const chefTitle = document.querySelector("#chefWidget .chef-panel-header h3");
+  const chefClose = document.getElementById("chefCloseBtn");
+  const chefLauncher = document.querySelector(".chef-launch-text");
+  const chefInput = document.getElementById("assistantInput");
+  const tableHeaders = document.querySelectorAll("#result thead th");
+  const actionTiles = document.querySelectorAll("#planActionBoard .action-tile");
+  const promptButtons = document.querySelectorAll("#chefWidget .chef-prompt");
+  const routeBadge = document.getElementById("mapRouteBadge");
+  const openDirections = document.getElementById("openDirectionsLink");
+  const routeTradeoff = document.getElementById("routeTradeoffText");
+
+  if (languageLabel) languageLabel.textContent = currentLanguage === "fr" ? "Langue" : "Language";
+  if (heroEyebrow) heroEyebrow.textContent = currentLanguage === "fr" ? "Budget malin · magasinage rapide" : "Budget smart · shop faster";
+  if (heroTitle) heroTitle.textContent = currentLanguage === "fr" ? "Dépensez moins. Mangez bien. Sachez où magasiner." : "Spend less. Eat well. Know where to shop.";
+  if (heroSubtitle) heroSubtitle.textContent = currentLanguage === "fr" ? "Équilibrez le coût, la nutrition, la fraîcheur, les estimations des magasins proches et le trajet en une seule étape." : "Balance cost, nutrition, freshness, nearby store estimates, and route planning in one pass.";
+  if (stepEyebrow) stepEyebrow.textContent = currentLanguage === "fr" ? "Étape 1" : "Step 1";
+  if (stepTitle) stepTitle.textContent = currentLanguage === "fr" ? "Définissez votre panier" : "Set your shopping target";
+  if (prefsToggle) prefsToggle.textContent = copy.moreOptions;
+  if (generateBtn) generateBtn.textContent = copy.generatePlan;
+  if (printBtn) printBtn.textContent = copy.print;
+  if (exportBtn) exportBtn.textContent = copy.exportCsv;
+  if (saveBtn) saveBtn.textContent = copy.savePlan;
+  if (refreshBtn) refreshBtn.textContent = copy.refreshPrices;
+  if (copyBtn) copyBtn.textContent = copy.copyItems;
+  if (mustHave) mustHave.placeholder = currentLanguage === "fr" ? "Poulet, pommes, avoine" : "Chicken breast, apples, oats";
+  if (mapEmpty) mapEmpty.textContent = copy.mapEmpty;
+  if (resultTitle) resultTitle.textContent = currentLanguage === "fr" ? "Votre plan optimisé" : "Your optimized plan";
+  if (insightsTitle) insightsTitle.textContent = currentLanguage === "fr" ? "Aperçu du plan" : "Plan insights";
+  if (forecastEyebrow) forecastEyebrow.textContent = currentLanguage === "fr" ? "Prévision des prix sur 7 jours" : "7-day price outlook";
+  if (forecastTitle) forecastTitle.textContent = currentLanguage === "fr" ? "Meilleur moment pour magasiner" : "Best time to shop";
+  if (nearbyTitle) nearbyTitle.textContent = currentLanguage === "fr" ? "Magasins proches" : "Nearby stores";
+  if (retailerTitle) retailerTitle.textContent = currentLanguage === "fr" ? "Priorités de couverture" : "Coverage priorities";
+  if (routeTitle) routeTitle.textContent = currentLanguage === "fr" ? "Itinéraire suggéré" : "Suggested route";
+  if (routeInfoLine) routeInfoLine.innerHTML = currentLanguage === "fr" ? "<strong>De :</strong> <span id=\"routeOriginLabel\">-</span> &mdash; <strong>Total :</strong> <span id=\"routeTotalDistance\"></span> km" : "<strong>From:</strong> <span id=\"routeOriginLabel\">-</span> &mdash; <strong>Total:</strong> <span id=\"routeTotalDistance\"></span> km";
+  if (saveLabel) saveLabel.textContent = currentLanguage === "fr" ? "Nommez votre plan" : "Name your plan";
+  if (saveConfirm) saveConfirm.textContent = currentLanguage === "fr" ? "Enregistrer" : "Save";
+  if (saveCancel) saveCancel.textContent = currentLanguage === "fr" ? "Annuler" : "Cancel";
+  if (chefTitle) chefTitle.textContent = currentLanguage === "fr" ? "Le Chef" : "The Chef";
+  if (chefClose) chefClose.textContent = currentLanguage === "fr" ? "Fermer" : "Close";
+  if (chefLauncher) chefLauncher.textContent = currentLanguage === "fr" ? "Demander au Chef" : "Ask The Chef";
+  if (chefInput) chefInput.placeholder = currentLanguage === "fr" ? "Demandez des idées de repas au Chef..." : "Ask The Chef for meal ideas...";
+  if (tableHeaders.length === 6) {
+    const labels = currentLanguage === "fr"
+      ? ["Article", "Catégorie", "Qté", "Prix du magasin", "Économies", "Acheter à"]
+      : ["Item", "Category", "Qty", "Store price", "Savings", "Buy at"];
+    tableHeaders.forEach((header, index) => {
+      header.textContent = labels[index] || header.textContent;
+    });
+  }
+  actionTiles.forEach((tile, index) => {
+    const titleEl = tile.querySelector("strong");
+    const subtitleEl = tile.querySelector("span");
+    const copyRows = currentLanguage === "fr"
+      ? [["Dîners rapides", "Demander au Chef"], ["Préparation", "Créer l'horaire"], ["Liste d'épicerie", "Copier les articles"], ["Fraîcheur", "À utiliser en premier"], ["Mode offres", "Voir les offres"]]
+      : [["Fast dinners", "Ask The Chef"], ["Meal prep", "Build schedule"], ["Shopping list", "Copy items"], ["Freshness", "Use first"], ["Sale mode", "Browse deals"]];
+    const row = copyRows[index];
+    if (row && subtitleEl) subtitleEl.textContent = row[0];
+    if (row && titleEl) titleEl.textContent = row[1];
+  });
+  promptButtons.forEach((button, index) => {
+    const labels = currentLanguage === "fr"
+      ? ["Dîners rapides", "Préparation", "Utiliser les ingrédients frais d'abord"]
+      : ["Fast dinners", "Meal prep", "Use fresh items first"];
+    if (labels[index]) button.textContent = labels[index];
+  });
+  if (routeBadge && routeBadge.textContent === "Best value") routeBadge.textContent = currentLanguage === "fr" ? "Meilleure valeur" : "Best value";
+  if (openDirections && openDirections.textContent === "Open directions") openDirections.textContent = currentLanguage === "fr" ? "Ouvrir l'itinéraire" : "Open directions";
+  if (routeTradeoff && !routeTradeoff.textContent) routeTradeoff.textContent = currentLanguage === "fr" ? "Le compromis trajet s’affichera ici après génération du plan." : "Travel tradeoff will appear here after a plan is generated.";
+}
+
 function splitList(value) {
   return String(value || "")
     .split(",")
@@ -520,12 +658,15 @@ function renderSavingsCelebration(insights, currency) {
   const routeSavings = Number(insights?.net_route_savings || 0);
   const savings = routeSavings > 0 ? routeSavings : Number(insights?.estimated_store_savings || 0);
   const bestStore = insights?.best_store?.name || "the lowest estimated store";
-  if (savings <= 0) {
+  const liveCoverage = Number(insights?.live_quote_coverage_percent || 0);
+  const pricingMode = String(insights?.pricing_mode || "");
+  const hasVerifiedPricing = pricingMode.includes("live") || liveCoverage >= 50 || Number(insights?.live_quotes || 0) > 0;
+  if (savings <= 0 || !hasVerifiedPricing) {
     panel.classList.add("hidden");
     return;
   }
 
-  title.textContent = `Congratulations - potential savings found`;
+  title.textContent = routeSavings > 0 ? "Verified route savings found" : "Verified savings found";
   text.textContent = routeSavings > 0
     ? `This route may net about ${formatCurrency(routeSavings, currency)} after estimated extra travel by splitting items across the best deal stops.`
     : `This plan may save you up to ${formatCurrency(savings, currency)} versus the highest nearby store estimate. Start with ${bestStore} to keep the most money in your pocket.`;
@@ -559,6 +700,12 @@ function applyReusePlanPrefill() {
     }
     if (req.address) {
       document.getElementById("address").value = String(req.address);
+    }
+    if (req.transportation_mode) {
+      document.getElementById("travelMode").value = String(req.transportation_mode);
+    }
+    if (req.country_hint != null) {
+      document.getElementById("countryHint").value = String(req.country_hint);
     }
     if (Array.isArray(req.required_categories)) {
       document.getElementById("requiredCategories").value = req.required_categories.join(",");
@@ -612,7 +759,7 @@ function renderStoreCards(stores, itemQuotes, currency, route) {
 
   const quotesByStore = new Map();
   (Array.isArray(itemQuotes) ? itemQuotes : []).forEach((quote) => {
-    const key = `${quote.store_name || ""}`;
+    const key = `${quote.store_id || quote.store_name || ""}`;
     if (!quotesByStore.has(key)) {
       quotesByStore.set(key, []);
     }
@@ -620,12 +767,16 @@ function renderStoreCards(stores, itemQuotes, currency, route) {
   });
 
   const sortedStores = [...(Array.isArray(stores) ? stores : [])].sort((a, b) => {
+    const distanceDelta = Number(a.distance_km || 0) - Number(b.distance_km || 0);
+    if (Math.abs(distanceDelta) > 0.001) {
+      return distanceDelta;
+    }
     return Number(a.estimated_total || 0) - Number(b.estimated_total || 0);
   });
 
   const displayed = sortedStores;
   const routeIds = new Set((route?.stops || []).map((stop) => String(stop.store_id || "")));
-  meta.textContent = `${displayed.length} nearby stores found. Red cards are recommended shopping stops.`;
+  meta.textContent = `${displayed.length} nearby stores found. Ordered by distance first, then estimated price. Open each card to compare branch-specific prices and pickup details.`;
 
   if (!displayed.length) {
     container.innerHTML = '<p class="muted">No nearby store pricing available yet.</p>';
@@ -647,6 +798,7 @@ function renderStoreCards(stores, itemQuotes, currency, route) {
       });
       const checklistItems = [...checklistByItem.values()].slice(0, 40);
       const selectedCount = checklistItems.filter((row) => storeChecklistState.get(`${storeKey}::${toKey(row.item_name)}`)).length;
+      const storeAddress = [store.address, store.distance_km != null ? `${store.distance_km} km away` : ""].filter(Boolean).join(" · ");
 
       const checklistPanel = checklistItems.length
         ? `
@@ -671,7 +823,7 @@ function renderStoreCards(stores, itemQuotes, currency, route) {
                         data-item-key="${itemKey}"
                         ${checked}
                       />
-                      <span>${escapeHtml(row.item_name)} x${row.quantity} &mdash; ${formatCurrency(row.line_total, row.currency || currency)}</span>
+                      <span>${escapeHtml(row.item_name)} x${row.quantity} &mdash; ${formatCurrency(row.line_total, row.currency || currency)}${Number(row.unit_price || 0) > 0 ? ` (${formatCurrency(row.unit_price, row.currency || currency)} / unit)` : ""}</span>
                     </label>
                   `;
                 })
@@ -689,6 +841,7 @@ function renderStoreCards(stores, itemQuotes, currency, route) {
             <div><strong>${escapeHtml(store.name)}</strong><small>${escapeHtml(store.chain)}</small></div>
             ${routeIds.has(String(store.store_id || "")) ? '<span class="route-badge">Route stop</span>' : ""}
           </div>
+          <p class="store-address-line">${escapeHtml(storeAddress)}</p>
           <div class="store-facts"><span>${store.distance_km} km</span><span>${formatCurrency(store.estimated_total, currency)}</span><span class="${tierBadgeClass}">${escapeHtml(store.price_tier)}</span></div>
           <p class="muted">Quality ${store.quality_rating}/5</p>
           <details class="item-checklist-details"><summary>View item prices</summary>${checklistPanel}</details>
@@ -716,7 +869,9 @@ function renderRetailerIntel(research) {
   const tierOne = tiers.find((tier) => String(tier.tier || "").includes("tier_1"));
   const tierTwo = tiers.find((tier) => String(tier.tier || "").includes("tier_2"));
   const seedCount = Number(research?.verified_seed_count || 0);
+  const copy = getUiCopy();
   summary.textContent = [
+    copy.retailerCoverage,
     tierOne?.label ? `${tierOne.label}: ${(tierOne.retailers || []).slice(0, 6).join(", ")}` : "",
     tierTwo?.label ? `${tierTwo.label}: ${(tierTwo.retailers || []).slice(0, 5).join(", ")}` : "",
     seedCount ? `${seedCount} verified specialty-store seed(s) added from research` : "",
@@ -731,7 +886,15 @@ function renderRetailerIntel(research) {
   panel.classList.remove("hidden");
 }
 
-function buildItemStorePlan(items, itemQuotes, routeAssignments = []) {
+function buildItemStorePlan(items, itemQuotes, routeAssignments = [], storeComparison = []) {
+  const storeById = new Map();
+  (Array.isArray(storeComparison) ? storeComparison : []).forEach((store) => {
+    const key = String(store.store_id || "");
+    if (key) {
+      storeById.set(key, store);
+    }
+  });
+
   const routeStoreByItem = new Map();
   (Array.isArray(routeAssignments) ? routeAssignments : []).forEach((assignment) => {
     const key = String(assignment.item_name || "").toLowerCase();
@@ -740,23 +903,50 @@ function buildItemStorePlan(items, itemQuotes, routeAssignments = []) {
     }
   });
 
-  const bestStoreByItem = new Map();
+  const quotesByItem = new Map();
   (Array.isArray(itemQuotes) ? itemQuotes : []).forEach((quote) => {
     const key = String(quote.item_name || "").toLowerCase();
-    const prev = bestStoreByItem.get(key);
-    if (!prev || Number(quote.line_total || 0) < Number(prev.line_total || 0)) {
-      bestStoreByItem.set(key, quote);
+    if (!quotesByItem.has(key)) {
+      quotesByItem.set(key, []);
     }
+    quotesByItem.get(key).push(quote);
   });
 
   return (Array.isArray(items) ? items : []).map((item) => {
     const key = String(item.name || "").toLowerCase();
     const routeBest = routeStoreByItem.get(key);
-    const best = routeBest || bestStoreByItem.get(key);
-    const storeName = best ? String(best.store_name || "") : "-";
+    const itemQuotesForStore = (quotesByItem.get(key) || []).sort((left, right) => Number(left.line_total || 0) - Number(right.line_total || 0));
+    const best = routeBest || itemQuotesForStore[0] || null;
+    const storeId = String(best?.store_id || item.recommended_store_id || "");
+    const storeInfo = storeById.get(storeId) || {};
+    const purchasePrice = Number(best?.line_total ?? item.store_line_total ?? item.total_cost ?? 0);
+    const savings = Number(best?.gross_savings ?? item.store_savings ?? 0);
+    const unitPrice = Number(best?.unit_price ?? item.recommended_store_unit_price ?? item.price ?? 0);
+    const storeName = String(best?.store_name || storeInfo.name || item.recommended_store || "-");
+    const storeAddress = String(storeInfo.address || item.recommended_store_address || "");
+    const priceOptions = itemQuotesForStore.slice(0, 3).map((quote) => {
+      const optionStore = storeById.get(String(quote.store_id || "")) || {};
+      return {
+        store_id: String(quote.store_id || ""),
+        store_name: String(quote.store_name || optionStore.name || "Store"),
+        store_address: String(optionStore.address || ""),
+        line_total: Number(quote.line_total || 0),
+        unit_price: Number(quote.unit_price || 0),
+        distance_km: optionStore.distance_km,
+      };
+    });
+
     return {
       ...item,
       recommended_store: storeName || "-",
+      recommended_store_id: storeId,
+      recommended_store_address: storeAddress,
+      recommended_store_distance_km: storeInfo.distance_km,
+      recommended_store_unit_price: unitPrice,
+      purchase_price: purchasePrice,
+      store_line_total: purchasePrice,
+      store_savings: savings,
+      price_options: priceOptions,
     };
   });
 }
@@ -845,11 +1035,14 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const summaryCards = document.getElementById("summaryCards");
   const resultItemsBody = document.getElementById("resultItemsBody");
   const resultText = document.getElementById("resultText");
+  const storeComparisonData = Array.isArray(stores.comparison) ? stores.comparison : [];
+  const savingsValue = Number(data.insights?.net_route_savings || data.insights?.estimated_store_savings || 0);
 
   const cards = [
     ["Total cost", formatCurrency(summary.total_cost, lastLocationCurrency)],
     ["Budget left", formatCurrency(summary.budget_remaining, lastLocationCurrency)],
     ["Items", String(summary.total_units || items.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0))],
+    ["Savings", formatCurrency(Math.max(0, savingsValue), lastLocationCurrency)],
   ];
 
   summaryCards.innerHTML = cards
@@ -864,10 +1057,10 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
     .join("");
 
   renderPlanInsights(data.insights || {}, lastLocationCurrency);
-  renderSavingsCelebration(data.insights || {}, lastLocationCurrency);
+  renderSavingsCelebration({ ...(data.insights || {}), pricing_mode: stores.pricing_mode, live_quote_coverage_percent: stores.live_quote_coverage_percent, live_quotes: stores.live_quotes }, lastLocationCurrency);
   renderPriceForecast(data.price_forecast || {}, lastLocationCurrency);
 
-  const plannedItems = buildItemStorePlan(items, stores.item_quotes || [], route?.item_assignments || []);
+  const plannedItems = buildItemStorePlan(items, stores.item_quotes || [], route?.item_assignments || [], storeComparisonData);
   resultItemsBody.innerHTML = plannedItems
     .map(
       (item) => `
@@ -875,8 +1068,21 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
         <td>${escapeHtml(item.name)}</td>
         <td>${escapeHtml(prettyCategory(item.category))}</td>
         <td>${item.quantity}</td>
-        <td>${formatCurrency(item.total_cost, lastLocationCurrency)}</td>
-        <td>${escapeHtml(item.recommended_store)}</td>
+        <td>${formatCurrency(item.purchase_price ?? item.total_cost, lastLocationCurrency)}</td>
+        <td>${Number(item.store_savings || 0) > 0 ? formatCurrency(item.store_savings, lastLocationCurrency) : "-"}</td>
+        <td>
+          <div class="item-store-cell">
+            <strong>${escapeHtml(item.recommended_store || "-")}</strong>
+            ${item.recommended_store_address ? `<small>${escapeHtml(item.recommended_store_address)}${item.recommended_store_distance_km != null ? ` · ${item.recommended_store_distance_km} km` : ""}</small>` : ""}
+            ${Number(item.recommended_store_unit_price || 0) > 0 ? `<small>${formatCurrency(item.recommended_store_unit_price, lastLocationCurrency)} / unit</small>` : ""}
+            ${Array.isArray(item.price_options) && item.price_options.length > 1 ? `
+              <span class="item-store-options-label">Other options</span>
+              <span class="item-store-options">
+                ${item.price_options.slice(0, 3).map((option) => `<span>${escapeHtml(option.store_name)} ${formatCurrency(option.line_total, lastLocationCurrency)}</span>`).join("")}
+              </span>
+            ` : ""}
+          </div>
+        </td>
       </tr>
     `
     )
@@ -886,7 +1092,6 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const storeComparison = document.getElementById("storeComparison");
   storeComparison.classList.remove("hidden");
 
-  const storeComparisonData = Array.isArray(stores.comparison) ? stores.comparison : [];
   renderStoreCards(storeComparisonData, stores.item_quotes || [], lastLocationCurrency, route);
   renderRetailerIntel(stores.retailer_research || {});
 
@@ -936,6 +1141,13 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
     routeTotalDistance.textContent = route.total_distance_km;
     if (routeOriginLabel) {
       routeOriginLabel.textContent = route.origin?.display_name || route.origin?.postal_code || "-";
+    }
+    const routeTradeoffText = document.getElementById("routeTradeoffText");
+    if (routeTradeoffText) {
+      const copy = getUiCopy();
+      const threshold = Number(route.savings_threshold || 0);
+      const travelCost = Number(route.travel_cost_per_km || 0);
+      routeTradeoffText.textContent = `${copy.routeTradeoffPrefix} ${route.selection_reason || copy.routeTradeoffDefault}${threshold > 0 ? ` (${formatCurrency(threshold, lastLocationCurrency)} threshold, ${formatCurrency(travelCost, lastLocationCurrency)} / km)` : ""}`;
     }
     document.getElementById("routeInfo").classList.remove("hidden");
   } else {
@@ -996,13 +1208,15 @@ function buildShoppingListText() {
 
   const items = Array.isArray(lastOptimizationResult.items) ? lastOptimizationResult.items : [];
   const stores = lastOptimizationResult.stores || {};
-  const plannedItems = buildItemStorePlan(items, stores.item_quotes || [], lastOptimizationResult.route?.item_assignments || []);
+  const plannedItems = buildItemStorePlan(items, stores.item_quotes || [], lastOptimizationResult.route?.item_assignments || [], Array.isArray(stores.comparison) ? stores.comparison : []);
   return plannedItems
     .map((item) => {
       const qty = Number(item.quantity || 0);
-      const cost = formatCurrency(item.total_cost, lastLocationCurrency);
+      const cost = formatCurrency(item.purchase_price ?? item.total_cost, lastLocationCurrency);
       const store = item.recommended_store && item.recommended_store !== "-" ? ` at ${item.recommended_store}` : "";
-      return `- ${item.name} x${qty} (${prettyCategory(item.category)}, ${cost}${store})`;
+      const savings = Number(item.store_savings || 0) > 0 ? `, save ${formatCurrency(item.store_savings, lastLocationCurrency)}` : "";
+      const unitPrice = Number(item.recommended_store_unit_price || 0) > 0 ? `, ${formatCurrency(item.recommended_store_unit_price, lastLocationCurrency)} / unit` : "";
+      return `- ${item.name} x${qty} (${prettyCategory(item.category)}, ${cost}${store}${savings}${unitPrice})`;
     })
     .join("\n");
 }
@@ -1099,12 +1313,8 @@ async function sendAssistantPrompt(messageOverride = "") {
     return;
   }
 
-  const suggestions = Array.isArray(result.data.suggestions) ? result.data.suggestions : [];
   const responseText = String(result.data.response || "");
-  const suggestionText = suggestions.length
-    ? `\n${suggestions.slice(0, 3).map((s) => `• ${s.title}: ${s.uses}`).join("\n")}`
-    : "";
-  addAssistantMessage("assistant", `${responseText}${suggestionText}`.trim());
+  addAssistantMessage("assistant", responseText.trim());
 }
 
 // Loading state helpers
@@ -1212,6 +1422,8 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
     location: document.getElementById("location").value,
     postal_code: document.getElementById("postalCode").value.trim().replace(/\s+/g, ""),
     address: document.getElementById("address").value.trim(),
+    transportation_mode: document.getElementById("travelMode").value,
+    country_hint: document.getElementById("countryHint").value,
     required_categories: splitList(document.getElementById("requiredCategories").value),
     must_have_items: splitList(document.getElementById("mustHaveItems").value),
     excluded_categories: splitList(document.getElementById("excludedCategories").value),
@@ -1220,17 +1432,17 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
     health_goals: splitList(document.getElementById("healthGoals").value),
   };
 
-  lastOptimizationPayload = payload;
-
-  // Show loading state
-  setFormLoading(true);
-  showStatus("Generating your plan...", "info");
-
-  const result = await optimizePlan(payload);
+      const sortedStores = [...(Array.isArray(stores) ? stores : [])].sort((a, b) => {
+        const distanceDelta = Number(a.distance_km || 0) - Number(b.distance_km || 0);
+        if (Math.abs(distanceDelta) > 0.001) {
+          return distanceDelta;
+        }
+        return Number(a.estimated_total || 0) - Number(b.estimated_total || 0);
+      });
 
   // Hide loading state
   setFormLoading(false);
-
+      meta.textContent = `${displayed.length} nearby stores found. Ordered by distance first, then estimated price. Open each card to compare branch-specific prices and pickup details.`;
   if (result.ok) {
     lastOptimizationResult = result.data;
     renderOptimizationResult(result.data, "Plan ready. You can save it if you like it.");
@@ -1400,4 +1612,8 @@ document.getElementById("savePlanName").addEventListener("keydown", (event) => {
 // Initial status
 updateHeroBreakdown("balanced");
 updatePlanPreview();
-showStatus("Set your budget, add postal code or address, and click 'Generate plan'.", "info");
+applyLanguage(document.getElementById("languageSelect")?.value || "en");
+document.getElementById("languageSelect")?.addEventListener("change", (event) => {
+  applyLanguage(event.target.value);
+});
+showStatus("Set your budget, add postal code or address, choose a travel mode, and click 'Generate plan'.", "info");

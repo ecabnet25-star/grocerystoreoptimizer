@@ -26,6 +26,80 @@ from ..stores import (
 from .schemas import OptimizeRequest
 
 
+_TRAVEL_MODE_PROFILES: dict[str, dict[str, float | int]] = {
+    "walk": {
+        "search_radius_km": 2.5,
+        "route_max_stops": 1,
+        "travel_cost_per_km": 0.12,
+        "min_net_savings": 2.5,
+        "max_store_distance_km": 1.75,
+        "max_extra_distance_km": 1.25,
+    },
+    "transit": {
+        "search_radius_km": 12.0,
+        "route_max_stops": 3,
+        "travel_cost_per_km": 0.28,
+        "min_net_savings": 1.0,
+        "max_store_distance_km": 6.0,
+        "max_extra_distance_km": 4.5,
+    },
+    "drive": {
+        "search_radius_km": 75.0,
+        "route_max_stops": 4,
+        "travel_cost_per_km": 0.70,
+        "min_net_savings": 1.5,
+        "max_store_distance_km": 15.0,
+        "max_extra_distance_km": 10.0,
+    },
+}
+
+
+def _travel_profile(mode: str) -> dict[str, float | int]:
+    return _TRAVEL_MODE_PROFILES.get(mode.strip().lower(), _TRAVEL_MODE_PROFILES["transit"])
+
+
+def _normalize_country_hint(country_hint: str, profile_currency: str) -> str:
+    hint = country_hint.strip()
+    if not hint:
+        return "Canada" if profile_currency == "CAD" else "USA"
+
+    normalized = hint.lower()
+    if normalized in {"auto", "global", "world", "any", "anywhere"}:
+        return ""
+    if normalized in {"ca", "can", "canada"}:
+        return "Canada"
+    if normalized in {"us", "usa", "united states", "united states of america"}:
+        return "USA"
+    return hint
+
+
+def _geocode_address_with_fallbacks(address: str, postal_code: str, country_hint: str) -> Any | None:
+    normalized_address = address.strip()
+    normalized_postal = postal_code.strip()
+
+    queries: list[str] = []
+    if normalized_address and normalized_postal:
+        queries.extend([
+            f"{normalized_address}, {normalized_postal}",
+            f"{normalized_postal}, {normalized_address}",
+        ])
+    if normalized_address:
+        queries.append(normalized_address)
+    if normalized_postal:
+        queries.append(normalized_postal)
+
+    seen_queries: set[str] = set()
+    for query in queries:
+        key = query.lower().strip()
+        if not key or key in seen_queries:
+            continue
+        seen_queries.add(key)
+        geo = geocode_address(query, country_hint=country_hint)
+        if geo:
+            return geo
+    return None
+
+
 def _shelf_life_metrics(selected_items: list[Any]) -> dict[str, float | int]:
     if not selected_items:
         return {
@@ -111,6 +185,8 @@ def _resolve_origin(
     postal_codes: dict[str, Any],
     profile: Any,
     all_stores: list[Any],
+    travel_profile: dict[str, float | int],
+    country_hint: str,
 ) -> tuple[dict[str, Any] | None, list[tuple[Any, float]]]:
     """Resolve the user's origin from postal code or address and find nearby stores.
 
@@ -123,10 +199,11 @@ def _resolve_origin(
     normalized_address = request.address.strip()
     origin: dict[str, Any] | None = None
     nearby: list[tuple[Any, float]] = []
+    max_distance_km = float(travel_profile.get("search_radius_km", 12.0))
 
     if request.postal_code:
         nearby = find_nearby_stores(
-            request.postal_code, all_stores, postal_codes, max_distance_km=20.0
+            request.postal_code, all_stores, postal_codes, max_distance_km=max_distance_km
         )
         pc_info = postal_codes.get(normalized_postal)
         if pc_info:
@@ -152,7 +229,7 @@ def _resolve_origin(
                     geo.latitude,
                     geo.longitude,
                     all_stores,
-                    max_distance_km=20.0,
+                    max_distance_km=max_distance_km,
                 )
 
         # Offline fallback: infer origin from local postal prefix cluster.
@@ -174,13 +251,12 @@ def _resolve_origin(
                     avg_lat,
                     avg_lon,
                     all_stores,
-                    max_distance_km=20.0,
+                    max_distance_km=max_distance_km,
                 )
 
         # Last fallback: if postal flow failed but address is present, use address geocode.
         if not nearby and normalized_address:
-            geo_country_hint = "Canada" if profile.currency == "CAD" else "USA"
-            geo = geocode_address(normalized_address, country_hint=geo_country_hint)
+            geo = _geocode_address_with_fallbacks(normalized_address, normalized_postal, country_hint)
             if geo:
                 origin = {
                     "postal_code": normalized_postal,
@@ -193,12 +269,11 @@ def _resolve_origin(
                     geo.latitude,
                     geo.longitude,
                     all_stores,
-                    max_distance_km=20.0,
+                    max_distance_km=max_distance_km,
                 )
     else:
         # Address-only path.
-        geo_country_hint = "Canada" if profile.currency == "CAD" else "USA"
-        geo = geocode_address(normalized_address, country_hint=geo_country_hint)
+        geo = _geocode_address_with_fallbacks(normalized_address, normalized_postal, country_hint)
         if geo:
             origin = {
                 "postal_code": "",
@@ -211,7 +286,7 @@ def _resolve_origin(
                 geo.latitude,
                 geo.longitude,
                 all_stores,
-                max_distance_km=20.0,
+                max_distance_km=max_distance_km,
             )
 
     return origin, nearby
@@ -288,10 +363,15 @@ def _prioritize_stores(
             return True
         return any(pref in name for pref in preferred_chains)
 
-    nearby_sorted = sorted(nearby, key=lambda item: item[1])
-    preferred = [entry for entry in nearby_sorted if _is_preferred(entry[0])]
-    others = [entry for entry in nearby_sorted if not _is_preferred(entry[0])]
-    return (preferred + others)[:max_candidate_stores]
+    nearby_sorted = sorted(
+        nearby,
+        key=lambda item: (
+            item[1],
+            0 if _is_preferred(item[0]) else 1,
+            str(getattr(item[0], "name", "")),
+        ),
+    )
+    return nearby_sorted[:max_candidate_stores]
 
 
 def _select_deal_route_stores(
@@ -300,6 +380,9 @@ def _select_deal_route_stores(
     store_comparison: list[dict[str, Any]],
     item_quotes: list[dict[str, Any]],
     max_stops: int = 3,
+    travel_cost_per_km: float | None = None,
+    savings_threshold: float | None = None,
+    travel_profile: dict[str, float | int] | None = None,
 ) -> tuple[list[Any], dict[str, Any]]:
     """Choose route stops by true per-item multi-store savings.
 
@@ -317,6 +400,9 @@ def _select_deal_route_stores(
 
     nearby_by_id = {str(store.store_id): (store, distance) for store, distance in nearby}
     comparison_by_id = {str(store.get("store_id", "")): store for store in store_comparison}
+    travel_profile = travel_profile or _travel_profile("transit")
+    max_store_distance_km = float(travel_profile.get("max_store_distance_km", 0.0) or 0.0)
+    max_extra_distance_km = float(travel_profile.get("max_extra_distance_km", 0.0) or 0.0)
     sorted_comparison = sorted(
         [store for store in store_comparison if str(store.get("store_id", "")) in nearby_by_id],
         key=lambda store: (float(store.get("estimated_total", 0.0)), float(store.get("distance_km", 999.0))),
@@ -338,7 +424,11 @@ def _select_deal_route_stores(
         if item_name and store_id in nearby_by_id:
             quotes_by_item.setdefault(item_name, []).append(quote)
 
-    candidate_ids = [str(store.get("store_id", "")) for store in sorted_comparison[: min(len(sorted_comparison), 8)]]
+    candidate_ids = [
+        str(store.get("store_id", ""))
+        for store in sorted_comparison[: min(len(sorted_comparison), 8)]
+        if not max_store_distance_km or float(store.get("distance_km", 999.0)) <= max_store_distance_km
+    ]
     if not quotes_by_item or best_id not in candidate_ids:
         return [nearby_by_id[best_id][0]], {
             "selection_reason": "Best-value single-store route",
@@ -376,8 +466,8 @@ def _select_deal_route_stores(
         }
 
     baseline_total = round(sum(float(quote.get("line_total", 0.0)) for quote in baseline_quotes.values()), 2)
-    travel_cost_per_km = float(os.getenv("GROCERY_ROUTE_COST_PER_KM", "0.70"))
-    savings_threshold = float(os.getenv("GROCERY_ROUTE_MIN_NET_SAVINGS", "1.50"))
+    travel_cost_per_km = travel_cost_per_km if travel_cost_per_km is not None else float(os.getenv("GROCERY_ROUTE_COST_PER_KM", "0.70"))
+    savings_threshold = savings_threshold if savings_threshold is not None else float(os.getenv("GROCERY_ROUTE_MIN_NET_SAVINGS", "1.50"))
     baseline_distance = float(nearby_by_id.get(best_id, (None, 0.0))[1])
 
     def _score_combo(combo_ids: tuple[str, ...]) -> dict[str, Any] | None:
@@ -422,6 +512,8 @@ def _select_deal_route_stores(
 
         total_candidate_distance = sum(float(nearby_by_id[store_id][1]) for store_id in combo_ids)
         extra_distance = max(0.0, total_candidate_distance - baseline_distance)
+        if max_extra_distance_km and extra_distance > max_extra_distance_km:
+            return None
         estimated_travel_cost = round(extra_distance * travel_cost_per_km, 2)
         net_savings = round(gross_savings - estimated_travel_cost, 2)
         return {
@@ -504,6 +596,8 @@ def _build_store_data(
     postal_codes: dict[str, Any] | None = None,
     normalized_address: str = "",
     use_live_pricing: bool = False,
+    travel_profile: dict[str, float | int] | None = None,
+    transportation_mode: str = "transit",
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None, dict[str, Any], str]:
     """Build the store-comparison payload, nearby-stores list, route info, and pricing metadata.
 
@@ -512,6 +606,7 @@ def _build_store_data(
     nearby_stores: list[dict[str, Any]] = []
     route_info: dict[str, Any] | None = None
     missing_reason = ""
+    travel_profile = travel_profile or _travel_profile("transit")
 
     # Determine why store data is missing (if applicable).
     if not nearby:
@@ -555,6 +650,10 @@ def _build_store_data(
             nearby=nearby,
             store_comparison=store_comparison,
             item_quotes=list(pricing_meta.get("item_quotes", [])),
+            max_stops=int(travel_profile.get("route_max_stops", 3)),
+            travel_cost_per_km=float(travel_profile.get("travel_cost_per_km", 0.70)),
+            savings_threshold=float(travel_profile.get("min_net_savings", 1.5)),
+            travel_profile=travel_profile,
         )
         if origin.get("origin_type") in {"address", "address_fallback", "postal_code_geocoded", "postal_prefix_fallback"}:
             route = optimize_route_from_coordinates(
@@ -622,6 +721,9 @@ def _build_store_data(
             "multi_store_item_savings": route_selection.get("multi_store_item_savings", 0.0),
             "estimated_travel_cost": route_selection.get("estimated_travel_cost", 0.0),
             "net_route_savings": route_selection.get("net_route_savings", 0.0),
+            "travel_cost_per_km": float(travel_profile.get("travel_cost_per_km", 0.70)),
+            "savings_threshold": float(travel_profile.get("min_net_savings", 1.5)),
+            "transportation_mode": transportation_mode,
         }
 
     return nearby_stores, store_comparison, route_info, pricing_meta, missing_reason
@@ -632,6 +734,8 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
     profile = load_location_profile(request.location)
     items = load_items_from_json(request.catalog_path)
     priced_items = apply_location_pricing(items, profile)
+    travel_profile = _travel_profile(request.transportation_mode)
+    country_hint = _normalize_country_hint(request.country_hint, profile.currency)
 
     # 2. Apply preferences.
     likes = [item.lower() for item in request.likes]
@@ -686,7 +790,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
     def _run_geo():
         if not (request.postal_code or normalized_address):
             return None, []
-        origin, nearby = _resolve_origin(request, postal_codes, profile, all_stores)
+        origin, nearby = _resolve_origin(request, postal_codes, profile, all_stores, travel_profile, country_hint)
         nearby = _apply_auto_discovery(request, nearby, normalized_postal)
         nearby = _prioritize_stores(nearby, profile, max_candidate_stores=50)
         return origin, nearby
@@ -706,6 +810,8 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             postal_codes=postal_codes,
             normalized_address=normalized_address,
             use_live_pricing=request.include_live_pricing,
+            travel_profile=travel_profile,
+            transportation_mode=request.transportation_mode,
         )
     else:
         nearby_stores = []
@@ -744,6 +850,10 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
         str(row.get("item_name", "")).strip().lower(): row
         for row in route_assignments
     }
+    store_lookup = {
+        str(store.get("store_id", "")): store
+        for store in store_comparison
+    }
 
     return {
         "location": {
@@ -752,6 +862,8 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             "currency": profile.currency,
             "postal_code": request.postal_code,
             "address": request.address,
+            "country_hint": request.country_hint,
+            "transportation_mode": request.transportation_mode,
         },
         "summary": {
             "strategy": result.strategy,
@@ -776,6 +888,9 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
                 "shelf_life_days": item.shelf_life_days,
                 "recommended_store": assignment_by_item.get(item.name.lower(), {}).get("store_name", ""),
                 "recommended_store_id": assignment_by_item.get(item.name.lower(), {}).get("store_id", ""),
+                "recommended_store_address": store_lookup.get(assignment_by_item.get(item.name.lower(), {}).get("store_id", ""), {}).get("address", ""),
+                "recommended_store_distance_km": store_lookup.get(assignment_by_item.get(item.name.lower(), {}).get("store_id", ""), {}).get("distance_km"),
+                "recommended_store_unit_price": assignment_by_item.get(item.name.lower(), {}).get("unit_price", item.price),
                 "store_line_total": assignment_by_item.get(item.name.lower(), {}).get("line_total", item.total_cost),
                 "store_savings": assignment_by_item.get(item.name.lower(), {}).get("gross_savings", 0.0),
             }

@@ -147,6 +147,23 @@ function Start-LocalStack {
     Import-LivePricingEnv
     Show-LivePricingProviderStatus
     Show-AssistantProviderStatus
+    $projectRootLiteral = ConvertTo-PSQuotedString -Value $ProjectRoot
+    Write-Host "[INFO] Running initial free pricing snapshot refresh..." -ForegroundColor Cyan
+
+    $refreshArgs = @($pythonInvoke.PrefixArgs + @(
+        "scripts/scrape_free_prices.py",
+        "--max-items",
+        "30"
+    ))
+    $refreshInvoke = New-CommandInvocation -Executable $pythonInvoke.Executable -Arguments $refreshArgs
+    try {
+        Invoke-Expression "Set-Location $projectRootLiteral; $refreshInvoke" | Out-Null
+        Write-Host "  [OK] Free pricing snapshot refreshed." -ForegroundColor Green
+    } catch {
+        Write-Host "  [WARN] Initial free pricing refresh failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+
+    Write-Host "[INFO] Starting free pricing auto-refresh loop (every 30 min)..." -ForegroundColor Cyan
     Write-Host "`nStarting local API and web servers..." -ForegroundColor Yellow
 
     $apiArgs = @($pythonInvoke.PrefixArgs + @(
@@ -167,16 +184,26 @@ function Start-LocalStack {
         "--directory",
         "web"
     ))
+    $freeScrapeArgs = @($pythonInvoke.PrefixArgs + @(
+        "scripts/scrape_free_prices.py",
+        "--max-items",
+        "30",
+        "--loop",
+        "--interval-seconds",
+        "1800"
+    ))
 
-    $projectRootLiteral = ConvertTo-PSQuotedString -Value $ProjectRoot
     $apiInvoke = New-CommandInvocation -Executable $pythonInvoke.Executable -Arguments $apiArgs
     $webInvoke = New-CommandInvocation -Executable $pythonInvoke.Executable -Arguments $webArgs
+    $freeScrapeInvoke = New-CommandInvocation -Executable $pythonInvoke.Executable -Arguments $freeScrapeArgs
 
     $apiCmd = "Set-Location $projectRootLiteral; `$env:PYTHONPATH='src'; $apiInvoke"
     $webCmd = "Set-Location $projectRootLiteral; $webInvoke"
+    $freeScrapeCmd = "Set-Location $projectRootLiteral; $freeScrapeInvoke"
 
     Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $apiCmd | Out-Null
     Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $webCmd | Out-Null
+    Start-Process -FilePath "powershell" -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", $freeScrapeCmd | Out-Null
 
     Start-Sleep -Seconds 2
 
@@ -193,7 +220,7 @@ function Start-LocalStack {
     if ($NoBrowser) {
         Write-Host "  Browser auto-open was disabled by -NoBrowser." -ForegroundColor DarkGray
     }
-    Write-Host "`nTip: Close the two PowerShell windows to stop local servers." -ForegroundColor Yellow
+    Write-Host "`nTip: Close the three PowerShell windows to stop API, web, and pricing refresh." -ForegroundColor Yellow
 }
 
 function Start-DockerStack {
@@ -228,7 +255,8 @@ function Stop-LocalStack {
         Where-Object {
             ($_.Name -in @("python.exe", "uvicorn.exe")) -and (
                 ($_.CommandLine -match "grocery_optimizer\.api\.app:app" -and $_.CommandLine -match "--port\s+8000") -or
-                ($_.CommandLine -match "http\.server" -and $_.CommandLine -match "\s8080\b" -and $_.CommandLine -match "--directory\s+web")
+                ($_.CommandLine -match "http\.server" -and $_.CommandLine -match "\s8080\b" -and $_.CommandLine -match "--directory\s+web") -or
+                ($_.CommandLine -match "scripts/scrape_free_prices\.py" -and $_.CommandLine -match "--loop")
             )
         }
 

@@ -36,9 +36,9 @@ function renderPlansList(data) {
   if (!plans.length && currentOffset === 0) {
     savedPlansList.innerHTML = `
       <div class="empty-state">
-        <strong>No saved plans yet</strong>
-        <p class="muted">Generate a grocery plan, save it, then come back here to reuse, print, or export it.</p>
-        <a class="button-link" href="index.html">Build a plan</a>
+        <strong>${tr("No saved plans yet", "Aucun plan sauvegarde")}</strong>
+        <p class="muted">${tr("Generate a grocery plan, save it, then come back here to reuse, print, or export it.", "Generez un plan d'epicerie, sauvegardez-le, puis revenez pour le reutiliser, imprimer ou exporter.")}</p>
+        <a class="button-link" href="index.html">${tr("Build a plan", "Creer un plan")}</a>
       </div>
     `;
     plansList.classList.remove("hidden");
@@ -48,7 +48,7 @@ function renderPlansList(data) {
   }
 
   if (currentOffset === 0) {
-    savedPlansList.innerHTML = '<div id="savedPlansSearchEmpty" class="empty-state hidden"><strong>No matching plans</strong><p class="muted">Try a different plan name, category, or cost detail.</p></div>';
+    savedPlansList.innerHTML = `<div id="savedPlansSearchEmpty" class="empty-state hidden"><strong>${tr("No matching plans", "Aucun plan correspondant")}</strong><p class="muted">${tr("Try a different plan name, category, or cost detail.", "Essayez un autre nom de plan, categorie ou detail de cout.")}</p></div>`;
   }
 
   savedPlansList.insertAdjacentHTML(
@@ -65,15 +65,15 @@ function renderPlansList(data) {
           <article class="saved-plan" data-plan-id="${safeId}">
             <div class="saved-plan-topline">
               <strong class="plan-label-text">${safeLabel}</strong>
-              <span class="preview-pill">${budgetUsed}% budget</span>
+              <span class="preview-pill">${budgetUsed}% ${tr("budget", "budget")}</span>
             </div>
-            <p class="muted">Created: ${escapeHtml(formatDate(plan.created_at))}</p>
-            <p class="muted">Cost: ${escapeHtml(formatCurrency(totalCost, currency))} &bull; Items: ${itemCount}</p>
+            <p class="muted">${tr("Created:", "Cree le:")} ${escapeHtml(formatDate(plan.created_at))}</p>
+            <p class="muted">${tr("Cost:", "Cout:")} ${escapeHtml(formatCurrency(totalCost, currency))} &bull; ${tr("Items:", "Articles:")} ${itemCount}</p>
             <div class="plan-actions">
-              <button class="secondary btn-sm" data-action="open" data-plan-id="${safeId}">Open</button>
-              <button class="secondary btn-sm" data-action="reuse" data-plan-id="${safeId}">Reuse</button>
-              <button class="secondary btn-sm" data-action="rename" data-plan-id="${safeId}" data-current-label="${escapeHtml(plan.label || "")}">Rename</button>
-              <button class="danger btn-sm" data-action="delete" data-plan-id="${safeId}">Delete</button>
+              <button class="secondary btn-sm" data-action="open" data-plan-id="${safeId}">${tr("Open", "Ouvrir")}</button>
+              <button class="secondary btn-sm" data-action="reuse" data-plan-id="${safeId}">${tr("Reuse", "Reutiliser")}</button>
+              <button class="secondary btn-sm" data-action="rename" data-plan-id="${safeId}" data-current-label="${escapeHtml(plan.label || "")}">${tr("Rename", "Renommer")}</button>
+              <button class="danger btn-sm" data-action="delete" data-plan-id="${safeId}">${tr("Delete", "Supprimer")}</button>
             </div>
           </article>
         `;
@@ -85,7 +85,7 @@ function renderPlansList(data) {
 
   const total = pagination.total || 0;
   const loaded = currentOffset + plans.length;
-  paginationInfo.textContent = `Showing ${loaded} of ${total} plan(s).`;
+  paginationInfo.textContent = `${tr("Showing", "Affichage")} ${loaded} ${tr("of", "sur")} ${total} ${tr("plan(s).", "plan(s).")}`;
 
   if (loaded < total) {
     loadMoreBtn.classList.remove("hidden");
@@ -112,14 +112,14 @@ function renderPlanDetail(planData) {
   const plansList = document.getElementById("plansList");
 
   const cards = [
-    ["Total cost", formatCurrency(summary.total_cost, currency)],
-    ["Budget left", formatCurrency(summary.budget_remaining, currency)],
-    ["Items", String(summary.total_units || 0)],
+    [tr("Total cost", "Cout total"), formatCurrency(summary.total_cost, currency)],
+    [tr("Budget left", "Budget restant"), formatCurrency(summary.budget_remaining, currency)],
+    [tr("Items", "Articles"), String(summary.total_units || 0)],
   ];
 
   planDetailContent.innerHTML = `
-    <h3>${escapeHtml(plan.label || "Untitled plan")}</h3>
-    <p class="muted">Created: ${escapeHtml(formatDate(plan.created_at))}</p>
+    <h3>${escapeHtml(plan.label || tr("Untitled plan", "Plan sans titre"))}</h3>
+    <p class="muted">${tr("Created:", "Cree le:")} ${escapeHtml(formatDate(plan.created_at))}</p>
 
     <div class="summary-grid mt-sm">
       ${cards.map(([label, value]) => `
@@ -132,8 +132,8 @@ function renderPlanDetail(planData) {
 
     <section class="insights-panel mt-section">
       <div>
-        <h4>Plan insights</h4>
-        <p class="muted">${escapeHtml(Number(insights.budget_used_percent || 0).toFixed(1))}% of budget used${insights.best_store?.name ? ` · Lowest estimate: ${escapeHtml(insights.best_store.name)}` : ""}</p>
+        <h4>${tr("Plan insights", "Apercus du plan")}</h4>
+        <p class="muted">${escapeHtml(Number(insights.budget_used_percent || 0).toFixed(1))}% ${tr("of budget used", "du budget utilise")}${insights.best_store?.name ? ` · ${tr("Lowest estimate:", "Estimation la plus basse:")} ${escapeHtml(insights.best_store.name)}` : ""}</p>
       </div>
       <div class="category-breakdown">
         ${categories.length ? categories.slice(0, 6).map((row) => `
@@ -141,22 +141,22 @@ function renderPlanDetail(planData) {
             <span>${escapeHtml(prettyCategory(row.category))}</span>
             <strong>${escapeHtml(formatCurrency(row.cost, currency))}</strong>
           </div>
-        `).join("") : '<p class="muted">No category spending data available.</p>'}
+        `).join("") : `<p class="muted">${tr("No category spending data available.", "Aucune depense par categorie disponible.")}</p>`}
       </div>
       <ul class="insight-actions">
-        ${actions.length ? actions.map((action) => `<li>${escapeHtml(action)}</li>`).join("") : "<li>Review your list before shopping.</li>"}
+        ${actions.length ? actions.map((action) => `<li>${escapeHtml(action)}</li>`).join("") : `<li>${tr("Review your list before shopping.", "Revisez votre liste avant d'aller en magasin.")}</li>`}
       </ul>
     </section>
 
-    <h4 class="mt-section">Shopping list</h4>
+    <h4 class="mt-section">${tr("Shopping list", "Liste d'achats")}</h4>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Qty</th>
-            <th>Cost</th>
+            <th>${tr("Item", "Article")}</th>
+            <th>${tr("Category", "Categorie")}</th>
+            <th>${tr("Qty", "Qt")}</th>
+            <th>${tr("Cost", "Cout")}</th>
           </tr>
         </thead>
         <tbody>
@@ -185,25 +185,25 @@ function renderPlanDetail(planData) {
 // --- Actions ---
 
 async function openPlan(planId) {
-  showStatus("Opening plan...", "info");
+  showStatus(tr("Opening plan...", "Ouverture du plan..."), "info");
   const result = await getPlan(planId);
   if (result.ok) {
     renderPlanDetail(result.data);
-    showStatus(`Opened: ${escapeHtml(result.data.plan?.label || planId)}`, "success");
+    showStatus(`${tr("Opened:", "Ouvert:")} ${escapeHtml(result.data.plan?.label || planId)}`, "success");
   } else {
-    showStatus(result.data.detail || "Could not open this plan.", "error");
+    showStatus(result.data.detail || tr("Could not open this plan.", "Impossible d'ouvrir ce plan."), "error");
   }
 }
 
 async function reusePlan(planId) {
-  showStatus("Loading plan for reuse...", "info");
+  showStatus(tr("Loading plan for reuse...", "Chargement du plan pour reutilisation..."), "info");
   const result = await getPlan(planId);
   if (result.ok && result.data.plan && result.data.plan.request) {
     const request = result.data.plan.request.optimize_request || {};
     sessionStorage.setItem("reuse_plan_request", JSON.stringify(request));
     window.location.href = "index.html";
   } else {
-    showStatus("Could not load plan for reuse.", "error");
+    showStatus(tr("Could not load plan for reuse.", "Impossible de charger le plan pour reutilisation."), "error");
   }
 }
 
@@ -235,14 +235,14 @@ function startInlineRename(triggerBtn, planId, currentLabel) {
       return;
     }
 
-    labelEl.textContent = "Saving...";
+    labelEl.textContent = tr("Saving...", "Enregistrement...");
     const result = await renamePlan(planId, newLabel);
 
     if (result.ok) {
-      showStatus("Plan renamed.", "success");
+      showStatus(tr("Plan renamed.", "Plan renomme."), "success");
       loadAllPlans();
     } else {
-      showStatus(result.data.detail || "Rename failed.", "error");
+      showStatus(result.data.detail || tr("Rename failed.", "Echec du renommage."), "error");
       labelEl.textContent = originalText;
     }
   };
@@ -274,8 +274,8 @@ function startDeleteConfirm(triggerBtn, planId) {
   const group = document.createElement("span");
   group.className = "delete-confirm-group";
   group.innerHTML = `
-    <button class="danger-confirm btn-sm" data-action="confirm-delete" data-plan-id="${escapeHtml(planId)}">Yes, delete</button>
-    <button class="secondary btn-sm" data-action="cancel-delete">Cancel</button>
+    <button class="danger-confirm btn-sm" data-action="confirm-delete" data-plan-id="${escapeHtml(planId)}">${tr("Yes, delete", "Oui, supprimer")}</button>
+    <button class="secondary btn-sm" data-action="cancel-delete">${tr("Cancel", "Annuler")}</button>
   `;
 
   triggerBtn.replaceWith(group);
@@ -301,17 +301,17 @@ function cancelDeleteConfirm(cancelBtn) {
   newBtn.className = "danger btn-sm";
   newBtn.dataset.action = "delete";
   newBtn.dataset.planId = planId;
-  newBtn.textContent = "Delete";
+  newBtn.textContent = tr("Delete", "Supprimer");
   group.replaceWith(newBtn);
 }
 
 async function executeDelete(planId) {
   const result = await deletePlan(planId);
   if (result.ok) {
-    showStatus("Plan deleted.", "success");
+    showStatus(tr("Plan deleted.", "Plan supprime."), "success");
     loadAllPlans();
   } else {
-    showStatus(result.data.detail || "Delete failed.", "error");
+    showStatus(result.data.detail || tr("Delete failed.", "Echec de suppression."), "error");
   }
 }
 
@@ -355,7 +355,7 @@ document.getElementById("backToListBtn").addEventListener("click", () => {
 
 document.getElementById("printPlanBtn").addEventListener("click", () => {
   if (!currentPlanDetail) {
-    showStatus("Open a plan before printing.", "error");
+    showStatus(tr("Open a plan before printing.", "Ouvrez un plan avant d'imprimer."), "error");
     return;
   }
   printPlanView();
@@ -363,26 +363,26 @@ document.getElementById("printPlanBtn").addEventListener("click", () => {
 
 document.getElementById("exportPlanCsvBtn").addEventListener("click", () => {
   if (!currentPlanDetail) {
-    showStatus("Open a plan before exporting.", "error");
+    showStatus(tr("Open a plan before exporting.", "Ouvrez un plan avant d'exporter."), "error");
     return;
   }
   const label = currentPlanDetail.plan?.label || "saved-plan";
   const safeLabel = String(label).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "saved-plan";
   downloadCsv(`${safeLabel}.csv`, buildPlanCsvRows(currentPlanDetail.plan));
-  showStatus("CSV exported.", "success");
+  showStatus(tr("CSV exported.", "CSV exporte."), "success");
 });
 
 // --- Load more ---
 
 document.getElementById("loadMoreBtn").addEventListener("click", async () => {
   currentOffset += PAGE_SIZE;
-  showStatus("Loading more plans...", "info");
+  showStatus(tr("Loading more plans...", "Chargement de plus de plans..."), "info");
   const result = await listPlans(PAGE_SIZE, currentOffset);
   if (result.ok) {
     renderPlansList(result.data);
-    showStatus("Plans loaded.", "success");
+    showStatus(tr("Plans loaded.", "Plans charges."), "success");
   } else {
-    showStatus(result.data.detail || "Could not load more plans.", "error");
+    showStatus(result.data.detail || tr("Could not load more plans.", "Impossible de charger plus de plans."), "error");
   }
 });
 
@@ -394,13 +394,13 @@ document.getElementById("planSearch")?.addEventListener("input", () => {
 
 async function loadAllPlans() {
   currentOffset = 0;
-  showStatus("Loading your saved plans...", "info");
+  showStatus(tr("Loading your saved plans...", "Chargement de vos plans sauvegardes..."), "info");
   const result = await listPlans(PAGE_SIZE, 0);
   if (result.ok) {
     renderPlansList(result.data);
-    showStatus("Saved plans loaded.", "success");
+    showStatus(tr("Saved plans loaded.", "Plans sauvegardes charges."), "success");
   } else {
-    showStatus(result.data.detail || "Could not load saved plans.", "error");
+    showStatus(result.data.detail || tr("Could not load saved plans.", "Impossible de charger les plans sauvegardes."), "error");
   }
 }
 
@@ -417,5 +417,5 @@ document.getElementById("fetchPlanBtn").addEventListener("click", () => {
 if (Session.isActive()) {
   loadAllPlans();
 } else {
-  showStatus("Sign in to see your saved plans.", "info");
+  showStatus(tr("Sign in to see your saved plans.", "Connectez-vous pour voir vos plans sauvegardes."), "info");
 }

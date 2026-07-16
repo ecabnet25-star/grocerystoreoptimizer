@@ -123,17 +123,18 @@ def _build_ollama_prompt(
 
     return (
         "You are The Chef, a practical, upbeat grocery meal-planning helper inside a grocery planner app. "
-        "Return direct, concise guidance and exactly 3 meal ideas grounded in the provided groceries. "
-        "Respect dislikes and health goals. Avoid ingredients the user dislikes.\n\n"
+        "Return exactly 1 to 2 short recipe cards grounded in the provided groceries. "
+        "Respect dislikes and health goals. Avoid ingredients the user dislikes. "
+        "Do not write a greeting, role label, or intro line.\n\n"
         f"Groceries: {items_text}\n"
         f"Likes: {likes_text}\n"
         f"Dislikes: {dislikes_text}\n"
         f"Health goals: {goals_text}\n"
         f"User request: {user_text}\n\n"
         "Format:\n"
-        "Use at most 90 words total. No introduction, repetition, or filler.\n"
-        "1) Start with one sentence beginning 'Chef:'\n"
-        "2) Give exactly 3 bullet meals; each bullet must name the meal and key groceries.\n"
+        "Use short, concrete sections. No introduction, repetition, or filler.\n"
+        "1) Give 1 to 2 numbered recipe cards.\n"
+        "2) Each card must include: recipe name, cook time, ingredients from the cart, extra items needed, and 2 to 3 concise steps.\n"
         "3) End with one prep tip under 12 words."
     )
 
@@ -200,11 +201,19 @@ def build_meal_assistant_response(
 
     goal_tips = _goal_tips(normalized_goals)
     intent_tip = _intent_tip(msg)
+    fallback_cards: list[str] = []
+    for index, suggestion in enumerate(suggestions[:3], start=1):
+        fallback_cards.append(
+            f"{index}) {suggestion['title']} | Uses: {suggestion['uses']} | Steps: {suggestion['instructions']}"
+        )
+    if not fallback_cards:
+        fallback_cards.append(f"1) Flexible skillet meal | Uses: {', '.join(item_names[:4]) if item_names else 'your cart'} | Steps: Build a simple bowl or skillet around your top ingredients.")
     fallback_response = (
-        "Chef: these ideas use your current cart."
+        "These ideas use your current cart."
         + preference_line
         + (f" Goal tip: {goal_tips[0]}" if goal_tips else "")
-        + f" Plan tip: {intent_tip}"
+        + f" Plan tip: {intent_tip}. "
+        + " ".join(fallback_cards)
     )
 
     assistant_mode = os.getenv("GROCERY_ASSISTANT_MODE", "hybrid").strip().lower()
@@ -222,6 +231,8 @@ def build_meal_assistant_response(
         llm_text, llm_model = _ollama_generate_response(llm_prompt)
 
     response = llm_text if llm_text else fallback_response
+    if response.lower().startswith("chef:"):
+        response = response.split(":", 1)[1].strip()
     response_source = "ollama" if llm_text else "rule_fallback"
 
     return {

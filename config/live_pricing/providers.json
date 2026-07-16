@@ -2,18 +2,95 @@
   "cache_ttl_seconds": 900,
   "request_timeout_seconds": 6,
   "max_live_quotes_per_snapshot": 60,
+  "min_quote_confidence": 0.55,
+  "min_price_ratio": 0.35,
+  "max_price_ratio": 2.5,
+  "history_min_samples": 5,
+  "history_min_confidence": 0.6,
+  "history_max_rows": 120,
+  "history_max_deviation_ratio": 1.8,
   "providers": [
     {
       "id": "openfoodfacts_us_ca",
       "type": "openfoodfacts_partner",
       "enabled": true,
       "page_size": 20,
-      "confidence": 0.72
+      "confidence": 0.72,
+      "reliability_weight": 0.8,
+      "store_chain_allowlist": [
+        "maxi",
+        "provigo",
+        "metro",
+        "super c",
+        "iga",
+        "walmart",
+        "costco"
+      ]
+    },
+    {
+      "id": "metro_qc_snapshot",
+      "type": "local_snapshot",
+      "enabled": true,
+      "snapshot_path": "config/live_pricing/snapshots/latest.json",
+      "confidence": 0.8,
+      "reliability_weight": 0.88,
+      "store_chain_allowlist": [
+        "metro",
+        "super c"
+      ]
+    },
+    {
+      "id": "iga_qc_snapshot",
+      "type": "local_snapshot",
+      "enabled": true,
+      "snapshot_path": "config/live_pricing/snapshots/latest.json",
+      "confidence": 0.79,
+      "reliability_weight": 0.86,
+      "store_chain_allowlist": [
+        "iga"
+      ]
+    },
+    {
+      "id": "maxi_qc_snapshot",
+      "type": "local_snapshot",
+      "enabled": true,
+      "snapshot_path": "config/live_pricing/snapshots/latest.json",
+      "confidence": 0.78,
+      "reliability_weight": 0.85,
+      "store_chain_allowlist": [
+        "maxi"
+      ]
+    },
+    {
+      "id": "provigo_qc_snapshot",
+      "type": "local_snapshot",
+      "enabled": true,
+      "snapshot_path": "config/live_pricing/snapshots/latest.json",
+      "confidence": 0.78,
+      "reliability_weight": 0.85,
+      "store_chain_allowlist": [
+        "provigo"
+      ]
+    },
+    {
+      "id": "flipp_public_snapshot",
+      "type": "local_snapshot",
+      "enabled": true,
+      "snapshot_path": "config/live_pricing/snapshots/latest.json",
+      "confidence": 0.7,
+      "reliability_weight": 0.78,
+      "store_chain_allowlist": [
+        "maxi",
+        "provigo",
+        "metro",
+        "super c",
+        "iga"
+      ]
     },
     {
       "id": "flipp_us_ca_partner",
       "type": "flipp_partner",
-      "enabled": true,
+      "enabled": false,
       "base_url": "https://flipp.p.rapidapi.com/flyers/search",
       "api_key_env": "LIVE_PRICING_FLIPP_KEY",
       "api_key_header": "x-rapidapi-key",
@@ -21,7 +98,118 @@
       "host_header_value": "flipp.p.rapidapi.com",
       "price_path": "results.0.price",
       "currency_path": "results.0.currency",
-      "confidence": 0.82
+      "confidence": 0.82,
+      "reliability_weight": 0.9,
+      "store_chain_allowlist": [
+        "maxi",
+        "provigo",
+        "metro",
+        "super c",
+        "iga",
+        "walmart",
+        "costco"
+      ]
+    },
+    {
+      "id": "metro_qc_html_scraper",
+      "type": "html_regex",
+      "enabled": true,
+      "url_template": "https://www.metro.ca/en/online-grocery/search?filter={item_name}",
+      "price_regex": "(?:\\\"price\\\"\\s*:\\s*\\\"?)(\\d+(?:\\.\\d{1,2})?)",
+      "confidence": 0.76,
+      "reliability_weight": 0.82,
+      "allow_scraping": true,
+      "store_chain_allowlist": [
+        "metro",
+        "super c"
+      ]
+    },
+    {
+      "id": "iga_qc_html_scraper",
+      "type": "html_regex",
+      "enabled": true,
+      "url_template": "https://www.iga.net/en/search?query={item_name}",
+      "price_regex": "(?:\\\"price\\\"\\s*:\\s*\\\"?)(\\d+(?:\\.\\d{1,2})?)",
+      "confidence": 0.75,
+      "reliability_weight": 0.8,
+      "allow_scraping": true,
+      "store_chain_allowlist": [
+        "iga"
+      ]
+    },
+    {
+      "id": "maxi_qc_html_scraper",
+      "type": "html_regex",
+      "enabled": true,
+      "url_template": "https://www.maxi.ca/search?search-bar={item_name}",
+      "price_regex": "(?:\\\"price\\\"\\s*:\\s*\\\"?)(\\d+(?:\\.\\d{1,2})?)",
+      "confidence": 0.74,
+      "reliability_weight": 0.79,
+      "allow_scraping": true,
+      "store_chain_allowlist": [
+        "maxi"
+      ]
+    },
+    {
+      "id": "provigo_qc_html_scraper",
+      "type": "html_regex",
+      "enabled": true,
+      "url_template": "https://www.provigo.ca/search?search-bar={item_name}",
+      "price_regex": "(?:\\\"price\\\"\\s*:\\s*\\\"?)(\\d+(?:\\.\\d{1,2})?)",
+      "confidence": 0.74,
+      "reliability_weight": 0.79,
+      "allow_scraping": true,
+      "store_chain_allowlist": [
+        "provigo"
+      ]
+    },
+    {
+      "id": "walmart_ca_managed_antibot",
+      "type": "json_feed",
+      "enabled": false,
+      "base_url": "https://api.brightdata.com/datasets/v3/trigger",
+      "api_key_env": "LIVE_PRICING_WALMART_MANAGED_KEY",
+      "api_key_header": "Authorization",
+      "headers": {
+        "x-managed-source": "walmart-ca"
+      },
+      "query": {
+        "q": "{item_name}",
+        "merchant": "walmart",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "price_path": "results.0.price",
+      "currency_path": "results.0.currency",
+      "confidence": 0.9,
+      "reliability_weight": 0.95,
+      "store_chain_allowlist": [
+        "walmart"
+      ]
+    },
+    {
+      "id": "costco_ca_managed_antibot",
+      "type": "json_feed",
+      "enabled": false,
+      "base_url": "https://api.brightdata.com/datasets/v3/trigger",
+      "api_key_env": "LIVE_PRICING_COSTCO_MANAGED_KEY",
+      "api_key_header": "Authorization",
+      "headers": {
+        "x-managed-source": "costco-ca"
+      },
+      "query": {
+        "q": "{item_name}",
+        "merchant": "costco",
+        "postal_code": "{postal_code}",
+        "country": "{country}"
+      },
+      "price_path": "results.0.price",
+      "currency_path": "results.0.currency",
+      "confidence": 0.9,
+      "reliability_weight": 0.95,
+      "store_chain_allowlist": [
+        "costco"
+      ]
     },
     {
       "id": "public_market_benchmark",
@@ -30,7 +218,8 @@
       "benchmark_path": "config/live_pricing/public_benchmarks.json",
       "world_bank_indicator": "FP.CPI.TOTL.ZG",
       "inflation_cache_seconds": 43200,
-      "confidence": 0.58
+      "confidence": 0.58,
+      "reliability_weight": 0.58
     },
     {
       "id": "rapidapi_retailer_feed",

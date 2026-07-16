@@ -171,16 +171,12 @@ def _extract_flipp_price(
     store_chain: str,
     fallback_price_path: str,
 ) -> float | None:
-    # Keep config-path extraction as first-class support.
-    configured = _to_float(_extract_path(payload, fallback_price_path))
-    if configured is not None and configured > 0:
-        return configured
-
     item_tokens = _tokenize_for_match(item_name)
     store_tokens = _tokenize_for_match(store_chain)
 
     best_score = -1
     best_price: float | None = None
+    minimum_score = 7
 
     for candidate in _iter_flipp_candidate_records(payload):
         score = 0
@@ -199,7 +195,14 @@ def _extract_flipp_price(
             best_score = score
             best_price = price
 
-    return best_price
+    if best_price is not None and best_score >= minimum_score:
+        return best_price
+
+    # Fallback to configured path only when no sufficiently matched candidate was found.
+    configured = _to_float(_extract_path(payload, fallback_price_path))
+    if configured is not None and configured > 0:
+        return configured
+    return None
 
 
 def _extract_flipp_currency(payload: Any, fallback_currency_path: str) -> str | None:

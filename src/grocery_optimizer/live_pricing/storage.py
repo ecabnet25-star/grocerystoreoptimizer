@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import statistics
 import threading
 from typing import Any
 
@@ -128,3 +129,41 @@ def get_live_price_history(postal_code: str, limit: int = 200) -> list[dict[str,
         (postal_code.upper().replace(" ", ""), max(1, min(limit, 2000))),
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_live_price_median(
+    *,
+    item_name: str,
+    store_chain: str,
+    postal_code: str,
+    min_confidence: float = 0.5,
+    max_rows: int = 120,
+) -> tuple[float | None, int]:
+    """Return median unit price and sample count for an item/store/postal history slice."""
+    conn = _get_price_db()
+    rows = conn.execute(
+        """
+        SELECT unit_price
+        FROM live_price_quotes
+        WHERE postal_code = ?
+          AND lower(item_name) = lower(?)
+          AND lower(store_chain) = lower(?)
+          AND provider_id != 'fallback'
+          AND confidence >= ?
+          AND unit_price > 0
+        ORDER BY fetched_at_utc DESC
+        LIMIT ?
+        """,
+        (
+            postal_code.upper().replace(" ", ""),
+            item_name.strip(),
+            store_chain.strip(),
+            float(min_confidence),
+            max(10, min(int(max_rows), 1000)),
+        ),
+    ).fetchall()
+
+    prices = [float(row[0]) for row in rows if row and row[0] is not None]
+    if not prices:
+        return None, 0
+    return float(round(statistics.median(prices), 4)), len(prices)

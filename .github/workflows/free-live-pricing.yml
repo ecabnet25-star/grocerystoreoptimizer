@@ -1,0 +1,40 @@
+name: Free Live Pricing Refresh
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "config/live_pricing/snapshots/latest.json"
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run free scraper
+        run: |
+          python scripts/scrape_free_prices.py --max-items 30
+
+      - name: Commit updated snapshots
+        run: |
+          if git diff --quiet -- config/live_pricing/snapshots/latest.json; then
+            echo "No snapshot changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/live_pricing/snapshots/latest.json
+          git commit -m "chore: refresh free live pricing snapshot"
+          git push

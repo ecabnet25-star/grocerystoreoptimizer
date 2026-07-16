@@ -8,7 +8,8 @@ $targets = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
     Where-Object {
         ($_.Name -in @("python.exe", "uvicorn.exe")) -and (
             ($_.CommandLine -match "grocery_optimizer\.api\.app:app" -and $_.CommandLine -match "--port\s+8000") -or
-            ($_.CommandLine -match "http\.server" -and $_.CommandLine -match "\s8080\b" -and $_.CommandLine -match "--directory\s+web")
+            ($_.CommandLine -match "http\.server" -and $_.CommandLine -match "\s8080\b" -and $_.CommandLine -match "--directory\s+web") -or
+            ($_.CommandLine -match "scripts/scrape_free_prices\.py" -and $_.CommandLine -match "--loop")
         )
     }
 

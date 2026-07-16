@@ -366,6 +366,159 @@ class HtmlRegexProvider(BaseLiveProvider):
         )
 
 
+class LocalSnapshotProvider(BaseLiveProvider):
+    """Read free scraped quotes from local JSON snapshots produced by scheduled jobs."""
+
+    def __init__(self, config: dict[str, Any], timeout_seconds: int):
+        super().__init__(config, timeout_seconds)
+        self._snapshot_cache: dict[str, Any] | None = None
+        self._snapshot_mtime: float = -1.0
+
+    def _snapshot_path(self) -> Path:
+        return Path(str(self.config.get("snapshot_path", "config/live_pricing/snapshots/latest.json")))
+
+    def _load_snapshot(self) -> dict[str, Any]:
+        path = self._snapshot_path()
+        if not path.exists():
+            return {}
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            return {}
+        if self._snapshot_cache is not None and mtime == self._snapshot_mtime:
+            return self._snapshot_cache
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+        if not isinstance(payload, dict):
+            return {}
+        self._snapshot_cache = payload
+        self._snapshot_mtime = mtime
+        return payload
+
+    def health(self) -> ProviderHealth:
+        path = self._snapshot_path()
+        configured = path.exists()
+        detail = "ready" if configured else f"missing snapshot file: {path}"
+        if not self.enabled:
+            detail = "disabled"
+        return ProviderHealth(
+            provider_id=self.provider_id,
+            enabled=self.enabled,
+            provider_type="local_snapshot",
+            configured=configured,
+            detail=detail,
+        )
+
+    def _tokenize(self, value: str) -> set[str]:
+        return {token for token in re.findall(r"[a-z0-9]+", value.lower()) if len(token) >= 3}
+
+    def _chain_matches(self, requested_chain: str, row_chain: str) -> bool:
+        requested = requested_chain.strip().lower()
+        candidate = row_chain.strip().lower()
+        if not requested or not candidate:
+            return False
+        if requested == candidate:
+            return True
+
+        alias_groups = [
+            {"metro", "super c", "superc"},
+            {"provigo", "maxi", "loblaws", "loblaw"},
+            {"walmart", "walmart canada"},
+            {"costco", "costco wholesale"},
+            {"iga"},
+        ]
+        for group in alias_groups:
+            if requested in group and candidate in group:
+                return True
+
+        return requested in candidate or candidate in requested
+
+    def _row_score(self, row: dict[str, Any], item_name: str, store_chain: str, postal_code: str) -> int:
+        score = 0
+        row_item = str(row.get("item_name", ""))
+        row_chain = str(row.get("store_chain", row.get("chain", "")))
+        row_postal = str(row.get("postal_code", ""))
+
+        item_tokens = self._tokenize(item_name)
+        row_tokens = self._tokenize(row_item)
+        overlap = len(item_tokens.intersection(row_tokens))
+        score += overlap * 3
+
+        chain_l = store_chain.strip().lower()
+        row_chain_l = row_chain.strip().lower()
+        if chain_l and row_chain_l:
+            if chain_l == row_chain_l:
+                score += 6
+            elif chain_l in row_chain_l or row_chain_l in chain_l:
+                score += 3
+
+        normalized_postal = postal_code.upper().replace(" ", "")
+        row_postal_n = row_postal.upper().replace(" ", "")
+        if normalized_postal and row_postal_n:
+            if normalized_postal == row_postal_n:
+                score += 3
+            elif normalized_postal[:3] and normalized_postal[:3] == row_postal_n[:3]:
+                score += 1
+        return score
+
+    def fetch_price(
+        self,
+        item_name: str,
+        item_category: str,
+        base_unit_price: float,
+        store_chain: str,
+        store_price_tier: str,
+        postal_code: str,
+        country: str,
+        currency_hint: str,
+    ) -> LivePriceQuote | None:
+        if not self.enabled:
+            return None
+
+        payload = self._load_snapshot()
+        rows = payload.get("quotes", [])
+        if not isinstance(rows, list):
+            return None
+
+        best_row: dict[str, Any] | None = None
+        best_score = -1
+        for entry in rows:
+            if not isinstance(entry, dict):
+                continue
+            row_chain = str(entry.get("store_chain", entry.get("chain", "")))
+            if not self._chain_matches(store_chain, row_chain):
+                continue
+            price = _to_float(entry.get("unit_price"))
+            if price is None or price <= 0:
+                continue
+            score = self._row_score(entry, item_name=item_name, store_chain=store_chain, postal_code=postal_code)
+            if score > best_score:
+                best_score = score
+                best_row = entry
+
+        if not best_row or best_score < 4:
+            return None
+
+        price = _to_float(best_row.get("unit_price"))
+        if price is None:
+            return None
+        confidence = _to_float(best_row.get("confidence")) or float(self.config.get("confidence", 0.74))
+        fetched_at = str(best_row.get("fetched_at_utc") or payload.get("generated_at_utc") or datetime.now(UTC).isoformat().replace("+00:00", "Z"))
+        source_url = str(best_row.get("source_url") or str(self._snapshot_path()))
+        currency = str(best_row.get("currency") or currency_hint)
+        return LivePriceQuote(
+            provider_id=self.provider_id,
+            item_name=item_name,
+            currency=currency,
+            unit_price=round(price, 2),
+            confidence=max(0.0, min(float(confidence), 1.0)),
+            fetched_at_utc=fetched_at,
+            source_url=source_url,
+        )
+
+
 class PublicMarketProvider(BaseLiveProvider):
     """Non-scraping provider that estimates shelf prices from public market data signals."""
 

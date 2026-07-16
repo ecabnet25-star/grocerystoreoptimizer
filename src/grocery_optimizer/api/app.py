@@ -642,6 +642,8 @@ def live_pricing(
     budget: float = Query(default=50.0, gt=0),
     max_items: int = Query(default=8, ge=1, le=100),
     strategy: Literal["greedy", "knapsack"] = "knapsack",
+    transportation_mode: Literal["walk", "transit", "drive"] = "transit",
+    country_hint: str = "",
 ) -> dict[str, Any]:
     """Return a live pricing snapshot for nearby stores and optimized route."""
     payload = OptimizeRequest(
@@ -651,6 +653,8 @@ def live_pricing(
         location=location,
         postal_code=postal_code,
         address=address,
+        transportation_mode=transportation_mode,
+        country_hint=country_hint,
         include_live_pricing=True,
     )
     result = optimize_from_request(payload)

@@ -1,0 +1,84 @@
+{
+  "poll_interval_seconds": 300,
+  "state_file": "data/live_pricing_job_state.json",
+  "jobs": [
+    {
+      "id": "metro-qc-scrape",
+      "enabled": true,
+      "provider_id": "metro_qc_html_scraper",
+      "store_chain": "Metro",
+      "store_price_tier": "mid",
+      "country": "CA",
+      "currency": "CAD",
+      "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+      "every_minutes": 180,
+      "max_items": 24,
+      "categories": ["produce", "protein", "dairy", "grains", "pantry"]
+    },
+    {
+      "id": "iga-qc-scrape",
+      "enabled": true,
+      "provider_id": "iga_qc_html_scraper",
+      "store_chain": "IGA",
+      "store_price_tier": "mid",
+      "country": "CA",
+      "currency": "CAD",
+      "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+      "every_minutes": 180,
+      "max_items": 24,
+      "categories": ["produce", "protein", "dairy", "grains", "pantry"]
+    },
+    {
+      "id": "maxi-qc-scrape",
+      "enabled": true,
+      "provider_id": "maxi_qc_html_scraper",
+      "store_chain": "Maxi",
+      "store_price_tier": "budget",
+      "country": "CA",
+      "currency": "CAD",
+      "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+      "every_minutes": 180,
+      "max_items": 24,
+      "categories": ["produce", "protein", "dairy", "grains", "pantry"]
+    },
+    {
+      "id": "provigo-qc-scrape",
+      "enabled": true,
+      "provider_id": "provigo_qc_html_scraper",
+      "store_chain": "Provigo",
+      "store_price_tier": "mid",
+      "country": "CA",
+      "currency": "CAD",
+      "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+      "every_minutes": 180,
+      "max_items": 24,
+      "categories": ["produce", "protein", "dairy", "grains", "pantry"]
+    },
+    {
+      "id": "walmart-ca-managed-premium",
+      "enabled": false,
+      "provider_id": "walmart_ca_managed_antibot",
+      "store_chain": "Walmart",
+      "store_price_tier": "budget",
+      "country": "CA",
+      "currency": "CAD",
+      "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+      "every_minutes": 240,
+      "max_items": 24,
+      "categories": ["produce", "protein", "dairy", "grains", "pantry"]
+    },
+    {
+      "id": "costco-ca-managed-premium",
+      "enabled": false,
+      "provider_id": "costco_ca_managed_antibot",
+      "store_chain": "Costco",
+      "store_price_tier": "budget",
+      "country": "CA",
+      "currency": "CAD",
+      "postal_codes": ["H3A1A1", "H2X1Y5", "H4B2M9"],
+      "every_minutes": 240,
+      "max_items": 24,
+      "categories": ["produce", "protein", "dairy", "grains", "pantry"]
+    }
+  ]
+}
