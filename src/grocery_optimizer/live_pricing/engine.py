@@ -22,8 +22,7 @@ from .providers import (
     PublicMarketProvider,
     RetailerCatalogProvider,
 )
-from .storage import flush_live_quotes, save_live_quote
-from .storage import get_live_price_median
+from .storage import flush_live_quotes, get_live_price_median, save_live_quote
 
 
 class LivePricingEngine:

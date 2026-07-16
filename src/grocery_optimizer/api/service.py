@@ -25,7 +25,6 @@ from ..stores import (
 )
 from .schemas import OptimizeRequest
 
-
 _TRAVEL_MODE_PROFILES: dict[str, dict[str, float | int]] = {
     "walk": {
         "search_radius_km": 2.5,

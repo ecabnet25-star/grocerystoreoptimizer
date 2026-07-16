@@ -13,9 +13,9 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-from grocery_optimizer.data_io import load_items_from_json
-from grocery_optimizer.live_pricing import get_live_pricing_engine, reload_live_pricing_engine
-from grocery_optimizer.live_pricing.storage import flush_live_quotes, save_live_quote
+from grocery_optimizer.data_io import load_items_from_json  # noqa: E402
+from grocery_optimizer.live_pricing import get_live_pricing_engine, reload_live_pricing_engine  # noqa: E402
+from grocery_optimizer.live_pricing.storage import flush_live_quotes, save_live_quote  # noqa: E402
 
 
 def _load_json(path: Path) -> dict[str, Any]:
