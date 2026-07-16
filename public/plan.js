@@ -1431,17 +1431,14 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
     health_goals: splitList(document.getElementById("healthGoals").value),
   };
 
-      const sortedStores = [...(Array.isArray(stores) ? stores : [])].sort((a, b) => {
-        const distanceDelta = Number(a.distance_km || 0) - Number(b.distance_km || 0);
-        if (Math.abs(distanceDelta) > 0.001) {
-          return distanceDelta;
-        }
-        return Number(a.estimated_total || 0) - Number(b.estimated_total || 0);
-      });
+  lastOptimizationPayload = payload;
+  setFormLoading(true);
+  showStatus("Generating optimized plan...", "info");
+
+  const result = await optimizePlan(payload);
 
   // Hide loading state
   setFormLoading(false);
-      meta.textContent = `${displayed.length} nearby stores found. Ordered by distance first, then estimated price. Open each card to compare branch-specific prices and pickup details.`;
   if (result.ok) {
     lastOptimizationResult = result.data;
     renderOptimizationResult(result.data, "Plan ready. You can save it if you like it.");
