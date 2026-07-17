@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-07-16T23:47:24.481902Z",
+  "generated_at_utc": "2026-07-17T00:57:25.081317Z",
   "source": "free-scraper",
   "quote_count": 60,
   "quotes": [
@@ -13,7 +13,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Brown+Rice",
-      "fetched_at_utc": "2026-07-16T23:45:42.643627Z"
+      "fetched_at_utc": "2026-07-17T00:55:11.223525Z"
     },
     {
       "item_name": "Black Beans",
@@ -25,7 +25,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Black+Beans",
-      "fetched_at_utc": "2026-07-16T23:45:44.170102Z"
+      "fetched_at_utc": "2026-07-17T00:55:13.727392Z"
     },
     {
       "item_name": "Chicken Breast",
@@ -37,7 +37,7 @@
       "unit_price": 3.0,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Chicken+Breast",
-      "fetched_at_utc": "2026-07-16T23:45:46.161419Z"
+      "fetched_at_utc": "2026-07-17T00:55:15.875805Z"
     },
     {
       "item_name": "Greek Yogurt",
@@ -49,7 +49,7 @@
       "unit_price": 3.0,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Greek+Yogurt",
-      "fetched_at_utc": "2026-07-16T23:45:47.676111Z"
+      "fetched_at_utc": "2026-07-17T00:55:18.053968Z"
     },
     {
       "item_name": "Apples",
@@ -61,7 +61,7 @@
       "unit_price": 0.81,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Apples",
-      "fetched_at_utc": "2026-07-16T23:45:49.393704Z"
+      "fetched_at_utc": "2026-07-17T00:55:19.599579Z"
     },
     {
       "item_name": "Broccoli",
@@ -73,7 +73,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Broccoli",
-      "fetched_at_utc": "2026-07-16T23:45:51.688132Z"
+      "fetched_at_utc": "2026-07-17T00:55:21.061842Z"
     },
     {
       "item_name": "Olive Oil",
@@ -85,7 +85,7 @@
       "unit_price": 4.79,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Olive+Oil",
-      "fetched_at_utc": "2026-07-16T23:45:53.664923Z"
+      "fetched_at_utc": "2026-07-17T00:55:24.364356Z"
     },
     {
       "item_name": "Whole Wheat Bread",
@@ -97,7 +97,7 @@
       "unit_price": 0.97,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Whole+Wheat+Bread",
-      "fetched_at_utc": "2026-07-16T23:45:55.234085Z"
+      "fetched_at_utc": "2026-07-17T00:55:26.063740Z"
     },
     {
       "item_name": "Eggs",
@@ -109,7 +109,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Eggs",
-      "fetched_at_utc": "2026-07-16T23:45:56.687394Z"
+      "fetched_at_utc": "2026-07-17T00:55:28.253918Z"
     },
     {
       "item_name": "Frozen Berries",
@@ -121,7 +121,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Frozen+Berries",
-      "fetched_at_utc": "2026-07-16T23:45:58.958703Z"
+      "fetched_at_utc": "2026-07-17T00:55:30.631914Z"
     },
     {
       "item_name": "Brown Rice",
@@ -133,7 +133,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Brown+Rice",
-      "fetched_at_utc": "2026-07-16T23:45:59.640465Z"
+      "fetched_at_utc": "2026-07-17T00:55:31.945143Z"
     },
     {
       "item_name": "Black Beans",
@@ -145,7 +145,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Black+Beans",
-      "fetched_at_utc": "2026-07-16T23:46:01.172764Z"
+      "fetched_at_utc": "2026-07-17T00:55:34.477868Z"
     },
     {
       "item_name": "Chicken Breast",
@@ -157,7 +157,7 @@
       "unit_price": 3.0,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Chicken+Breast",
-      "fetched_at_utc": "2026-07-16T23:46:02.863104Z"
+      "fetched_at_utc": "2026-07-17T00:55:36.013977Z"
     },
     {
       "item_name": "Greek Yogurt",
@@ -169,7 +169,7 @@
       "unit_price": 3.0,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Greek+Yogurt",
-      "fetched_at_utc": "2026-07-16T23:46:03.678144Z"
+      "fetched_at_utc": "2026-07-17T00:55:37.814440Z"
     },
     {
       "item_name": "Apples",
@@ -181,7 +181,7 @@
       "unit_price": 0.81,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Apples",
-      "fetched_at_utc": "2026-07-16T23:46:06.503720Z"
+      "fetched_at_utc": "2026-07-17T00:55:39.514056Z"
     },
     {
       "item_name": "Broccoli",
@@ -193,7 +193,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Broccoli",
-      "fetched_at_utc": "2026-07-16T23:46:08.819962Z"
+      "fetched_at_utc": "2026-07-17T00:55:40.987661Z"
     },
     {
       "item_name": "Olive Oil",
@@ -205,7 +205,7 @@
       "unit_price": 4.79,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Olive+Oil",
-      "fetched_at_utc": "2026-07-16T23:46:09.655242Z"
+      "fetched_at_utc": "2026-07-17T00:55:42.146708Z"
     },
     {
       "item_name": "Whole Wheat Bread",
@@ -217,7 +217,7 @@
       "unit_price": 0.97,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Whole+Wheat+Bread",
-      "fetched_at_utc": "2026-07-16T23:46:11.000080Z"
+      "fetched_at_utc": "2026-07-17T00:55:44.371106Z"
     },
     {
       "item_name": "Eggs",
@@ -229,7 +229,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Eggs",
-      "fetched_at_utc": "2026-07-16T23:46:11.780978Z"
+      "fetched_at_utc": "2026-07-17T00:55:45.560596Z"
     },
     {
       "item_name": "Frozen Berries",
@@ -241,7 +241,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Frozen+Berries",
-      "fetched_at_utc": "2026-07-16T23:46:13.050248Z"
+      "fetched_at_utc": "2026-07-17T00:55:47.136117Z"
     },
     {
       "item_name": "Brown Rice",
@@ -253,7 +253,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Brown+Rice",
-      "fetched_at_utc": "2026-07-16T23:46:13.838529Z"
+      "fetched_at_utc": "2026-07-17T00:55:49.148692Z"
     },
     {
       "item_name": "Black Beans",
@@ -265,7 +265,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Black+Beans",
-      "fetched_at_utc": "2026-07-16T23:46:15.085358Z"
+      "fetched_at_utc": "2026-07-17T00:55:51.319176Z"
     },
     {
       "item_name": "Chicken Breast",
@@ -277,7 +277,7 @@
       "unit_price": 3.0,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Chicken+Breast",
-      "fetched_at_utc": "2026-07-16T23:46:15.891061Z"
+      "fetched_at_utc": "2026-07-17T00:55:53.240252Z"
     },
     {
       "item_name": "Greek Yogurt",
@@ -289,7 +289,7 @@
       "unit_price": 3.0,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Greek+Yogurt",
-      "fetched_at_utc": "2026-07-16T23:46:17.002776Z"
+      "fetched_at_utc": "2026-07-17T00:55:54.457763Z"
     },
     {
       "item_name": "Apples",
@@ -301,7 +301,7 @@
       "unit_price": 0.81,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Apples",
-      "fetched_at_utc": "2026-07-16T23:46:18.225517Z"
+      "fetched_at_utc": "2026-07-17T00:55:56.295823Z"
     },
     {
       "item_name": "Broccoli",
@@ -313,7 +313,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Broccoli",
-      "fetched_at_utc": "2026-07-16T23:46:18.936023Z"
+      "fetched_at_utc": "2026-07-17T00:55:57.524975Z"
     },
     {
       "item_name": "Olive Oil",
@@ -325,7 +325,7 @@
       "unit_price": 4.79,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Olive+Oil",
-      "fetched_at_utc": "2026-07-16T23:46:19.545024Z"
+      "fetched_at_utc": "2026-07-17T00:55:58.795110Z"
     },
     {
       "item_name": "Whole Wheat Bread",
@@ -337,7 +337,7 @@
       "unit_price": 0.97,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Whole+Wheat+Bread",
-      "fetched_at_utc": "2026-07-16T23:46:20.308956Z"
+      "fetched_at_utc": "2026-07-17T00:56:00.284770Z"
     },
     {
       "item_name": "Eggs",
@@ -349,7 +349,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Eggs",
-      "fetched_at_utc": "2026-07-16T23:46:20.910403Z"
+      "fetched_at_utc": "2026-07-17T00:56:01.609162Z"
     },
     {
       "item_name": "Frozen Berries",
@@ -361,7 +361,7 @@
       "unit_price": 1.99,
       "confidence": 0.75,
       "source_url": "https://www.maxi.ca/search?search-bar=Frozen+Berries",
-      "fetched_at_utc": "2026-07-16T23:46:22.505545Z"
+      "fetched_at_utc": "2026-07-17T00:56:02.475479Z"
     },
     {
       "item_name": "Brown Rice",
@@ -373,7 +373,7 @@
       "unit_price": 2.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Brown+Rice",
-      "fetched_at_utc": "2026-07-16T23:46:24.237468Z"
+      "fetched_at_utc": "2026-07-17T00:56:04.586989Z"
     },
     {
       "item_name": "Black Beans",
@@ -385,7 +385,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Black+Beans",
-      "fetched_at_utc": "2026-07-16T23:46:26.777415Z"
+      "fetched_at_utc": "2026-07-17T00:56:06.487744Z"
     },
     {
       "item_name": "Chicken Breast",
@@ -397,7 +397,7 @@
       "unit_price": 3.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Chicken+Breast",
-      "fetched_at_utc": "2026-07-16T23:46:29.438488Z"
+      "fetched_at_utc": "2026-07-17T00:56:09.077107Z"
     },
     {
       "item_name": "Greek Yogurt",
@@ -409,7 +409,7 @@
       "unit_price": 5.0,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Greek+Yogurt",
-      "fetched_at_utc": "2026-07-16T23:46:31.155482Z"
+      "fetched_at_utc": "2026-07-17T00:56:11.123321Z"
     },
     {
       "item_name": "Apples",
@@ -421,7 +421,7 @@
       "unit_price": 1.06,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Apples",
-      "fetched_at_utc": "2026-07-16T23:46:32.706367Z"
+      "fetched_at_utc": "2026-07-17T00:56:12.988287Z"
     },
     {
       "item_name": "Broccoli",
@@ -433,7 +433,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Broccoli",
-      "fetched_at_utc": "2026-07-16T23:46:34.085099Z"
+      "fetched_at_utc": "2026-07-17T00:56:15.785721Z"
     },
     {
       "item_name": "Olive Oil",
@@ -445,7 +445,7 @@
       "unit_price": 5.0,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Olive+Oil",
-      "fetched_at_utc": "2026-07-16T23:46:35.598490Z"
+      "fetched_at_utc": "2026-07-17T00:56:17.589669Z"
     },
     {
       "item_name": "Whole Wheat Bread",
@@ -457,7 +457,7 @@
       "unit_price": 1.75,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Whole+Wheat+Bread",
-      "fetched_at_utc": "2026-07-16T23:46:37.377017Z"
+      "fetched_at_utc": "2026-07-17T00:56:20.300773Z"
     },
     {
       "item_name": "Eggs",
@@ -469,7 +469,7 @@
       "unit_price": 5.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Eggs",
-      "fetched_at_utc": "2026-07-16T23:46:38.953429Z"
+      "fetched_at_utc": "2026-07-17T00:56:22.319025Z"
     },
     {
       "item_name": "Frozen Berries",
@@ -481,7 +481,7 @@
       "unit_price": 2.25,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Frozen+Berries",
-      "fetched_at_utc": "2026-07-16T23:46:40.475592Z"
+      "fetched_at_utc": "2026-07-17T00:56:24.421742Z"
     },
     {
       "item_name": "Brown Rice",
@@ -493,7 +493,7 @@
       "unit_price": 2.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Brown+Rice",
-      "fetched_at_utc": "2026-07-16T23:46:41.270985Z"
+      "fetched_at_utc": "2026-07-17T00:56:26.762906Z"
     },
     {
       "item_name": "Black Beans",
@@ -505,7 +505,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Black+Beans",
-      "fetched_at_utc": "2026-07-16T23:46:42.309329Z"
+      "fetched_at_utc": "2026-07-17T00:56:28.641220Z"
     },
     {
       "item_name": "Chicken Breast",
@@ -517,7 +517,7 @@
       "unit_price": 3.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Chicken+Breast",
-      "fetched_at_utc": "2026-07-16T23:46:43.992318Z"
+      "fetched_at_utc": "2026-07-17T00:56:29.908840Z"
     },
     {
       "item_name": "Greek Yogurt",
@@ -526,10 +526,10 @@
       "postal_code": "H2X1Y5",
       "country": "CA",
       "currency": "CAD",
-      "unit_price": 4.49,
+      "unit_price": 5.0,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Greek+Yogurt",
-      "fetched_at_utc": "2026-07-16T23:46:45.656892Z"
+      "fetched_at_utc": "2026-07-17T00:56:33.202374Z"
     },
     {
       "item_name": "Apples",
@@ -541,7 +541,7 @@
       "unit_price": 1.06,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Apples",
-      "fetched_at_utc": "2026-07-16T23:46:47.895491Z"
+      "fetched_at_utc": "2026-07-17T00:56:35.212390Z"
     },
     {
       "item_name": "Broccoli",
@@ -553,7 +553,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Broccoli",
-      "fetched_at_utc": "2026-07-16T23:46:49.939363Z"
+      "fetched_at_utc": "2026-07-17T00:56:36.891359Z"
     },
     {
       "item_name": "Olive Oil",
@@ -565,7 +565,7 @@
       "unit_price": 5.0,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Olive+Oil",
-      "fetched_at_utc": "2026-07-16T23:46:51.597902Z"
+      "fetched_at_utc": "2026-07-17T00:56:38.148256Z"
     },
     {
       "item_name": "Whole Wheat Bread",
@@ -577,7 +577,7 @@
       "unit_price": 1.75,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Whole+Wheat+Bread",
-      "fetched_at_utc": "2026-07-16T23:46:52.965376Z"
+      "fetched_at_utc": "2026-07-17T00:56:40.346329Z"
     },
     {
       "item_name": "Eggs",
@@ -589,7 +589,7 @@
       "unit_price": 5.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Eggs",
-      "fetched_at_utc": "2026-07-16T23:46:53.710995Z"
+      "fetched_at_utc": "2026-07-17T00:56:42.987074Z"
     },
     {
       "item_name": "Frozen Berries",
@@ -601,7 +601,7 @@
       "unit_price": 2.25,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Frozen+Berries",
-      "fetched_at_utc": "2026-07-16T23:46:55.007780Z"
+      "fetched_at_utc": "2026-07-17T00:56:44.468941Z"
     },
     {
       "item_name": "Brown Rice",
@@ -613,7 +613,7 @@
       "unit_price": 2.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Brown+Rice",
-      "fetched_at_utc": "2026-07-16T23:46:56.655794Z"
+      "fetched_at_utc": "2026-07-17T00:56:45.949255Z"
     },
     {
       "item_name": "Black Beans",
@@ -625,7 +625,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Black+Beans",
-      "fetched_at_utc": "2026-07-16T23:46:57.738999Z"
+      "fetched_at_utc": "2026-07-17T00:56:47.778102Z"
     },
     {
       "item_name": "Chicken Breast",
@@ -637,7 +637,7 @@
       "unit_price": 3.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Chicken+Breast",
-      "fetched_at_utc": "2026-07-16T23:46:59.924418Z"
+      "fetched_at_utc": "2026-07-17T00:56:50.480106Z"
     },
     {
       "item_name": "Greek Yogurt",
@@ -646,10 +646,10 @@
       "postal_code": "H4B2M9",
       "country": "CA",
       "currency": "CAD",
-      "unit_price": 4.49,
+      "unit_price": 5.0,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Greek+Yogurt",
-      "fetched_at_utc": "2026-07-16T23:47:01.390766Z"
+      "fetched_at_utc": "2026-07-17T00:56:52.280244Z"
     },
     {
       "item_name": "Apples",
@@ -661,7 +661,7 @@
       "unit_price": 1.06,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Apples",
-      "fetched_at_utc": "2026-07-16T23:47:03.730122Z"
+      "fetched_at_utc": "2026-07-17T00:56:54.033103Z"
     },
     {
       "item_name": "Broccoli",
@@ -673,7 +673,7 @@
       "unit_price": 1.5,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Broccoli",
-      "fetched_at_utc": "2026-07-16T23:47:04.445126Z"
+      "fetched_at_utc": "2026-07-17T00:56:56.418707Z"
     },
     {
       "item_name": "Olive Oil",
@@ -685,7 +685,7 @@
       "unit_price": 5.0,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Olive+Oil",
-      "fetched_at_utc": "2026-07-16T23:47:05.606606Z"
+      "fetched_at_utc": "2026-07-17T00:56:58.282111Z"
     },
     {
       "item_name": "Whole Wheat Bread",
@@ -697,7 +697,7 @@
       "unit_price": 1.75,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Whole+Wheat+Bread",
-      "fetched_at_utc": "2026-07-16T23:47:06.425802Z"
+      "fetched_at_utc": "2026-07-17T00:56:59.730602Z"
     },
     {
       "item_name": "Eggs",
@@ -709,7 +709,7 @@
       "unit_price": 5.79,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Eggs",
-      "fetched_at_utc": "2026-07-16T23:47:07.374244Z"
+      "fetched_at_utc": "2026-07-17T00:57:00.932257Z"
     },
     {
       "item_name": "Frozen Berries",
@@ -721,7 +721,7 @@
       "unit_price": 2.25,
       "confidence": 0.75,
       "source_url": "https://www.provigo.ca/search?search-bar=Frozen+Berries",
-      "fetched_at_utc": "2026-07-16T23:47:09.794009Z"
+      "fetched_at_utc": "2026-07-17T00:57:03.278584Z"
     }
   ]
 }
