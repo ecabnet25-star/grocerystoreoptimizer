@@ -32,11 +32,7 @@ def _generate_plan(page: Page, *, budget: str = "46", max_items: str = "8") -> N
     page.fill("#healthGoals", "high protein, savings")
     page.click("#generateBtn")
     page.wait_for_selector("#result:not(.hidden)", timeout=20_000)
-    # Savings banner is conditional; do not fail integration if it is not shown.
-    try:
-        page.wait_for_selector("#savingsCelebration:not(.hidden)", timeout=2_000)
-    except TimeoutError:
-        pass
+    page.wait_for_selector("#savingsCelebration:not(.hidden)", timeout=5_000)
     page.wait_for_selector("#chefWidget:not(.hidden)", timeout=8_000)
     _wait_for_route(page)
 

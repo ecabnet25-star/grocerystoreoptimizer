@@ -94,4 +94,6 @@ jobs:
       - name: Run browser integration
         env:
           PYTHONPATH: src
-        run: python scripts/playwright_integration.py
+        run: |
+          python scripts/playwright_integration.py
+          python scripts/browser_smoke.py

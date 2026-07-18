@@ -661,15 +661,18 @@ function renderSavingsCelebration(insights, currency) {
   const liveCoverage = Number(insights?.live_quote_coverage_percent || 0);
   const pricingMode = String(insights?.pricing_mode || "");
   const hasVerifiedPricing = pricingMode.includes("live") || liveCoverage >= 50 || Number(insights?.live_quotes || 0) > 0;
-  if (savings <= 0 || !hasVerifiedPricing) {
+  if (savings <= 0) {
     panel.classList.add("hidden");
     return;
   }
 
-  title.textContent = routeSavings > 0 ? "Verified route savings found" : "Verified savings found";
-  text.textContent = routeSavings > 0
-    ? `This route may net about ${formatCurrency(routeSavings, currency)} after estimated extra travel by splitting items across the best deal stops.`
-    : `This plan may save you up to ${formatCurrency(savings, currency)} versus the highest nearby store estimate. Start with ${bestStore} to keep the most money in your pocket.`;
+  if (routeSavings > 0) {
+    title.textContent = hasVerifiedPricing ? "Verified route savings found" : "Estimated route savings found";
+    text.textContent = `Congratulations. This route may save about ${formatCurrency(routeSavings, currency)} after estimated extra travel by splitting items across worthwhile deal stops.${hasVerifiedPricing ? "" : " Confirm shelf prices before leaving."}`;
+  } else {
+    title.textContent = hasVerifiedPricing ? "Verified savings found" : "Estimated savings found";
+    text.textContent = `Congratulations. This plan may save up to ${formatCurrency(savings, currency)} versus the highest nearby store total. Start with ${bestStore}.${hasVerifiedPricing ? "" : " This is an estimate, so confirm shelf prices before shopping."}`;
+  }
   panel.classList.remove("hidden");
   panel.classList.add("celebrate-pop");
   setTimeout(() => panel.classList.remove("celebrate-pop"), 900);

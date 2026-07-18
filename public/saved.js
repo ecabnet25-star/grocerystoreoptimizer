@@ -415,7 +415,9 @@ document.getElementById("fetchPlanBtn").addEventListener("click", () => {
 // --- Auto-load on page visit ---
 
 if (Session.isActive()) {
+  document.getElementById("savedSignedOutState")?.classList.add("hidden");
   loadAllPlans();
 } else {
+  document.getElementById("savedSignedOutState")?.classList.remove("hidden");
   showStatus(tr("Sign in to see your saved plans.", "Connectez-vous pour voir vos plans sauvegardes."), "info");
 }

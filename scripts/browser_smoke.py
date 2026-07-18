@@ -6,6 +6,27 @@ import time
 from playwright.sync_api import sync_playwright
 
 
+def _audit_layout(page, page_name: str, errors: list[str]) -> None:
+    metrics = page.evaluate(
+        """
+        () => ({
+          horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+          brand: getComputedStyle(document.documentElement).getPropertyValue('--brand').trim(),
+          legacyGreen: getComputedStyle(document.documentElement).getPropertyValue('--green-500').trim(),
+          favicon: document.querySelector('link[rel="icon"]')?.getAttribute('href') || '',
+        })
+        """
+    )
+    if metrics["horizontalOverflow"]:
+        errors.append(f"layout:{page_name}:horizontal overflow")
+    if metrics["brand"].lower() != "#d20f25":
+        errors.append(f"theme:{page_name}:unexpected brand color {metrics['brand']}")
+    if metrics["legacyGreen"]:
+        errors.append(f"theme:{page_name}:legacy green token remains")
+    if "?v=" not in metrics["favicon"]:
+        errors.append(f"cache:{page_name}:favicon URL is not versioned")
+
+
 def main() -> int:
     errors: list[str] = []
     smoke_email = f"browser-smoke-{int(time.time() * 1000)}@example.com"
@@ -23,13 +44,19 @@ def main() -> int:
 
         page.goto("http://127.0.0.1:8080/about.html", wait_until="networkidle")
         page.wait_for_selector("text=Make every grocery dollar work harder", timeout=5_000)
+        _audit_layout(page, "about", errors)
+        page.select_option("#languageSelect", "fr")
+        page.wait_for_selector("text=Faites travailler chaque dollar", timeout=5_000)
+        page.select_option("#languageSelect", "en")
         page.goto("http://127.0.0.1:8080/account.html", wait_until="networkidle")
+        _audit_layout(page, "account", errors)
         page.fill("#createName", "Browser Smoke")
         page.fill("#createEmail", smoke_email)
         page.fill("#createPassword", "Password123")
         page.click("#createAccountBtn")
         page.wait_for_selector("#welcomeCard:not(.hidden)", timeout=10_000)
         page.goto("http://127.0.0.1:8080/index.html", wait_until="networkidle")
+        _audit_layout(page, "plan", errors)
         page.fill("#postalCode", "H3A1A1")
         page.click("#generateBtn")
         page.wait_for_selector("#result:not(.hidden)", timeout=15_000)
@@ -56,6 +83,25 @@ def main() -> int:
         route_marker_count = page.locator(".route-stop-marker").count()
         road_route_count = page.locator("#storeMap .road-route-line").count()
         approx_route_count = page.locator("#storeMap .approx-route-line").count()
+
+        mobile_context = browser.new_context(viewport={"width": 390, "height": 844})
+        mobile_page = mobile_context.new_page()
+        for page_name in ("index", "about", "account", "saved"):
+            mobile_page.goto(f"http://127.0.0.1:8080/{page_name}.html", wait_until="networkidle")
+            _audit_layout(mobile_page, f"{page_name}-mobile", errors)
+        mobile_page.goto("http://127.0.0.1:8080/index.html", wait_until="networkidle")
+        planner_columns = mobile_page.locator("#optionalFields").evaluate(
+            "element => getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length"
+        )
+        if planner_columns != 1:
+            errors.append(f"layout:index-mobile:expected one preference column, found {planner_columns}")
+        mobile_page.goto("http://127.0.0.1:8080/saved.html", wait_until="networkidle")
+        footer_gap = mobile_page.evaluate(
+            "Math.max(0, window.innerHeight - document.querySelector('.site-footer').getBoundingClientRect().bottom)"
+        )
+        if footer_gap > 1:
+            errors.append(f"layout:saved-mobile:footer leaves {footer_gap}px below it")
+        mobile_context.close()
         browser.close()
 
     if errors:
