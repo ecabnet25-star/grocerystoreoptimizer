@@ -45,6 +45,7 @@ def main() -> int:
     label = f"Integration Plan {stamp}"
     saved_count = 0
     current_step = "browser startup"
+    expected_unauthorized = False
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
@@ -52,7 +53,7 @@ def main() -> int:
         page = context.new_page()
 
         def collect_console(msg) -> None:
-            if msg.type == "error" and "401 (Unauthorized)" not in msg.text:
+            if msg.type == "error" and not (expected_unauthorized and "401" in msg.text):
                 errors.append(f"console:error:{msg.text}")
 
         page.on("console", collect_console)
@@ -77,8 +78,10 @@ def main() -> int:
             current_step = "invalid login"
             page.fill("#loginEmail", email)
             page.fill("#loginPassword", "Wrongpass123")
+            expected_unauthorized = True
             page.click("#loginBtn")
             page.wait_for_selector(".status.error", timeout=5_000)
+            expected_unauthorized = False
             current_step = "valid login"
             page.fill("#loginPassword", password)
             page.click("#loginBtn")
