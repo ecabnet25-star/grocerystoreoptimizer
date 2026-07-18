@@ -30,7 +30,7 @@ _discovery_cache: dict[str, dict[str, Any]] = {}
 
 _OVERPASS_ENDPOINTS = (
     "https://overpass-api.de/api/interpreter?data=",
-    "https://overpass.kumi.systems/api/interpreter?data=",
+    "https://overpass.private.coffee/api/interpreter?data=",
 )
 
 

@@ -291,6 +291,11 @@ class TestDiscoverFoodPlaces(unittest.TestCase):
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["stores"][0]["name"], "Recovered Market")
         self.assertEqual(mock_http.call_count, 2)
+        self.assertTrue(
+            mock_http.call_args_list[1].args[0].startswith(
+                "https://overpass.private.coffee/api/interpreter?data="
+            )
+        )
 
     @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
     @patch("grocery_optimizer.geo_discovery._http_get_json")

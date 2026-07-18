@@ -658,7 +658,7 @@ function nearbyStoreIdentity(store) {
   return String(store?.store_id || `${name}|${store?.address || ""}`);
 }
 
-async function expandNearbyStoreCoverage(data, route) {
+async function expandNearbyStoreCoverage(data, route, retryAttempt = 0) {
   const stores = data?.stores || {};
   const postalCode = String(lastOptimizationPayload?.postal_code || "").trim();
   if (!postalCode || stores.auto_discovery_used) {
@@ -677,10 +677,12 @@ async function expandNearbyStoreCoverage(data, route) {
     query.set("country_hint", countryHint);
   }
 
+  let shouldRetry = false;
   try {
     const result = await apiRequest(`/area/scan?${query.toString()}`);
     const scannedStores = Array.isArray(result.data?.stores) ? result.data.stores : [];
     if (!result.ok || result.data?.source !== "osm_overpass" || !scannedStores.length) {
+      shouldRetry = retryAttempt < 1;
       return;
     }
     if (data !== lastOptimizationResult) {
@@ -717,6 +719,11 @@ async function expandNearbyStoreCoverage(data, route) {
     }
   } finally {
     areaScanRequestKey = "";
+    if (shouldRetry && data === lastOptimizationResult) {
+      setTimeout(() => {
+        void expandNearbyStoreCoverage(data, route, retryAttempt + 1);
+      }, 2500);
+    }
   }
 }
 
