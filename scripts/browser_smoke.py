@@ -57,11 +57,15 @@ def main() -> int:
         page.wait_for_selector("#welcomeCard:not(.hidden)", timeout=10_000)
         page.goto("http://127.0.0.1:8080/index.html", wait_until="networkidle")
         _audit_layout(page, "plan", errors)
-        page.fill("#postalCode", "H3A1A1")
+        page.fill("#locationQuery", "H3A1A1")
+        page.fill("#mustHaveItems", "Chicken Breast, 900 g; Romaine Hearts")
         page.click("#generateBtn")
-        page.wait_for_selector("#result:not(.hidden)", timeout=15_000)
+        page.wait_for_selector("#result:not(.hidden)", timeout=20_000)
         page.wait_for_selector("#planActionBoard", timeout=5_000)
-        page.wait_for_selector("#savingsCelebration:not(.hidden)", timeout=5_000)
+        if page.locator("#savingsCelebration:not(.hidden)").count():
+            savings_title = page.locator("#savingsCelebrationTitle").inner_text()
+            if "congrat" in savings_title.lower():
+                errors.append("truthfulness:generic congratulations returned")
         page.wait_for_function(
             "document.querySelector('#storeMap.leaflet-container') || document.querySelector('#storeMap svg')",
             timeout=10_000,
@@ -73,6 +77,9 @@ def main() -> int:
         page.click('[data-chef-auto="Give me three fast dinners from this plan."]')
         page.wait_for_selector("#chefPanel:not(.hidden)", timeout=5_000)
         page.wait_for_function("document.querySelectorAll('.assistant-message').length >= 2", timeout=25_000)
+        page.click("#dealsViewTab")
+        page.wait_for_selector(".deal-card", timeout=10_000)
+        page.click("#planViewTab")
 
         action_count = page.locator(".action-tile").count()
         chef_message_count = page.locator(".assistant-message").count()
@@ -91,11 +98,21 @@ def main() -> int:
             mobile_page.goto(f"http://127.0.0.1:8080/{page_name}.html", wait_until="networkidle")
             _audit_layout(mobile_page, f"{page_name}-mobile", errors)
         mobile_page.goto("http://127.0.0.1:8080/index.html", wait_until="networkidle")
-        planner_columns = mobile_page.locator("#optionalFields").evaluate(
+        planner_columns = mobile_page.locator(".quick-plan-grid").evaluate(
             "element => getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length"
         )
         if planner_columns != 1:
-            errors.append(f"layout:index-mobile:expected one preference column, found {planner_columns}")
+            errors.append(f"layout:index-mobile:expected one planner column, found {planner_columns}")
+        mobile_page.fill("#locationQuery", "H3A1A1")
+        mobile_page.fill("#mustHaveItems", "Chicken Breast, 900 g; Romaine Hearts")
+        mobile_page.click("#generateBtn")
+        mobile_page.wait_for_selector("#result:not(.hidden)", timeout=20_000)
+        _audit_layout(mobile_page, "plan-result-mobile", errors)
+        item_card_widths = mobile_page.locator("#resultItemsBody tr").evaluate_all(
+            "rows => rows.map(row => row.getBoundingClientRect().width)"
+        )
+        if not item_card_widths or max(item_card_widths) > 358:
+            errors.append(f"layout:plan-result-mobile:invalid item card widths {item_card_widths[:3]}")
         mobile_page.goto("http://127.0.0.1:8080/saved.html", wait_until="networkidle")
         footer_gap = mobile_page.evaluate(
             "Math.max(0, window.innerHeight - document.querySelector('.site-footer').getBoundingClientRect().bottom)"
