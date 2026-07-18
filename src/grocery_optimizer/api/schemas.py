@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -36,6 +36,7 @@ class CreateUserRequest(BaseModel):
 class SavePlanRequest(BaseModel):
     label: str = "Untitled Plan"
     optimize_request: OptimizeRequest = Field(default_factory=OptimizeRequest)
+    optimization_result: dict[str, Any] | None = None
 
 
 class LoginRequest(BaseModel):

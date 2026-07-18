@@ -251,6 +251,85 @@ class TestDiscoverFoodPlaces(unittest.TestCase):
         self.assertIn("source", result)
         self.assertEqual(result["source"], "local_config_fallback")
 
+        from grocery_optimizer.geo_discovery import _discovery_cache
+
+        self.assertNotIn("H3A1A1|12.0|", _discovery_cache)
+
+    @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
+    @patch("grocery_optimizer.geo_discovery._http_get_json")
+    @patch("grocery_optimizer.geo_discovery.load_postal_codes")
+    def test_alternate_overpass_provider_recovers(self, mock_load_pc, mock_http, mock_load_stores):
+        from grocery_optimizer.stores import PostalCodeInfo
+
+        mock_load_pc.return_value = {
+            "H3A1A1": PostalCodeInfo(
+                postal_code="H3A1A1",
+                latitude=45.5017,
+                longitude=-73.5673,
+                city="Montreal",
+                province_state="QC",
+                country="CA",
+            )
+        }
+        mock_http.side_effect = [
+            {"elements": []},
+            {
+                "elements": [
+                    {
+                        "type": "node",
+                        "lat": 45.502,
+                        "lon": -73.568,
+                        "tags": {"name": "Recovered Market", "shop": "supermarket"},
+                    }
+                ]
+            },
+        ]
+
+        result = discover_food_places("H3A1A1", radius_km=5.0)
+
+        self.assertEqual(result["source"], "osm_overpass")
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["stores"][0]["name"], "Recovered Market")
+        self.assertEqual(mock_http.call_count, 2)
+
+    @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
+    @patch("grocery_optimizer.geo_discovery._http_get_json")
+    @patch("grocery_optimizer.geo_discovery.load_postal_codes")
+    def test_transient_fallback_is_retried(self, mock_load_pc, mock_http, mock_load_stores):
+        from grocery_optimizer.stores import PostalCodeInfo
+
+        mock_load_pc.return_value = {
+            "H3A1A1": PostalCodeInfo(
+                postal_code="H3A1A1",
+                latitude=45.5017,
+                longitude=-73.5673,
+                city="Montreal",
+                province_state="QC",
+                country="CA",
+            )
+        }
+        mock_http.side_effect = [
+            None,
+            None,
+            {
+                "elements": [
+                    {
+                        "type": "node",
+                        "lat": 45.502,
+                        "lon": -73.568,
+                        "tags": {"name": "Retry Grocer", "shop": "supermarket"},
+                    }
+                ]
+            },
+        ]
+
+        first = discover_food_places("H3A1A1", radius_km=5.0)
+        second = discover_food_places("H3A1A1", radius_km=5.0)
+
+        self.assertEqual(first["source"], "local_config_fallback")
+        self.assertEqual(second["source"], "osm_overpass")
+        self.assertEqual(second["stores"][0]["name"], "Retry Grocer")
+
     @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
     @patch("grocery_optimizer.geo_discovery._http_get_json")
     @patch("grocery_optimizer.geo_discovery.load_postal_codes")

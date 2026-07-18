@@ -406,7 +406,7 @@ async function optimizePlan(payload) {
   });
 }
 
-async function savePlan(label, optimizeRequest) {
+async function savePlan(label, optimizeRequest, optimizationResult = null) {
   if (!Session.isActive()) {
     return { ok: false, data: { detail: "Not signed in" } };
   }
@@ -419,6 +419,7 @@ async function savePlan(label, optimizeRequest) {
     body: JSON.stringify({
       label,
       optimize_request: optimizeRequest,
+      optimization_result: optimizationResult,
     }),
   });
 }

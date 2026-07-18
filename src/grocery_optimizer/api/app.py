@@ -855,6 +855,7 @@ def logout_all(request: AuthTokenRequest, authorization: str = Header(default=""
 class SavePlanForUserRequest(BaseModel):
     label: str = "Untitled Plan"
     optimize_request: dict[str, Any] = Field(default_factory=dict)
+    optimization_result: dict[str, Any] | None = None
     auth_token: str = ""
 
 
@@ -865,7 +866,11 @@ def save_plan_for_user(
     authorization: str = Header(default=""),
 ) -> dict[str, Any]:
     optimize_payload = OptimizeRequest(**request.optimize_request)
-    payload = SavePlanRequest(label=request.label, optimize_request=optimize_payload)
+    payload = SavePlanRequest(
+        label=request.label,
+        optimize_request=optimize_payload,
+        optimization_result=request.optimization_result,
+    )
     token = _resolve_auth_token(auth_token=request.auth_token, authorization=authorization)
     try:
         return save_optimized_plan(user_id, payload, auth_token=token)

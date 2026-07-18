@@ -178,7 +178,11 @@ def save_optimized_plan(
     if user is None:
         raise ValueError("User not found")
 
-    optimization_result = optimize_from_request(request.optimize_request)
+    optimization_result = (
+        request.optimization_result
+        if request.optimization_result is not None
+        else optimize_from_request(request.optimize_request)
+    )
     saved = save_plan(
         user_id=user_id,
         label=request.label,

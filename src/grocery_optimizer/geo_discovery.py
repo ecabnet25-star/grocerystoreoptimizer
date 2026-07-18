@@ -28,6 +28,11 @@ _geocode_cache: dict[str, GeoPoint | None] = {}
 # In-memory cache for Overpass store discovery results (keyed by postal+radius).
 _discovery_cache: dict[str, dict[str, Any]] = {}
 
+_OVERPASS_ENDPOINTS = (
+    "https://overpass-api.de/api/interpreter?data=",
+    "https://overpass.kumi.systems/api/interpreter?data=",
+)
+
 
 def _close_http_error(error: HTTPError) -> None:
     try:
@@ -231,16 +236,27 @@ def discover_food_places(
     query = f"""
 [out:json][timeout:25];
 (
-  node["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace|deli|seafood|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
-  way["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace|deli|seafood|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
-  relation["shop"~"supermarket|convenience|butcher|bakery|greengrocer|marketplace|deli|seafood|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
+  node["shop"~"supermarket|grocery|greengrocer|health_food|wholesale|department_store"](around:{radius_m},{point.latitude},{point.longitude});
+  way["shop"~"supermarket|grocery|greengrocer|health_food|wholesale|department_store"](around:{radius_m},{point.latitude},{point.longitude});
+  relation["shop"~"supermarket|grocery|greengrocer|health_food|wholesale|department_store"](around:{radius_m},{point.latitude},{point.longitude});
   node["amenity"="marketplace"](around:{radius_m},{point.latitude},{point.longitude});
 );
 out center tags;
 """.strip()
 
-    overpass_url = "https://overpass-api.de/api/interpreter?data=" + quote(query)
-    payload = _http_get_json(overpass_url, timeout_seconds=10)
+    payload: Any = None
+    provider = ""
+    encoded_query = quote(query)
+    for endpoint in _OVERPASS_ENDPOINTS:
+        candidate = _http_get_json(endpoint + encoded_query, timeout_seconds=5)
+        if (
+            isinstance(candidate, dict)
+            and isinstance(candidate.get("elements"), list)
+            and candidate["elements"]
+        ):
+            payload = candidate
+            provider = endpoint.split("/api/", 1)[0]
+            break
 
     if not payload or not isinstance(payload, dict):
         # Graceful fallback: use local configured stores by distance.
@@ -279,7 +295,6 @@ out center tags;
             "detail": "Area scan service unavailable. Used local store catalog fallback.",
             "scanned_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
-        _discovery_cache[disc_key] = fallback_result
         return fallback_result
 
     payload_dict = cast(dict[str, Any], payload)
@@ -361,8 +376,10 @@ out center tags;
         "stores": deduped,
         "count": len(deduped),
         "source": "osm_overpass",
+        "provider": provider,
         "detail": "ok",
         "scanned_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     }
-    _discovery_cache[disc_key] = result
+    if deduped:
+        _discovery_cache[disc_key] = result
     return result

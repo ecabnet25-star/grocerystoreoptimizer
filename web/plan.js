@@ -6,6 +6,8 @@ let lastLocationCurrency = "CAD";
 let livePricingIntervalId = null;
 let chefIsResponding = false;
 let routeMap = null;
+let areaScanRequestKey = "";
+let areaScanCompletedKey = "";
 const PRESET_BREAKDOWNS = {
   balanced: {
     title: "Balanced split",
@@ -629,6 +631,95 @@ function renderStoreMap(nearbyStores, route) {
   }
 }
 
+function updateMapRouteSummary(nearbyStores, route) {
+  const mapRouteTitle = document.getElementById("mapRouteTitle");
+  const mapRouteBadge = document.getElementById("mapRouteBadge");
+  if (!mapRouteTitle || !mapRouteBadge) {
+    return;
+  }
+
+  const nearbyCount = Array.isArray(nearbyStores) ? nearbyStores.length : 0;
+  const stopCount = Array.isArray(route?.stops) ? route.stops.length : 0;
+  mapRouteTitle.textContent = currentLanguage === "fr"
+    ? `${nearbyCount} magasins proches · ${stopCount} arrêt(s) conseillé(s)`
+    : `${nearbyCount} nearby stores · ${stopCount} recommended stop(s)`;
+  mapRouteBadge.textContent = route?.skipped_store_count
+    ? (currentLanguage === "fr" ? `${route.skipped_store_count} magasin(s) ignoré(s)` : `${route.skipped_store_count} store(s) skipped`)
+    : (currentLanguage === "fr" ? "Meilleure valeur" : "Best value");
+}
+
+function nearbyStoreIdentity(store) {
+  const name = String(store?.name || "").trim().toLowerCase();
+  const latitude = Number(store?.latitude);
+  const longitude = Number(store?.longitude);
+  if (name && Number.isFinite(latitude) && Number.isFinite(longitude)) {
+    return `${name}|${latitude.toFixed(4)}|${longitude.toFixed(4)}`;
+  }
+  return String(store?.store_id || `${name}|${store?.address || ""}`);
+}
+
+async function expandNearbyStoreCoverage(data, route) {
+  const stores = data?.stores || {};
+  const postalCode = String(lastOptimizationPayload?.postal_code || "").trim();
+  if (!postalCode || stores.auto_discovery_used) {
+    return;
+  }
+
+  const countryHint = String(lastOptimizationPayload?.country_hint || "").trim();
+  const requestKey = `${postalCode}|${countryHint}`;
+  if (areaScanRequestKey === requestKey || areaScanCompletedKey === requestKey) {
+    return;
+  }
+
+  areaScanRequestKey = requestKey;
+  const query = new URLSearchParams({ postal_code: postalCode, radius_km: "12" });
+  if (countryHint) {
+    query.set("country_hint", countryHint);
+  }
+
+  try {
+    const result = await apiRequest(`/area/scan?${query.toString()}`);
+    const scannedStores = Array.isArray(result.data?.stores) ? result.data.stores : [];
+    if (!result.ok || result.data?.source !== "osm_overpass" || !scannedStores.length) {
+      return;
+    }
+    if (data !== lastOptimizationResult) {
+      return;
+    }
+
+    areaScanCompletedKey = requestKey;
+    const currentStores = Array.isArray(stores.nearby) ? stores.nearby : [];
+    const mergedStores = [...currentStores];
+    const seen = new Set(currentStores.map(nearbyStoreIdentity));
+    scannedStores.forEach((store) => {
+      const key = nearbyStoreIdentity(store);
+      if (!seen.has(key)) {
+        seen.add(key);
+        mergedStores.push(store);
+      }
+    });
+
+    if (mergedStores.length === currentStores.length) {
+      return;
+    }
+
+    stores.nearby = mergedStores;
+    renderStoreMap(mergedStores, route);
+    renderNearbyStoreDirectory(mergedStores, stores.comparison || [], lastLocationCurrency, route);
+    updateMapRouteSummary(mergedStores, route);
+
+    const meta = document.getElementById("storeComparisonMeta");
+    if (meta) {
+      const addedCount = mergedStores.length - currentStores.length;
+      meta.textContent += currentLanguage === "fr"
+        ? ` ${addedCount} emplacement(s) supplémentaire(s) ont été trouvés; les estimations de prix peuvent être indisponibles.`
+        : ` ${addedCount} additional map location(s) found; price estimates may be unavailable.`;
+    }
+  } finally {
+    areaScanRequestKey = "";
+  }
+}
+
 function renderSavingsCelebration(insights, currency) {
   const panel = document.getElementById("savingsCelebration");
   const title = document.getElementById("savingsCelebrationTitle");
@@ -1026,14 +1117,8 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   livePricingStatus.textContent = stores.last_updated_utc || "";
 
   renderStoreMap(stores.nearby || [], route);
-  const mapRouteTitle = document.getElementById("mapRouteTitle");
-  const mapRouteBadge = document.getElementById("mapRouteBadge");
-  if (mapRouteTitle && mapRouteBadge) {
-    mapRouteTitle.textContent = `${stores.nearby?.length || 0} nearby stores · ${route?.stops?.length || 0} recommended stop(s)`;
-    mapRouteBadge.textContent = route?.skipped_store_count
-      ? `${route.skipped_store_count} store(s) skipped`
-      : "Best value";
-  }
+  updateMapRouteSummary(stores.nearby || [], route);
+  void expandNearbyStoreCoverage(data, route);
 
   if (route && Array.isArray(route.stops) && route.stops.length > 0) {
     const routeStops = document.getElementById("routeStops");
@@ -1467,7 +1552,7 @@ document.getElementById("saveModalConfirm").addEventListener("click", async () =
     return;
   }
 
-  const result = await savePlan(label, lastOptimizationPayload);
+  const result = await savePlan(label, lastOptimizationPayload, lastOptimizationResult);
 
   if (result.ok) {
     showStatus(`Plan saved: ${escapeHtml(result.data.saved.id)}`, "success");

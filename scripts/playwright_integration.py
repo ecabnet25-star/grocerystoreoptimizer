@@ -44,6 +44,7 @@ def main() -> int:
     password = "Password123"
     label = f"Integration Plan {stamp}"
     saved_count = 0
+    current_step = "browser startup"
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
@@ -58,27 +59,34 @@ def main() -> int:
         page.on("pageerror", lambda exc: errors.append(f"pageerror:{exc}"))
 
         try:
+            current_step = "About page"
             page.goto(f"{WEB_URL}/about.html", wait_until="domcontentloaded")
             page.wait_for_selector("text=Make every grocery dollar work harder", timeout=5_000)
             assert page.locator('nav a[href="about.html"]').count() == 1
 
+            current_step = "account creation"
             page.goto(f"{WEB_URL}/account.html", wait_until="domcontentloaded")
             page.fill("#createName", "Playwright User")
             page.fill("#createEmail", email)
             page.fill("#createPassword", password)
             page.click("#createAccountBtn")
             page.wait_for_selector("#welcomeCard:not(.hidden)", timeout=10_000)
+            current_step = "logout"
             page.click("#logoutBtn")
             page.wait_for_function("document.querySelector('#welcomeCard')?.classList.contains('hidden')", timeout=5_000)
+            current_step = "invalid login"
             page.fill("#loginEmail", email)
             page.fill("#loginPassword", "Wrongpass123")
             page.click("#loginBtn")
             page.wait_for_selector(".status.error", timeout=5_000)
+            current_step = "valid login"
             page.fill("#loginPassword", password)
             page.click("#loginBtn")
             page.wait_for_selector("#welcomeCard:not(.hidden)", timeout=10_000)
 
+            current_step = "initial plan generation"
             _generate_plan(page)
+            current_step = "plan save"
             page.click("#savePlanBtn")
             page.wait_for_selector("#saveModal.active", timeout=5_000)
             page.fill("#savePlanName", label)
@@ -88,24 +96,29 @@ def main() -> int:
                 timeout=10_000,
             )
 
+            current_step = "saved-plan library"
             page.goto(f"{WEB_URL}/saved.html", wait_until="domcontentloaded")
             page.wait_for_selector(".saved-plan", timeout=10_000)
             page.fill("#planSearch", label)
             page.wait_for_function("document.querySelectorAll('.saved-plan:not(.hidden-by-search)').length >= 1")
             saved_count = page.locator(".saved-plan:not(.hidden-by-search)").count()
             first_plan = page.locator(".saved-plan:not(.hidden-by-search)").first
+            current_step = "saved-plan detail"
             first_plan.locator('[data-action="open"]').click()
             page.wait_for_selector("#planDetail:not(.hidden)", timeout=8_000)
             page.click("#backToListBtn")
             page.wait_for_selector("#plansList:not(.hidden)", timeout=5_000)
+            current_step = "saved-plan reuse"
             page.locator(".saved-plan:not(.hidden-by-search)").first.locator('[data-action="reuse"]').click()
 
+            current_step = "reused plan generation"
             page.wait_for_url("**/index.html", timeout=8_000)
             page.wait_for_function("document.querySelector('#postalCode')?.value === 'H3A1A1'", timeout=8_000)
             page.click("#generateBtn")
             page.wait_for_selector("#result:not(.hidden)", timeout=20_000)
             _wait_for_route(page)
 
+            current_step = "Chef response"
             page.click("#chefLauncher")
             page.fill("#assistantInput", "Give me two fast meals from this exact plan.")
             page.click("#assistantSendBtn")
@@ -116,7 +129,7 @@ def main() -> int:
             chef_message_count = page.locator(".assistant-message").count()
             nearby_store_count = page.locator(".nearby-store-row").count()
         except TimeoutError as exc:
-            errors.append(f"timeout:{exc}")
+            errors.append(f"timeout:{current_step}:{exc}")
             route_stop_count = route_line_count = chef_message_count = nearby_store_count = saved_count = 0
         except AssertionError as exc:
             errors.append(f"assertion:{exc}")

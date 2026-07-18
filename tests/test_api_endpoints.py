@@ -323,9 +323,15 @@ class TestAPIEndpoints(unittest.TestCase):
             json={
                 "label": "Header Plan",
                 "optimize_request": {"budget": 25, "max_items": 4, "location": "montreal"},
+                "optimization_result": {
+                    "summary": {"total_cost": 12.34},
+                    "items": [],
+                    "source": "precomputed-test-result",
+                },
             },
         )
         self.assertEqual(save_response.status_code, 200)
+        self.assertEqual(save_response.json()["result"]["source"], "precomputed-test-result")
         plan_id = save_response.json()["saved"]["id"]
 
         list_response = self.client.get(f"/users/{user_id}/plans", headers=headers)

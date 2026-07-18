@@ -304,7 +304,11 @@ def _apply_auto_discovery(
     """
     auto_discovery_enabled = os.getenv("GROCERY_ENABLE_AUTO_DISCOVERY", "true").lower() == "true"
     auto_scan: dict[str, Any] = (
-        discover_food_places(request.postal_code, radius_km=12.0)
+        discover_food_places(
+            request.postal_code,
+            radius_km=12.0,
+            country_hint=request.country_hint,
+        )
         if request.postal_code and auto_discovery_enabled
         else {"stores": []}
     )
@@ -313,11 +317,16 @@ def _apply_auto_discovery(
     if not scan_stores:
         return nearby
 
-    seen_keys = {
-        (store.name.lower(), round(distance, 1))
-        for store, distance in nearby
+    seen_ids = {str(store.store_id) for store, _distance in nearby}
+    seen_locations = {
+        (
+            store.name.lower(),
+            round(float(store.latitude), 4),
+            round(float(store.longitude), 4),
+        )
+        for store, _distance in nearby
     }
-    for s in scan_stores[:30]:
+    for s in scan_stores:
         if not isinstance(s, dict):
             continue
         s_dict = cast(dict[str, Any], s)
@@ -335,10 +344,15 @@ def _apply_auto_discovery(
             location_id=str(s_dict.get("location_id", "auto-discovered")),
         )
         dist = float(s_dict.get("distance_km", 0.0))
-        key = (discovered_store.name.lower(), round(dist, 1))
-        if key in seen_keys:
+        location_key = (
+            discovered_store.name.lower(),
+            round(discovered_store.latitude, 4),
+            round(discovered_store.longitude, 4),
+        )
+        if discovered_store.store_id in seen_ids or location_key in seen_locations:
             continue
-        seen_keys.add(key)
+        seen_ids.add(discovered_store.store_id)
+        seen_locations.add(location_key)
         nearby.append((discovered_store, dist))
 
     return nearby
@@ -791,7 +805,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             return None, []
         origin, nearby = _resolve_origin(request, postal_codes, profile, all_stores, travel_profile, country_hint)
         nearby = _apply_auto_discovery(request, nearby, normalized_postal)
-        nearby = _prioritize_stores(nearby, profile, max_candidate_stores=50)
+        nearby = _prioritize_stores(nearby, profile, max_candidate_stores=75)
         return origin, nearby
 
     with ThreadPoolExecutor(max_workers=2) as pool:
