@@ -2710,7 +2710,12 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
 
 .nearby-store-list {
   margin-top: 14px;
+  max-height: min(620px, 70vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
   border-top: 1px solid var(--border);
+  scrollbar-color: var(--red-300) var(--gray-100);
 }
 
 .nearby-store-row {
@@ -2753,6 +2758,7 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
   .saved-auth-prompt { align-items: flex-start; flex-direction: column; }
   .nearby-store-heading, .nearby-store-row { align-items: flex-start; flex-direction: column; }
   .nearby-store-facts { justify-content: flex-start; flex-wrap: wrap; }
+  .nearby-store-list { max-height: 520px; }
 }
 
 @media (max-width: 600px) {
