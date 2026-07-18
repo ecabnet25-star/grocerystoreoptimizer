@@ -5,7 +5,9 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import lru_cache
 from hashlib import sha1
+from pathlib import Path
 from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -32,6 +34,61 @@ _OVERPASS_ENDPOINTS = (
     "https://overpass-api.de/api/interpreter?data=",
     "https://overpass.private.coffee/api/interpreter?data=",
 )
+
+_GROCERY_SHOP_TYPES = {"supermarket", "grocery", "greengrocer", "health_food", "wholesale"}
+_GROCERY_DEPARTMENT_STORE_NAMES = ("walmart", "giant tiger", "tigre géant")
+
+
+def _is_grocery_location(name: str, tags: dict[str, Any]) -> bool:
+    shop_types = {part.strip() for part in str(tags.get("shop", "")).lower().split(";") if part.strip()}
+    if shop_types & _GROCERY_SHOP_TYPES:
+        return True
+    normalized_name = name.lower()
+    if "department_store" in shop_types and any(chain in normalized_name for chain in _GROCERY_DEPARTMENT_STORE_NAMES):
+        return True
+    return str(tags.get("amenity", "")).lower() == "marketplace"
+
+
+@lru_cache(maxsize=1)
+def _load_discovery_snapshot_stores(
+    base_dir: str = "config/discovery_snapshots",
+) -> tuple[dict[str, Any], ...]:
+    root = Path(base_dir)
+    if not root.exists():
+        return ()
+
+    stores: list[dict[str, Any]] = []
+    for path in sorted(root.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        rows = payload.get("stores", []) if isinstance(payload, dict) else []
+        stores.extend(cast(dict[str, Any], row) for row in rows if isinstance(row, dict))
+    return tuple(stores)
+
+
+def _nearby_snapshot_stores(point: GeoPoint, radius_km: float) -> list[dict[str, Any]]:
+    nearby: list[dict[str, Any]] = []
+    for stored in _load_discovery_snapshot_stores():
+        tags = dict(stored.get("tags", {})) if isinstance(stored.get("tags"), dict) else {}
+        if not _is_grocery_location(str(stored.get("name", "")), tags):
+            continue
+        try:
+            latitude = float(stored["latitude"])
+            longitude = float(stored["longitude"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        distance = calculate_distance_km(point.latitude, point.longitude, latitude, longitude)
+        if distance > radius_km:
+            continue
+        row = dict(stored)
+        row["distance_km"] = distance
+        tags["source"] = "bundled_osm_snapshot"
+        row["tags"] = tags
+        nearby.append(row)
+    nearby.sort(key=lambda store: float(store.get("distance_km", 0.0)))
+    return nearby
 
 
 def _close_http_error(error: HTTPError) -> None:
@@ -236,9 +293,12 @@ def discover_food_places(
     query = f"""
 [out:json][timeout:25];
 (
-  node["shop"~"supermarket|grocery|greengrocer|health_food|wholesale|department_store"](around:{radius_m},{point.latitude},{point.longitude});
-  way["shop"~"supermarket|grocery|greengrocer|health_food|wholesale|department_store"](around:{radius_m},{point.latitude},{point.longitude});
-  relation["shop"~"supermarket|grocery|greengrocer|health_food|wholesale|department_store"](around:{radius_m},{point.latitude},{point.longitude});
+  node["shop"~"supermarket|grocery|greengrocer|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
+  way["shop"~"supermarket|grocery|greengrocer|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
+  relation["shop"~"supermarket|grocery|greengrocer|health_food|wholesale"](around:{radius_m},{point.latitude},{point.longitude});
+  node["shop"="department_store"]["name"~"Walmart|Giant Tiger|Tigre Géant",i](around:{radius_m},{point.latitude},{point.longitude});
+  way["shop"="department_store"]["name"~"Walmart|Giant Tiger|Tigre Géant",i](around:{radius_m},{point.latitude},{point.longitude});
+  relation["shop"="department_store"]["name"~"Walmart|Giant Tiger|Tigre Géant",i](around:{radius_m},{point.latitude},{point.longitude});
   node["amenity"="marketplace"](around:{radius_m},{point.latitude},{point.longitude});
 );
 out center tags;
@@ -248,7 +308,7 @@ out center tags;
     provider = ""
     encoded_query = quote(query)
     for endpoint in _OVERPASS_ENDPOINTS:
-        candidate = _http_get_json(endpoint + encoded_query, timeout_seconds=5)
+        candidate = _http_get_json(endpoint + encoded_query, timeout_seconds=4)
         if (
             isinstance(candidate, dict)
             and isinstance(candidate.get("elements"), list)
@@ -259,11 +319,23 @@ out center tags;
             break
 
     if not payload or not isinstance(payload, dict):
-        # Graceful fallback: use local configured stores by distance.
-        fallback_stores = []
+        # Graceful fallback: use the bundled map snapshot and curated catalog.
+        fallback_stores = _nearby_snapshot_stores(point, radius_km)
+        seen_locations = {
+            (
+                str(store.get("name", "")).lower(),
+                round(float(store.get("latitude", 0.0)), 4),
+                round(float(store.get("longitude", 0.0)), 4),
+            )
+            for store in fallback_stores
+        }
         for store in load_stores():
             distance = calculate_distance_km(point.latitude, point.longitude, store.latitude, store.longitude)
             if distance <= radius_km:
+                location_key = (store.name.lower(), round(store.latitude, 4), round(store.longitude, 4))
+                if location_key in seen_locations:
+                    continue
+                seen_locations.add(location_key)
                 fallback_stores.append(
                     {
                         "store_id": store.store_id,
@@ -281,6 +353,11 @@ out center tags;
                 )
 
         fallback_stores.sort(key=lambda s: s["distance_km"])
+        used_snapshot = any(
+            isinstance(store.get("tags"), dict)
+            and store["tags"].get("source") == "bundled_osm_snapshot"
+            for store in fallback_stores
+        )
         fallback_result = {
             "origin": {
                 "postal_code": postal_code,
@@ -291,8 +368,12 @@ out center tags;
             },
             "stores": fallback_stores,
             "count": len(fallback_stores),
-            "source": "local_config_fallback",
-            "detail": "Area scan service unavailable. Used local store catalog fallback.",
+            "source": "bundled_osm_snapshot" if used_snapshot else "local_config_fallback",
+            "detail": (
+                "Live area scan unavailable. Used the bundled OpenStreetMap location snapshot."
+                if used_snapshot
+                else "Area scan service unavailable. Used local store catalog fallback."
+            ),
             "scanned_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
         return fallback_result
@@ -322,6 +403,8 @@ out center tags;
             continue
 
         name = _normalize_store_name(raw_name)
+        if not _is_grocery_location(name, cast(dict[str, Any], tags)):
+            continue
         chain = str(tags.get("brand", name)).strip() or name
         distance = calculate_distance_km(point.latitude, point.longitude, float(lat), float(lon))
         street = str(tags.get("addr:street", "")).strip()

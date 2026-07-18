@@ -138,6 +138,20 @@ class TestDiscoverFoodPlaces(unittest.TestCase):
         _geocode_cache.clear()
         _discovery_cache.clear()
 
+    def test_bundled_montreal_snapshot_contains_only_grocery_locations(self):
+        from grocery_optimizer.geo_discovery import (
+            _is_grocery_location,
+            _load_discovery_snapshot_stores,
+        )
+
+        rows = _load_discovery_snapshot_stores()
+        self.assertGreaterEqual(len(rows), 100)
+        self.assertNotIn("Winners", {str(row.get("name", "")) for row in rows})
+        for row in rows:
+            tags = row.get("tags", {})
+            self.assertIsInstance(tags, dict)
+            self.assertTrue(_is_grocery_location(str(row.get("name", "")), tags))
+
     @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
     @patch("grocery_optimizer.geo_discovery._http_get_json")
     @patch("grocery_optimizer.geo_discovery.load_postal_codes")
@@ -223,10 +237,13 @@ class TestDiscoverFoodPlaces(unittest.TestCase):
         self.assertEqual(result["stores"], [])
         self.assertEqual(result["count"], 0)
 
+    @patch("grocery_optimizer.geo_discovery._load_discovery_snapshot_stores", return_value=())
     @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
     @patch("grocery_optimizer.geo_discovery._http_get_json")
     @patch("grocery_optimizer.geo_discovery.load_postal_codes")
-    def test_overpass_failure_uses_local_fallback(self, mock_load_pc, mock_http, mock_load_stores):
+    def test_overpass_failure_uses_local_fallback(
+        self, mock_load_pc, mock_http, mock_load_stores, mock_snapshot_stores
+    ):
         """If Overpass API fails, function falls back to local store config."""
         from grocery_optimizer.stores import PostalCodeInfo
 
@@ -254,6 +271,47 @@ class TestDiscoverFoodPlaces(unittest.TestCase):
         from grocery_optimizer.geo_discovery import _discovery_cache
 
         self.assertNotIn("H3A1A1|12.0|", _discovery_cache)
+
+    @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
+    @patch("grocery_optimizer.geo_discovery._http_get_json", return_value=None)
+    @patch("grocery_optimizer.geo_discovery.load_postal_codes")
+    @patch("grocery_optimizer.geo_discovery._load_discovery_snapshot_stores")
+    def test_overpass_failure_uses_bundled_snapshot(
+        self, mock_snapshot_stores, mock_load_pc, mock_http, mock_load_stores
+    ):
+        from grocery_optimizer.stores import PostalCodeInfo
+
+        mock_load_pc.return_value = {
+            "H3A1A1": PostalCodeInfo(
+                postal_code="H3A1A1",
+                latitude=45.5017,
+                longitude=-73.5673,
+                city="Montreal",
+                province_state="QC",
+                country="CA",
+            )
+        }
+        mock_snapshot_stores.return_value = (
+            {
+                "store_id": "scan-snapshot",
+                "name": "Snapshot Market",
+                "chain": "Snapshot Market",
+                "address": "1 Snapshot Street",
+                "latitude": 45.502,
+                "longitude": -73.568,
+                "price_tier": "mid",
+                "quality_rating": 4.0,
+                "location_id": "montreal",
+                "tags": {"shop": "supermarket"},
+            },
+        )
+
+        result = discover_food_places("H3A1A1", radius_km=5.0)
+
+        self.assertEqual(result["source"], "bundled_osm_snapshot")
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["stores"][0]["name"], "Snapshot Market")
+        self.assertEqual(result["stores"][0]["tags"]["source"], "bundled_osm_snapshot")
 
     @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
     @patch("grocery_optimizer.geo_discovery._http_get_json")
@@ -297,10 +355,13 @@ class TestDiscoverFoodPlaces(unittest.TestCase):
             )
         )
 
+    @patch("grocery_optimizer.geo_discovery._load_discovery_snapshot_stores", return_value=())
     @patch("grocery_optimizer.geo_discovery.load_stores", return_value=[])
     @patch("grocery_optimizer.geo_discovery._http_get_json")
     @patch("grocery_optimizer.geo_discovery.load_postal_codes")
-    def test_transient_fallback_is_retried(self, mock_load_pc, mock_http, mock_load_stores):
+    def test_transient_fallback_is_retried(
+        self, mock_load_pc, mock_http, mock_load_stores, mock_snapshot_stores
+    ):
         from grocery_optimizer.stores import PostalCodeInfo
 
         mock_load_pc.return_value = {
