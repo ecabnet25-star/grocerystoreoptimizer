@@ -11,38 +11,88 @@ from urllib.request import Request, urlopen
 from ..unit_pricing import normalized_unit_price, parse_package_size
 
 DEFAULT_FLIPP_SEARCH_URL = "https://cdn-gateflipp.flippback.com/bf/flipp/items/search"
-_TOKEN_STOPWORDS = {"and", "the", "fresh", "product", "produit", "your", "market"}
+_TOKEN_STOPWORDS = {"and", "or", "ou", "the", "fresh", "product", "produit", "your", "market"}
+_NON_MATCHING_PHRASES = {"nature valley"}
+_NON_GROCERY_TERMS = {
+    "bird",
+    "birdhouse",
+    "candle",
+    "cleaner",
+    "conditioner",
+    "cooker",
+    "costume",
+    "decor",
+    "deodorant",
+    "detergent",
+    "feeder",
+    "house",
+    "litter",
+    "lotion",
+    "ornament",
+    "serum",
+    "shampoo",
+    "shirt",
+    "slime",
+    "slimygloop",
+    "soap",
+    "sock",
+    "toy",
+}
 _DERIVATIVE_TERMS = {
+    "baby",
     "bar",
+    "becel",
+    "blend",
     "brochette",
+    "bread",
     "breaded",
+    "canola",
     "candy",
     "cereal",
     "chip",
+    "chocolate",
     "cider",
+    "coconut",
+    "condensed",
     "cooked",
     "cookie",
     "cracker",
     "deli",
     "diced",
+    "dijon",
+    "dijonnaise",
+    "dried",
     "drink",
+    "ice",
     "juice",
+    "loaf",
+    "margarine",
     "marinated",
     "meal",
+    "pam",
+    "paratha",
     "pie",
     "pizza",
     "prepared",
+    "puree",
+    "reese",
     "roast",
     "roasted",
     "salad",
+    "sardine",
     "sauce",
     "seasoned",
+    "shish",
     "skewer",
     "slice",
     "smoked",
     "smoothie",
     "soup",
+    "spray",
+    "spread",
     "stuffed",
+    "taouk",
+    "vegetable",
 }
 
 
@@ -63,9 +113,14 @@ def _tokens(value: str) -> set[str]:
 
 
 def item_match_score(query: str, candidate: str) -> float:
+    candidate_text = _plain_text(candidate)
+    if any(phrase in candidate_text for phrase in _NON_MATCHING_PHRASES):
+        return 0.0
     requested = _tokens(query)
     available = _tokens(candidate)
     if not requested or not available:
+        return 0.0
+    if available & _NON_GROCERY_TERMS:
         return 0.0
     overlap = len(requested & available)
     coverage = overlap / len(requested)
@@ -201,6 +256,8 @@ def parse_flipp_quotes(
         except (TypeError, ValueError):
             original = None
         package_size, package_unit, package_label = parse_package_size(product_name)
+        if item_category == "produce" and package_size is not None and package_unit in {"ml", "l"}:
+            continue
         basis_size, basis_unit, basis_label = _price_basis(row.get("post_price_text"))
         if basis_size is not None:
             package_size, package_unit, package_label = basis_size, basis_unit, basis_label

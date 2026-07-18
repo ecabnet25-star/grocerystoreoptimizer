@@ -16,6 +16,19 @@ def test_product_identity_rejects_processed_lookalikes() -> None:
     assert item_match_score("Chicken Breast", "Fresh boneless skinless chicken breasts") >= 0.72
     assert item_match_score("Chicken Breast", "Smoked deli chicken breast slices") < 0.72
     assert item_match_score("Eggs", "Made Foods Egg Salad Wedge") < 0.72
+    assert item_match_score("Peanut Butter", "Tasc Peanut Butter Bird House") == 0
+    assert item_match_score("Peanut Butter", "SLIMYGLOOP Chunky Peanut Butter") == 0
+    assert item_match_score("Peanut Butter", "ONE REESE'S Peanut Butter") < 0.72
+    assert item_match_score("Quinoa", "Lekue Quinoa And Rice Cooker Green") == 0
+    assert item_match_score("Quinoa", "Promise Gluten Free Quinoa & Chia Loaf") < 0.72
+    assert item_match_score("Quinoa", "Country Harvest Flax & Quinoa Sliced Bread") < 0.72
+    assert item_match_score("Olive Oil", "Becel With Olive Oil 400g") < 0.72
+    assert item_match_score("Olive Oil", "Gabriel Sardines In Olive Oil 120") < 0.72
+    assert item_match_score("Olive Oil", "Great Value Canola Olive Oil Blend 1 L") < 0.72
+    assert item_match_score("Milk", "Grace coconut milk") < 0.72
+    assert item_match_score("Milk", "Cedar Sweetened Condensed Milk") < 0.72
+    assert item_match_score("Sweet Potatoes", "Baby sweet potatoes puree pouch") < 0.72
+    assert item_match_score("Peanut Butter", "Nature Valley Crunchy Peanut Butter 210g") == 0
 
 
 def test_distinct_loblaw_banners_do_not_match() -> None:
@@ -52,3 +65,24 @@ def test_flipp_parser_handles_multi_buy_and_validity() -> None:
     assert quotes[0]["offer_quantity"] == 2
     assert quotes[0]["normalized_unit_price"] == 0.6667
     assert quotes[0]["normalized_unit_basis"] == "unit"
+
+
+def test_flipp_parser_rejects_liquid_result_for_fresh_produce() -> None:
+    payload = {
+        "ecom_items": [
+            {
+                "name": "E-Bggr Banana 200ml",
+                "merchant_name": "Walmart",
+                "current_price": 8.97,
+                "original_price": 9.97,
+                "item_id": "not-produce",
+            }
+        ]
+    }
+    assert not parse_flipp_quotes(
+        payload,
+        requested_item="Bananas",
+        requested_chain="Walmart",
+        item_category="produce",
+        now=datetime(2026, 7, 18, tzinfo=UTC),
+    )

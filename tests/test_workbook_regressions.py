@@ -23,6 +23,18 @@ def test_current_snapshot_contract_and_chain_coverage() -> None:
     assert {quote["source_type"] for quote in quotes} <= {"flyer_aggregator", "retailer_ecommerce"}
     assert all(quote.get("source_url") and quote.get("fetched_at_utc") for quote in quotes)
     assert all(quote.get("product_name") and quote.get("postal_code") for quote in quotes)
+    rejected_product_phrases = {
+        "bird house",
+        "condensed milk",
+        "coconut milk",
+        "quinoa and rice cooker",
+        "slimygloop",
+        "sweet potatoes puree",
+    }
+    assert all(
+        not any(phrase in quote["product_name"].lower() for phrase in rejected_product_phrases)
+        for quote in quotes
+    )
 
 
 def test_public_verified_pricing_is_the_only_enabled_live_path() -> None:
