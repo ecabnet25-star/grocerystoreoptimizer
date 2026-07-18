@@ -1480,9 +1480,9 @@ tbody tr:last-child td {
   align-items: center;
   padding: 16px;
   margin: 16px 0;
-  border: 1px solid rgba(20, 184, 166, 0.22);
+  border: 1px solid rgba(237, 27, 47, 0.22);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgba(240, 253, 250, 0.92), rgba(239, 246, 255, 0.88));
+  background: linear-gradient(135deg, rgba(255, 245, 245, 0.94), rgba(255, 255, 255, 0.96));
 }
 
 .retailer-intel h4 {
@@ -1501,7 +1501,7 @@ tbody tr:last-child td {
   gap: 3px;
   min-width: 112px;
   padding: 9px 10px;
-  border: 1px solid rgba(15, 118, 110, 0.16);
+  border: 1px solid rgba(237, 27, 47, 0.16);
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.86);
   box-shadow: var(--shadow-xs);
