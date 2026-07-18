@@ -21,7 +21,8 @@ class TestAssistant(unittest.TestCase):
         self.assertIn("response", result)
         self.assertEqual(result["response_source"], "rule_fallback")
         self.assertTrue(len(result["suggestions"]) > 0)
-        self.assertIn("Plan tip", result["response"])
+        self.assertEqual(result["recipes"][0]["ingredients_from_plan"], ["Black Beans", "Brown Rice", "Broccoli"])
+        self.assertEqual(len(result["recipes"][0]["steps"]), 3)
         self.assertIn("plan_tip", result)
 
     def test_fallback_detects_meal_prep_intent(self):
@@ -39,10 +40,24 @@ class TestAssistant(unittest.TestCase):
 
         self.assertIn("Batch cook", result["plan_tip"])
 
-    def test_hybrid_uses_ollama_when_available(self):
+    def test_french_structured_recipe(self):
+        with patch.dict("os.environ", {"GROCERY_ASSISTANT_MODE": "rules"}):
+            result = build_meal_assistant_response(
+                user_message="Une idee rapide",
+                plan_items=[{"name": "Chicken Breast"}, {"name": "Quinoa"}, {"name": "Spinach"}],
+                likes=[],
+                dislikes=[],
+                health_goals=[],
+                language="fr",
+            )
+        self.assertEqual(result["language"], "fr")
+        self.assertEqual(result["recipes"][0]["name"], "Bol repas express")
+        self.assertEqual(result["recipes"][0]["cook_time_minutes"], 20)
+
+    def test_explicit_ollama_mode_uses_model_when_available(self):
         def _getenv(key: str, default: str | None = None) -> str | None:
             if key == "GROCERY_ASSISTANT_MODE":
-                return "hybrid"
+                return "ollama"
             if key == "GROCERY_ASSISTANT_OLLAMA_MODEL":
                 return "llama3.2:3b"
             return default

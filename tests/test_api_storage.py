@@ -18,7 +18,7 @@ class TestApiStorage(unittest.TestCase):
         with TemporaryDirectory() as temp_dir:
             db_path = str(Path(temp_dir) / "schema.db")
             create_user(name="Schema", email="schema@example.com", password_hash="hash", db_path=db_path)
-            self.assertEqual(get_schema_version(db_path=db_path), 3)
+            self.assertEqual(get_schema_version(db_path=db_path), 4)
 
     def test_v2_database_migrates_password_hash_column(self):
         with TemporaryDirectory() as temp_dir:
@@ -43,8 +43,9 @@ class TestApiStorage(unittest.TestCase):
             columns = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
             conn.close()
 
-            self.assertEqual(get_schema_version(db_path=db_path), 3)
+            self.assertEqual(get_schema_version(db_path=db_path), 4)
             self.assertIn("password_hash", columns)
+            self.assertIn("preferences_json", columns)
 
     def test_token_revoke_and_expiry(self):
         with TemporaryDirectory() as temp_dir:

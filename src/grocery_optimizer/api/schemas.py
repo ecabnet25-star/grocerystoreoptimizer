@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class OptimizeRequest(BaseModel):
+    user_id: str = ""
     budget: float = Field(default=50.0, gt=0)
     max_items: int = Field(default=10, ge=1, le=100)
     strategy: Literal["greedy", "knapsack"] = "greedy"
@@ -20,6 +21,8 @@ class OptimizeRequest(BaseModel):
     location: str = "montreal"
     postal_code: str = ""
     address: str = ""
+    location_query: str = ""
+    language: Literal["en", "fr"] = "en"
     likes: list[str] = Field(default_factory=list)
     dislikes: list[str] = Field(default_factory=list)
     health_goals: list[str] = Field(default_factory=list)
@@ -42,3 +45,11 @@ class SavePlanRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str = Field(min_length=8, max_length=256)
+
+
+class UserPreferencesRequest(BaseModel):
+    likes: list[str] = Field(default_factory=list)
+    dislikes: list[str] = Field(default_factory=list)
+    health_goals: list[str] = Field(default_factory=list)
+    excluded_categories: list[str] = Field(default_factory=list)
+    preferred_language: Literal["en", "fr"] = "en"

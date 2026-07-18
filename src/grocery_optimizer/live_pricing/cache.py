@@ -13,6 +13,23 @@ class LivePriceQuote:
     confidence: float
     fetched_at_utc: str
     source_url: str
+    product_name: str = ""
+    store_chain: str = ""
+    package_size: float | None = None
+    package_unit: str = "package"
+    package_label: str = ""
+    regular_price: float | None = None
+    on_sale: bool = False
+    valid_from_utc: str = ""
+    valid_to_utc: str = ""
+    source_type: str = "unknown"
+    offer_quantity: int = 1
+    offer_price: float | None = None
+    normalized_unit_price: float | None = None
+    normalized_unit_basis: str = "package"
+    source_item_id: str = ""
+    image_url: str = ""
+    price_basis_text: str = ""
 
 
 class PriceCache:

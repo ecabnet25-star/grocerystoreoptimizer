@@ -15,6 +15,7 @@ from .cache import LivePriceQuote, PriceCache
 from .providers import (
     BaseLiveProvider,
     FlippPartnerProvider,
+    FlippPublicProvider,
     HtmlRegexProvider,
     JsonFeedProvider,
     LocalSnapshotProvider,
@@ -69,6 +70,8 @@ class LivePricingEngine:
                 providers.append(OpenFoodFactsPartnerProvider(provider_cfg, timeout_seconds=timeout_seconds))
             elif provider_type == "flipp_partner":
                 providers.append(FlippPartnerProvider(provider_cfg, timeout_seconds=timeout_seconds))
+            elif provider_type == "flipp_public":
+                providers.append(FlippPublicProvider(provider_cfg, timeout_seconds=timeout_seconds))
             elif provider_type == "local_snapshot":
                 providers.append(LocalSnapshotProvider(provider_cfg, timeout_seconds=timeout_seconds))
             elif provider_type == "public_market":
@@ -91,6 +94,8 @@ class LivePricingEngine:
             "retailer_catalog": 1.0,
             "json_feed": 0.92,
             "flipp_partner": 0.88,
+            "flipp_public": 0.96,
+            "local_snapshot": 0.94,
             "openfoodfacts_partner": 0.8,
             "html_regex": 0.65,
             "public_market": 0.58,
@@ -275,6 +280,8 @@ class LivePricingEngine:
                     provider_id=provider.provider_id,
                 ):
                     candidates.append((self._quote_score(provider.provider_id, provider, quote), quote))
+                    if quote.source_type in {"flyer_aggregator", "retailer_ecommerce"} and quote.confidence >= 0.9:
+                        return quote
 
         if not candidates:
             return None
@@ -381,9 +388,27 @@ def build_store_live_pricing_snapshot(
                         "currency": quote.currency,
                         "provider_id": quote.provider_id,
                         "confidence": quote.confidence,
-                        "pricing_source": "public_benchmark_live"
+                        "pricing_source": "market_estimate"
                         if quote.provider_id == "public_market_benchmark"
-                        else "third_party_live",
+                        else "verified_current",
+                        "product_name": quote.product_name,
+                        "store_chain": quote.store_chain or store["chain"],
+                        "package_size": quote.package_size,
+                        "package_unit": quote.package_unit,
+                        "package_label": quote.package_label,
+                        "normalized_unit_price": quote.normalized_unit_price,
+                        "normalized_unit_basis": quote.normalized_unit_basis,
+                        "regular_price": quote.regular_price,
+                        "on_sale": quote.on_sale,
+                        "valid_from_utc": quote.valid_from_utc,
+                        "valid_to_utc": quote.valid_to_utc,
+                        "source_type": quote.source_type,
+                        "source_url": quote.source_url,
+                        "source_item_id": quote.source_item_id,
+                        "image_url": quote.image_url,
+                        "offer_quantity": quote.offer_quantity,
+                        "offer_price": quote.offer_price,
+                        "price_basis_text": quote.price_basis_text,
                     }
                 )
             else:
@@ -416,6 +441,12 @@ def build_store_live_pricing_snapshot(
                         "provider_id": "fallback",
                         "confidence": 0.0,
                         "pricing_source": "tier_estimate_fallback",
+                        "package_size": item.package_size,
+                        "package_unit": item.package_unit,
+                        "package_label": item.package_label,
+                        "normalized_unit_price": item.normalized_unit_price,
+                        "normalized_unit_basis": item.unit_price_basis,
+                        "source_type": "estimate",
                     }
                 )
 
@@ -423,9 +454,9 @@ def build_store_live_pricing_snapshot(
         confidence = round((confidence_sum / live_count), 2) if live_count else 0.0
         benchmark_only_live = bool(store_provider_ids) and store_provider_ids.issubset({"public_market_benchmark"})
         store_pricing_source = (
-            "public_benchmark_live"
+            "market_estimate"
             if benchmark_only_live
-            else ("third_party_live" if live_count > 0 else "tier_estimate_fallback")
+            else ("verified_current" if live_count > 0 else "tier_estimate_fallback")
         )
 
         compared_stores.append(

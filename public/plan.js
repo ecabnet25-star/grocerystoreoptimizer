@@ -10,20 +10,20 @@ let areaScanRequestKey = "";
 let areaScanCompletedKey = "";
 const PRESET_BREAKDOWNS = {
   balanced: {
-    title: "Balanced split",
-    values: { produce: 34, protein: 30, grains: 18, savings: 12, pantry: 6 },
+    title: "Sample balanced allocation",
+    values: { produce: 34, protein: 30, grains: 18, dairy: 12, pantry: 6 },
   },
   budget: {
-    title: "Budget saver split",
-    values: { produce: 20, protein: 18, grains: 24, savings: 28, pantry: 10 },
+    title: "Sample budget allocation",
+    values: { produce: 20, protein: 18, grains: 24, dairy: 10, pantry: 28 },
   },
   protein: {
-    title: "High protein split",
-    values: { produce: 22, protein: 46, grains: 14, savings: 8, pantry: 10 },
+    title: "Sample protein allocation",
+    values: { produce: 22, protein: 46, grains: 14, dairy: 10, pantry: 8 },
   },
   fresh: {
-    title: "Fresh produce split",
-    values: { produce: 52, protein: 20, grains: 10, savings: 8, pantry: 10 },
+    title: "Sample fresh allocation",
+    values: { produce: 52, protein: 20, grains: 10, dairy: 10, pantry: 8 },
   },
 };
 
@@ -38,11 +38,11 @@ const UI_COPY = {
     savePlan: "Save plan",
     refreshPrices: "Refresh prices",
     copyItems: "Copy items",
-    mustHaveHint: "Enter the exact item name when possible, then add commas for multiple items.",
+    mustHaveHint: "Separate items with semicolons; package sizes are optional.",
     routeTradeoffPrefix: "Travel tradeoff:",
     routeTradeoffDefault: "We only split stores when the savings beat the extra trip cost.",
     retailerCoverage: "Coverage priorities show which chains we price first and which sources back them.",
-    mapEmpty: "Enter a postal code or street address to see stores on the map.",
+    mapEmpty: "Enter a postal code or address to see stores on the map.",
   },
   fr: {
     moreOptions: "Plus d'options",
@@ -52,7 +52,7 @@ const UI_COPY = {
     savePlan: "Enregistrer le plan",
     refreshPrices: "Actualiser les prix",
     copyItems: "Copier les articles",
-    mustHaveHint: "Saisissez si possible le nom exact de l'article, puis utilisez des virgules pour plusieurs articles.",
+    mustHaveHint: "Separez les articles avec des points-virgules; les formats sont facultatifs.",
     routeTradeoffPrefix: "Compromis trajet :",
     routeTradeoffDefault: "Nous séparons les magasins seulement si l'économie dépasse le coût du trajet supplémentaire.",
     retailerCoverage: "Les priorités de couverture montrent quelles enseignes sont évaluées en premier et quelles sources les soutiennent.",
@@ -106,6 +106,14 @@ function applyLanguage(language) {
   const routeBadge = document.getElementById("mapRouteBadge");
   const openDirections = document.getElementById("openDirectionsLink");
   const routeTradeoff = document.getElementById("routeTradeoffText");
+  const locationLabel = document.getElementById("locationLabelText");
+  const mustHaveLabel = document.getElementById("mustHaveLabelText");
+  const mustHaveHelp = document.getElementById("mustHaveHelp");
+  const travelLegend = document.getElementById("travelModeLegend");
+  const profileNote = document.getElementById("profilePreferenceNote");
+  const locationInput = document.getElementById("locationQuery");
+  const planTab = document.getElementById("planViewTab");
+  const dealsTab = document.getElementById("dealsViewTab");
 
   if (languageLabel) languageLabel.textContent = currentLanguage === "fr" ? "Langue" : "Language";
   if (heroEyebrow) heroEyebrow.textContent = currentLanguage === "fr" ? "Budget malin · magasinage rapide" : "Budget smart · shop faster";
@@ -121,6 +129,16 @@ function applyLanguage(language) {
   if (refreshBtn) refreshBtn.textContent = copy.refreshPrices;
   if (copyBtn) copyBtn.textContent = copy.copyItems;
   if (mustHave) mustHave.placeholder = currentLanguage === "fr" ? "Poulet, pommes, avoine" : "Chicken breast, apples, oats";
+  if (locationLabel) locationLabel.textContent = currentLanguage === "fr" ? "Lieu" : "Location";
+  if (mustHaveLabel) mustHaveLabel.textContent = currentLanguage === "fr" ? "Articles indispensables" : "Must-have groceries";
+  if (mustHaveHelp) mustHaveHelp.textContent = copy.mustHaveHint;
+  if (travelLegend) travelLegend.textContent = currentLanguage === "fr" ? "Mode de transport" : "Travel mode";
+  if (profileNote) profileNote.innerHTML = currentLanguage === "fr"
+    ? 'Gerez vos preferences dans <a href="account.html">Compte</a>; elles sont appliquees automatiquement.'
+    : 'Dietary preferences are managed in <a href="account.html">Account</a> and applied automatically when signed in.';
+  if (locationInput) locationInput.placeholder = currentLanguage === "fr" ? "H3A 1A1 ou 1420 rue du Fort" : "H3A 1A1 or 1420 Rue du Fort";
+  if (planTab) planTab.textContent = currentLanguage === "fr" ? "Mon plan" : "My plan";
+  if (dealsTab) dealsTab.textContent = currentLanguage === "fr" ? "Offres de la semaine" : "Weekly deals";
   if (mapEmpty) mapEmpty.textContent = copy.mapEmpty;
   if (resultTitle) resultTitle.textContent = currentLanguage === "fr" ? "Votre plan optimisé" : "Your optimized plan";
   if (insightsTitle) insightsTitle.textContent = currentLanguage === "fr" ? "Aperçu du plan" : "Plan insights";
@@ -128,7 +146,7 @@ function applyLanguage(language) {
   if (forecastTitle) forecastTitle.textContent = currentLanguage === "fr" ? "Meilleur moment pour magasiner" : "Best time to shop";
   if (nearbyTitle) nearbyTitle.textContent = currentLanguage === "fr" ? "Magasins proches" : "Nearby stores";
   if (nearbyDirectoryTitle) nearbyDirectoryTitle.textContent = currentLanguage === "fr" ? "Tous les magasins proches" : "All nearby stores";
-  if (retailerTitle) retailerTitle.textContent = currentLanguage === "fr" ? "Priorités de couverture" : "Coverage priorities";
+  if (retailerTitle) retailerTitle.textContent = currentLanguage === "fr" ? "Couverture des detaillants" : "Retailer coverage";
   if (routeTitle) routeTitle.textContent = currentLanguage === "fr" ? "Itinéraire suggéré" : "Suggested route";
   if (routeInfoLine) routeInfoLine.innerHTML = currentLanguage === "fr" ? "<strong>De :</strong> <span id=\"routeOriginLabel\">-</span> &mdash; <strong>Total :</strong> <span id=\"routeTotalDistance\"></span> km" : "<strong>From:</strong> <span id=\"routeOriginLabel\">-</span> &mdash; <strong>Total:</strong> <span id=\"routeTotalDistance\"></span> km";
   if (saveLabel) saveLabel.textContent = currentLanguage === "fr" ? "Nommez votre plan" : "Name your plan";
@@ -165,6 +183,14 @@ function applyLanguage(language) {
   if (routeBadge && routeBadge.textContent === "Best value") routeBadge.textContent = currentLanguage === "fr" ? "Meilleure valeur" : "Best value";
   if (openDirections && openDirections.textContent === "Open directions") openDirections.textContent = currentLanguage === "fr" ? "Ouvrir l'itinéraire" : "Open directions";
   if (routeTradeoff && !routeTradeoff.textContent) routeTradeoff.textContent = currentLanguage === "fr" ? "Le compromis trajet s’affichera ici après génération du plan." : "Travel tradeoff will appear here after a plan is generated.";
+  document.querySelectorAll(".travel-segment").forEach((button) => {
+    const labels = {
+      walk: currentLanguage === "fr" ? "Marche" : "Walk",
+      transit: currentLanguage === "fr" ? "Transport" : "Transit",
+      drive: currentLanguage === "fr" ? "Auto" : "Drive",
+    };
+    button.textContent = labels[button.dataset.travelMode] || button.textContent;
+  });
 }
 
 function splitList(value) {
@@ -249,10 +275,7 @@ function applyPreset(presetName) {
       maxItems: 8,
       strategy: "knapsack",
       required: "produce,protein",
-      excluded: "dairy",
-      likes: "",
-      dislikes: "",
-      goals: "",
+      excluded: "",
     },
     budget: {
       budget: 35,
@@ -260,9 +283,6 @@ function applyPreset(presetName) {
       strategy: "knapsack",
       required: "grains,pantry,produce",
       excluded: "",
-      likes: "rice,oats,beans",
-      dislikes: "",
-      goals: "budget staples",
     },
     protein: {
       budget: 65,
@@ -270,19 +290,13 @@ function applyPreset(presetName) {
       strategy: "knapsack",
       required: "protein,produce",
       excluded: "",
-      likes: "eggs,chicken,beans,yogurt",
-      dislikes: "",
-      goals: "muscle gain, high protein",
     },
     fresh: {
       budget: 55,
       maxItems: 9,
       strategy: "greedy",
       required: "produce,protein",
-      excluded: "frozen",
-      likes: "greens,berries,vegetables",
-      dislikes: "",
-      goals: "heart health, fiber",
+      excluded: "",
     },
   };
 
@@ -296,9 +310,6 @@ function applyPreset(presetName) {
   document.getElementById("strategy").value = preset.strategy;
   document.getElementById("requiredCategories").value = preset.required;
   document.getElementById("excludedCategories").value = preset.excluded;
-  document.getElementById("likes").value = preset.likes;
-  document.getElementById("dislikes").value = preset.dislikes;
-  document.getElementById("healthGoals").value = preset.goals;
   setActivePreset(presetName);
   updateHeroBreakdown(presetName);
   updatePlanPreview();
@@ -459,7 +470,7 @@ function setRoadRouteStatus(message, type = "info") {
 
 async function fetchRoadRouteLatLngs(routeLine) {
   if (!Array.isArray(routeLine) || routeLine.length < 2) {
-    return [];
+    return null;
   }
 
   const result = await apiRequest("/route/road", {
@@ -473,17 +484,22 @@ async function fetchRoadRouteLatLngs(routeLine) {
   });
 
   if (!result.ok) {
-    return [];
+    return null;
   }
 
   const routeCoords = result.data?.route?.coordinates;
   if (!Array.isArray(routeCoords)) {
-    return [];
+    return null;
   }
 
-  return routeCoords
+  const coordinates = routeCoords
     .map((coord) => [Number(coord.latitude), Number(coord.longitude)])
     .filter(([lat, lon]) => Number.isFinite(lat) && Number.isFinite(lon));
+  return {
+    coordinates,
+    distance_km: Number(result.data.route.distance_km || 0),
+    duration_minutes: Number(result.data.route.duration_minutes || 0),
+  };
 }
 
 function renderStoreMapLeaflet(mapEl, points, route) {
@@ -574,8 +590,8 @@ function renderStoreMapLeaflet(mapEl, points, route) {
       if (!routeMap) {
         return;
       }
-      if (roadRoute.length >= 2) {
-        L.polyline(roadRoute, {
+      if (roadRoute?.coordinates?.length >= 2) {
+        L.polyline(roadRoute.coordinates, {
           className: "road-route-line",
           color: "#ed1b2f",
           weight: 6,
@@ -583,8 +599,19 @@ function renderStoreMapLeaflet(mapEl, points, route) {
           lineCap: "round",
           lineJoin: "round",
         }).addTo(routeMap);
-        routeMap.fitBounds(roadRoute, { padding: [38, 38], maxZoom: 15 });
-        setRoadRouteStatus("Showing the recommended driving route on roads.", "success");
+        routeMap.fitBounds(roadRoute.coordinates, { padding: [38, 38], maxZoom: 15 });
+        if (route) {
+          route.actual_road_distance_km = roadRoute.distance_km;
+          route.actual_road_duration_minutes = roadRoute.duration_minutes;
+        }
+        const total = document.getElementById("routeTotalDistance");
+        if (total && roadRoute.distance_km) total.textContent = roadRoute.distance_km;
+        setRoadRouteStatus(
+          currentLanguage === "fr"
+            ? `Itineraire routier reel: ${roadRoute.distance_km} km · ${roadRoute.duration_minutes} min.`
+            : `Actual road route: ${roadRoute.distance_km} km · ${roadRoute.duration_minutes} min.`,
+          "success"
+        );
         return;
       }
 
@@ -595,7 +622,7 @@ function renderStoreMapLeaflet(mapEl, points, route) {
         opacity: 0.82,
         dashArray: "10 8",
       }).addTo(routeMap);
-      setRoadRouteStatus("Road route is unavailable right now, so this is an approximate line.", "warning");
+      setRoadRouteStatus(currentLanguage === "fr" ? "Le service routier est indisponible; le trace est approximatif." : "Road routing is unavailable; this line is approximate.", "warning");
     });
   } else {
     setRoadRouteStatus("");
@@ -629,6 +656,13 @@ function renderStoreMap(nearbyStores, route) {
   if (!renderedLeaflet) {
     renderStoreMapSvg(mapEl, points, route);
   }
+}
+
+function splitMustHaves(value) {
+  const text = String(value || "").trim();
+  if (!text) return [];
+  const separator = /[;\n]/.test(text) ? /[;\n]+/ : /,+/;
+  return text.split(separator).map((item) => item.trim()).filter(Boolean);
 }
 
 function updateMapRouteSummary(nearbyStores, route) {
@@ -737,21 +771,22 @@ function renderSavingsCelebration(insights, currency) {
 
   const routeSavings = Number(insights?.net_route_savings || 0);
   const savings = routeSavings > 0 ? routeSavings : Number(insights?.estimated_store_savings || 0);
-  const bestStore = insights?.best_store?.name || "the lowest estimated store";
-  const liveCoverage = Number(insights?.live_quote_coverage_percent || 0);
-  const pricingMode = String(insights?.pricing_mode || "");
-  const hasVerifiedPricing = pricingMode.includes("live") || liveCoverage >= 50 || Number(insights?.live_quotes || 0) > 0;
-  if (savings <= 0) {
+  const bestStore = insights?.best_store?.name || "the lowest-priced verified store";
+  if (savings <= 0 || insights?.savings_is_verified !== true) {
     panel.classList.add("hidden");
     return;
   }
 
   if (routeSavings > 0) {
-    title.textContent = hasVerifiedPricing ? "Verified route savings found" : "Estimated route savings found";
-    text.textContent = `Congratulations. This route may save about ${formatCurrency(routeSavings, currency)} after estimated extra travel by splitting items across worthwhile deal stops.${hasVerifiedPricing ? "" : " Confirm shelf prices before leaving."}`;
+    title.textContent = currentLanguage === "fr" ? "Economie d'itineraire verifiee" : "Verified route savings found";
+    text.textContent = currentLanguage === "fr"
+      ? `Les prix actuels indiquent environ ${formatCurrency(routeSavings, currency)} d'economie nette en utilisant uniquement les arrets rentables.`
+      : `Current prices show about ${formatCurrency(routeSavings, currency)} in net savings by using only worthwhile deal stops.`;
   } else {
-    title.textContent = hasVerifiedPricing ? "Verified savings found" : "Estimated savings found";
-    text.textContent = `Congratulations. This plan may save up to ${formatCurrency(savings, currency)} versus the highest nearby store total. Start with ${bestStore}.${hasVerifiedPricing ? "" : " This is an estimate, so confirm shelf prices before shopping."}`;
+    title.textContent = currentLanguage === "fr" ? "Economie verifiee" : "Verified savings found";
+    text.textContent = currentLanguage === "fr"
+      ? `Les prix actuels montrent jusqu'a ${formatCurrency(savings, currency)} d'economie. Commencez par ${bestStore}.`
+      : `Current prices show up to ${formatCurrency(savings, currency)} in savings. Start with ${bestStore}.`;
   }
   panel.classList.remove("hidden");
   panel.classList.add("celebrate-pop");
@@ -779,10 +814,9 @@ function applyReusePlanPrefill() {
       document.getElementById("location").value = String(req.location);
     }
     if (req.postal_code) {
-      document.getElementById("postalCode").value = String(req.postal_code);
-    }
-    if (req.address) {
-      document.getElementById("address").value = String(req.address);
+      document.getElementById("locationQuery").value = String(req.postal_code);
+    } else if (req.address || req.location_query) {
+      document.getElementById("locationQuery").value = String(req.address || req.location_query);
     }
     if (req.transportation_mode) {
       document.getElementById("travelMode").value = String(req.transportation_mode);
@@ -799,15 +833,9 @@ function applyReusePlanPrefill() {
     if (Array.isArray(req.excluded_categories)) {
       document.getElementById("excludedCategories").value = req.excluded_categories.join(",");
     }
-    if (Array.isArray(req.likes)) {
-      document.getElementById("likes").value = req.likes.join(",");
-    }
-    if (Array.isArray(req.dislikes)) {
-      document.getElementById("dislikes").value = req.dislikes.join(",");
-    }
-    if (Array.isArray(req.health_goals)) {
-      document.getElementById("healthGoals").value = req.health_goals.join(",");
-    }
+    document.querySelectorAll(".travel-segment").forEach((button) => {
+      button.classList.toggle("active", button.dataset.travelMode === document.getElementById("travelMode").value);
+    });
 
     showStatus("Loaded a saved plan. Review and click 'Generate plan'.", "success");
   } catch {
@@ -874,7 +902,7 @@ function renderNearbyStoreDirectory(nearbyStores, storeComparison, currency, rou
     .join("");
 }
 
-function renderRetailerIntel(research) {
+function renderRetailerIntel(stores) {
   const panel = document.getElementById("retailerIntelPanel");
   const summary = document.getElementById("retailerIntelSummary");
   const chips = document.getElementById("retailerIntelChips");
@@ -882,28 +910,25 @@ function renderRetailerIntel(research) {
     return;
   }
 
-  const topRetailers = Array.isArray(research?.top_priority_retailers) ? research.top_priority_retailers : [];
-  const tiers = Array.isArray(research?.acquisition_tiers) ? research.acquisition_tiers : [];
-  if (!topRetailers.length && !tiers.length) {
+  const coverage = Array.isArray(stores?.coverage_by_chain) ? stores.coverage_by_chain : [];
+  if (!coverage.length) {
     panel.classList.add("hidden");
     return;
   }
 
-  const tierOne = tiers.find((tier) => String(tier.tier || "").includes("tier_1"));
-  const tierTwo = tiers.find((tier) => String(tier.tier || "").includes("tier_2"));
-  const seedCount = Number(research?.verified_seed_count || 0);
-  const copy = getUiCopy();
-  summary.textContent = [
-    copy.retailerCoverage,
-    tierOne?.label ? `${tierOne.label}: ${(tierOne.retailers || []).slice(0, 6).join(", ")}` : "",
-    tierTwo?.label ? `${tierTwo.label}: ${(tierTwo.retailers || []).slice(0, 5).join(", ")}` : "",
-    seedCount ? `${seedCount} verified specialty-store seed(s) added from research` : "",
-  ].filter(Boolean).join(" · ");
+  const verifiedTotal = coverage.reduce((sum, row) => sum + Number(row.verified_quotes || 0), 0);
+  summary.textContent = currentLanguage === "fr"
+    ? `${verifiedTotal} prix actuels verifies. Les autres magasins restent visibles avec leur statut exact.`
+    : `${verifiedTotal} verified current prices. Other nearby stores remain visible with their exact status.`;
 
-  chips.innerHTML = topRetailers.slice(0, 8).map((retailer) => `
-    <span class="retailer-chip">
-      <strong>${escapeHtml(retailer.retailer || "Retailer")}</strong>
-      <small>Tier ${escapeHtml(retailer.tier || "-")} · score ${escapeHtml(retailer.weighted_score || "-")}</small>
+  chips.innerHTML = coverage.slice(0, 12).map((retailer) => `
+    <span class="retailer-chip coverage-${escapeHtml(retailer.status || "nearby_only")}">
+      <strong>${escapeHtml(retailer.chain || "Retailer")}</strong>
+      <small>${retailer.status === "verified_current"
+        ? `${retailer.verified_quotes} ${currentLanguage === "fr" ? "prix actuels" : "current prices"}`
+        : retailer.status === "estimate_only"
+          ? (currentLanguage === "fr" ? "estimations seulement" : "estimates only")
+          : (currentLanguage === "fr" ? "emplacement seulement" : "location only")}</small>
     </span>
   `).join("");
   panel.classList.remove("hidden");
@@ -956,6 +981,11 @@ function buildItemStorePlan(items, itemQuotes, routeAssignments = [], storeCompa
         line_total: Number(quote.line_total || 0),
         unit_price: Number(quote.unit_price || 0),
         distance_km: optionStore.distance_km,
+        package_label: String(quote.package_label || ""),
+        normalized_unit_price: Number(quote.normalized_unit_price || 0),
+        normalized_unit_basis: String(quote.normalized_unit_basis || "package"),
+        pricing_source: String(quote.pricing_source || ""),
+        on_sale: Boolean(quote.on_sale),
       };
     });
 
@@ -969,7 +999,7 @@ function buildItemStorePlan(items, itemQuotes, routeAssignments = [], storeCompa
       purchase_price: purchasePrice,
       store_line_total: purchasePrice,
       store_savings: savings,
-      price_options: priceOptions,
+      price_options: priceOptions.length ? priceOptions : (Array.isArray(item.price_options) ? item.price_options : []),
     };
   });
 }
@@ -988,15 +1018,15 @@ function renderPlanInsights(insights, currency) {
   const savings = Number(data.estimated_store_savings || 0);
   const routeDistance = data.route_distance_km;
   const budgetUsed = Number(data.budget_used_percent || 0);
-  const overviewParts = [`${budgetUsed.toFixed(1)}% of budget used`];
+  const overviewParts = [currentLanguage === "fr" ? `${budgetUsed.toFixed(1)} % du budget utilise` : `${budgetUsed.toFixed(1)}% of budget used`];
   if (bestStore && bestStore.name) {
-    overviewParts.push(`lowest estimate: ${bestStore.name}`);
+    overviewParts.push(currentLanguage === "fr" ? `meilleur total: ${bestStore.name}` : `lowest total: ${bestStore.name}`);
   }
-  if (savings > 0) {
-    overviewParts.push(`possible store spread: ${formatCurrency(savings, currency)}`);
+  if (savings > 0 && data.savings_is_verified) {
+    overviewParts.push(currentLanguage === "fr" ? `ecart verifie: ${formatCurrency(savings, currency)}` : `verified store spread: ${formatCurrency(savings, currency)}`);
   }
-  if (Number(data.net_route_savings || 0) > 0) {
-    overviewParts.push(`route net savings: ${formatCurrency(data.net_route_savings, currency)}`);
+  if (Number(data.net_route_savings || 0) > 0 && data.savings_is_verified) {
+    overviewParts.push(currentLanguage === "fr" ? `economie nette: ${formatCurrency(data.net_route_savings, currency)}` : `route net savings: ${formatCurrency(data.net_route_savings, currency)}`);
   }
   if (routeDistance != null) {
     overviewParts.push(`route: ${routeDistance} km`);
@@ -1017,12 +1047,12 @@ function renderPlanInsights(insights, currency) {
         `;
       })
       .join("")
-    : '<p class="muted">No category spending data available.</p>';
+    : `<p class="muted">${currentLanguage === "fr" ? "Aucune repartition disponible." : "No category spending data available."}</p>`;
 
   const actions = Array.isArray(data.next_actions) ? data.next_actions : [];
   nextActions.innerHTML = actions.length
     ? actions.map((action) => `<li>${escapeHtml(action)}</li>`).join("")
-    : "<li>Review your list before shopping.</li>";
+    : `<li>${currentLanguage === "fr" ? "Verifiez votre liste avant de magasiner." : "Review your list before shopping."}</li>`;
   panel.classList.remove("hidden");
 }
 
@@ -1034,8 +1064,10 @@ function renderPriceForecast(forecast, currency) {
   const disclaimer = document.getElementById("priceForecastDisclaimer");
   if (!panel || !title || !text || !drops || !disclaimer) return;
   const data = forecast || {};
-  title.textContent = data.action === "wait" ? "A short wait may pay off" : "Today is a reasonable day to shop";
-  text.textContent = data.recommendation || "Use current nearby-store estimates before shopping.";
+  title.textContent = data.action === "wait"
+    ? (currentLanguage === "fr" ? "Attendre un peu pourrait etre avantageux" : "A short wait may pay off")
+    : (currentLanguage === "fr" ? "Aujourd'hui est un bon moment pour magasiner" : "Today is a reasonable day to shop");
+  text.textContent = data.recommendation || (currentLanguage === "fr" ? "Utilisez les prix actuels avant de magasiner." : "Use current nearby-store prices before shopping.");
   const candidates = Array.isArray(data.drops) ? data.drops : [];
   drops.innerHTML = candidates.map((row) => `
     <span><strong>${escapeHtml(row.item_name)}</strong> ${formatCurrency(row.current_price, currency)} &rarr; ${formatCurrency(row.predicted_price, currency)} <small>${escapeHtml(row.change_percent)}%</small></span>
@@ -1045,6 +1077,7 @@ function renderPriceForecast(forecast, currency) {
 }
 
 function renderOptimizationResult(data, caption = "Plan generated.") {
+  setResultView("plan");
   const summary = data.summary || {};
   const items = Array.isArray(data.items) ? data.items : [];
   const stores = data.stores || {};
@@ -1059,13 +1092,19 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const resultItemsBody = document.getElementById("resultItemsBody");
   const resultText = document.getElementById("resultText");
   const storeComparisonData = Array.isArray(stores.comparison) ? stores.comparison : [];
-  const savingsValue = Number(data.insights?.net_route_savings || data.insights?.estimated_store_savings || 0);
+  const savingsVerified = data.insights?.savings_is_verified === true;
+  const savingsValue = savingsVerified
+    ? Number(data.insights?.net_route_savings || data.insights?.estimated_store_savings || 0)
+    : 0;
 
   const cards = [
-    ["Total cost", formatCurrency(summary.total_cost, lastLocationCurrency)],
-    ["Budget left", formatCurrency(summary.budget_remaining, lastLocationCurrency)],
-    ["Items", String(summary.total_units || items.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0))],
-    ["Savings", formatCurrency(Math.max(0, savingsValue), lastLocationCurrency)],
+    [currentLanguage === "fr" ? "Cout total" : "Total cost", formatCurrency(summary.total_cost, lastLocationCurrency)],
+    [currentLanguage === "fr" ? "Budget restant" : "Budget left", formatCurrency(summary.budget_remaining, lastLocationCurrency)],
+    [currentLanguage === "fr" ? "Articles" : "Items", String(summary.total_units || items.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0))],
+    [
+      savingsVerified && savingsValue > 0 ? (currentLanguage === "fr" ? "Economie verifiee" : "Verified savings") : (currentLanguage === "fr" ? "Score nutrition" : "Nutrition score"),
+      savingsVerified && savingsValue > 0 ? formatCurrency(savingsValue, lastLocationCurrency) : String(summary.total_nutrition_score || 0),
+    ],
   ];
 
   summaryCards.innerHTML = cards
@@ -1080,28 +1119,39 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
     .join("");
 
   renderPlanInsights(data.insights || {}, lastLocationCurrency);
-  renderSavingsCelebration({ ...(data.insights || {}), pricing_mode: stores.pricing_mode, live_quote_coverage_percent: stores.live_quote_coverage_percent, live_quotes: stores.live_quotes }, lastLocationCurrency);
+  renderSavingsCelebration(data.insights || {}, lastLocationCurrency);
   renderPriceForecast(data.price_forecast || {}, lastLocationCurrency);
+  const mustHaveWarning = document.getElementById("mustHaveWarning");
+  const unmatched = Array.isArray(data.must_haves?.unmatched) ? data.must_haves.unmatched : [];
+  if (mustHaveWarning) {
+    mustHaveWarning.classList.toggle("hidden", unmatched.length === 0);
+    mustHaveWarning.innerHTML = unmatched.length
+      ? `<strong>${currentLanguage === "fr" ? "Articles non trouves" : "Must-haves not found"}</strong><span>${escapeHtml(unmatched.join(", "))}</span><small>${currentLanguage === "fr" ? "Ces articles n'ont pas ete ajoutes. Essayez un nom plus simple." : "These were not added. Try a simpler catalog name."}</small>`
+      : "";
+  }
 
   const plannedItems = buildItemStorePlan(items, stores.item_quotes || [], route?.item_assignments || [], storeComparisonData);
+  const itemTableLabels = currentLanguage === "fr"
+    ? ["Article", "Categorie", "Qte", "Prix", "Economie", "Acheter chez"]
+    : ["Item", "Category", "Qty", "Price", "Savings", "Buy at"];
   resultItemsBody.innerHTML = plannedItems
     .map(
       (item) => `
       <tr>
-        <td>${escapeHtml(item.name)}</td>
-        <td>${escapeHtml(prettyCategory(item.category))}</td>
-        <td>${item.quantity}</td>
-        <td>${formatCurrency(item.purchase_price ?? item.total_cost, lastLocationCurrency)}</td>
-        <td>${Number(item.store_savings || 0) > 0 ? formatCurrency(item.store_savings, lastLocationCurrency) : "-"}</td>
-        <td>
+        <td data-label="${itemTableLabels[0]}"><strong>${escapeHtml(item.name)}</strong>${item.package_label ? `<small class="table-subline">${escapeHtml(item.package_label)} · ${formatCurrency(item.normalized_unit_price, lastLocationCurrency)} / ${escapeHtml(item.normalized_unit_basis)}</small>` : ""}</td>
+        <td data-label="${itemTableLabels[1]}">${escapeHtml(prettyCategory(item.category))}</td>
+        <td data-label="${itemTableLabels[2]}">${item.quantity}</td>
+        <td data-label="${itemTableLabels[3]}">${formatCurrency(item.purchase_price ?? item.total_cost, lastLocationCurrency)}</td>
+        <td data-label="${itemTableLabels[4]}">${Number(item.store_savings || 0) > 0 ? formatCurrency(item.store_savings, lastLocationCurrency) : "-"}</td>
+        <td data-label="${itemTableLabels[5]}">
           <div class="item-store-cell">
             <strong>${escapeHtml(item.recommended_store || "-")}</strong>
             ${item.recommended_store_address ? `<small>${escapeHtml(item.recommended_store_address)}${item.recommended_store_distance_km != null ? ` · ${item.recommended_store_distance_km} km` : ""}</small>` : ""}
-            ${Number(item.recommended_store_unit_price || 0) > 0 ? `<small>${formatCurrency(item.recommended_store_unit_price, lastLocationCurrency)} / unit</small>` : ""}
+            ${Number(item.recommended_store_unit_price || 0) > 0 ? `<small>${formatCurrency(item.recommended_store_unit_price, lastLocationCurrency)} ${item.price_options?.[0]?.package_label ? `· ${escapeHtml(item.price_options[0].package_label)}` : "/ package"}</small>` : ""}
             ${Array.isArray(item.price_options) && item.price_options.length > 1 ? `
-              <span class="item-store-options-label">Other options</span>
+              <span class="item-store-options-label">${currentLanguage === "fr" ? "Autres options" : "Other options"}</span>
               <span class="item-store-options">
-                ${item.price_options.slice(0, 3).map((option) => `<span>${escapeHtml(option.store_name)} ${formatCurrency(option.line_total, lastLocationCurrency)}</span>`).join("")}
+                ${item.price_options.slice(0, 3).map((option) => `<span><strong>${escapeHtml(option.store_name)}</strong> ${formatCurrency(option.line_total, lastLocationCurrency)}${option.normalized_unit_price ? ` · ${formatCurrency(option.normalized_unit_price, lastLocationCurrency)} / ${escapeHtml(option.normalized_unit_basis)}` : ""}${option.pricing_source === "verified_current" ? (currentLanguage === "fr" ? " · verifie" : " · verified") : (currentLanguage === "fr" ? " · estimation" : " · estimate")}</span>`).join("")}
               </span>
             ` : ""}
           </div>
@@ -1115,7 +1165,7 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   const storeComparison = document.getElementById("storeComparison");
   storeComparison.classList.remove("hidden");
 
-  renderRetailerIntel(stores.retailer_research || {});
+  renderRetailerIntel(stores);
   renderNearbyStoreDirectory(stores.nearby || [], storeComparisonData, lastLocationCurrency, route);
 
   // Hidden data holders (kept for compatibility)
@@ -1136,12 +1186,12 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
       .map(
         (stop) => `
         <div class="route-stop">
-          <strong>Stop ${stop.order}: ${escapeHtml(stop.name)}</strong><br/>
+          <strong>${currentLanguage === "fr" ? "Arret" : "Stop"} ${stop.order}: ${escapeHtml(stop.name)}</strong><br/>
           <small class="muted">
-            ${stop.distance_from_previous_km} km from previous stop
-            ${stop.estimated_total != null ? ` · estimate ${formatCurrency(stop.estimated_total, lastLocationCurrency)}` : ""}
-            ${Number(stop.deal_savings || 0) > 0 ? ` · item deals ${formatCurrency(stop.deal_savings, lastLocationCurrency)}` : ""}
-            ${Number(stop.assigned_item_count || 0) > 0 ? ` · ${stop.assigned_item_count} assigned item(s)` : ""}
+            ${stop.distance_from_previous_km} km ${currentLanguage === "fr" ? "depuis l'arret precedent" : "from previous stop"}
+            ${stop.estimated_total != null ? ` · ${currentLanguage === "fr" ? "estimation" : "estimate"} ${formatCurrency(stop.estimated_total, lastLocationCurrency)}` : ""}
+            ${Number(stop.deal_savings || 0) > 0 ? ` · ${currentLanguage === "fr" ? "offres" : "item deals"} ${formatCurrency(stop.deal_savings, lastLocationCurrency)}` : ""}
+            ${Number(stop.assigned_item_count || 0) > 0 ? ` · ${stop.assigned_item_count} ${currentLanguage === "fr" ? "article(s)" : "assigned item(s)"}` : ""}
           </small>
           ${Array.isArray(stop.assigned_items) && stop.assigned_items.length ? `
             <div class="route-stop-items">
@@ -1163,8 +1213,13 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
     if (routeTradeoffText) {
       const copy = getUiCopy();
       const threshold = Number(route.savings_threshold || 0);
-      const travelCost = Number(route.travel_cost_per_km || 0);
-      routeTradeoffText.textContent = `${copy.routeTradeoffPrefix} ${route.selection_reason || copy.routeTradeoffDefault}${threshold > 0 ? ` (${formatCurrency(threshold, lastLocationCurrency)} threshold, ${formatCurrency(travelCost, lastLocationCurrency)} / km)` : ""}`;
+      const addedMinutes = Number(route.added_travel_minutes || 0);
+      const netSavings = Number(route.net_route_savings || 0);
+      routeTradeoffText.textContent = route.savings_is_verified && netSavings > 0
+        ? (currentLanguage === "fr"
+          ? `${copy.routeTradeoffPrefix} economisez ${formatCurrency(netSavings, lastLocationCurrency)} pour environ ${addedMinutes} min supplementaires.`
+          : `${copy.routeTradeoffPrefix} save ${formatCurrency(netSavings, lastLocationCurrency)} for about ${addedMinutes} added minutes.`)
+        : `${copy.routeTradeoffPrefix} ${route.selection_reason || copy.routeTradeoffDefault}${threshold > 0 ? ` (${formatCurrency(threshold, lastLocationCurrency)} minimum)` : ""}`;
     }
     document.getElementById("routeInfo").classList.remove("hidden");
   } else {
@@ -1183,26 +1238,19 @@ async function refreshLivePricing() {
     return;
   }
 
-  if (!lastOptimizationPayload.postal_code && !lastOptimizationPayload.address) {
-    showStatus("Add a postal code or address to load nearby live store pricing.", "error");
+  if (!lastOptimizationPayload.location_query) {
+    showStatus(currentLanguage === "fr" ? "Ajoutez un lieu pour charger les prix actuels." : "Add a location to load current prices.", "error");
     return;
   }
 
-  const snapshot = await loadLivePricing(lastOptimizationPayload);
-  if (!snapshot) {
+  const result = await optimizePlan({ ...lastOptimizationPayload, include_live_pricing: true });
+  if (!result.ok) {
     showStatus("Live pricing refresh failed. API may be unavailable.", "error");
     return;
   }
 
-  const merged = {
-    ...lastOptimizationResult,
-    location: snapshot.location || lastOptimizationResult.location,
-    summary: snapshot.summary || lastOptimizationResult.summary,
-    stores: snapshot.stores || lastOptimizationResult.stores,
-    route: snapshot.route || lastOptimizationResult.route,
-  };
-  lastOptimizationResult = merged;
-  renderOptimizationResult(merged, "Live pricing refreshed.");
+  lastOptimizationResult = result.data;
+  renderOptimizationResult(result.data, currentLanguage === "fr" ? "Prix actuels charges." : "Current prices loaded.");
 }
 
 function addAssistantMessage(role, text) {
@@ -1216,6 +1264,80 @@ function addAssistantMessage(role, text) {
   box.appendChild(el);
   box.scrollTop = box.scrollHeight;
   return el;
+}
+
+function setResultView(view) {
+  const showDeals = view === "deals";
+  document.getElementById("dealsPanel")?.classList.toggle("hidden", !showDeals);
+  document.getElementById("planResultContent")?.classList.toggle("hidden", showDeals);
+  document.getElementById("planViewTab")?.classList.toggle("active", !showDeals);
+  document.getElementById("dealsViewTab")?.classList.toggle("active", showDeals);
+  document.getElementById("planViewTab")?.setAttribute("aria-selected", String(!showDeals));
+  document.getElementById("dealsViewTab")?.setAttribute("aria-selected", String(showDeals));
+  if (showDeals) void refreshDealsView();
+}
+
+async function refreshDealsView() {
+  const cards = document.getElementById("dealCards");
+  const coverage = document.getElementById("dealCoverage");
+  if (!cards || !coverage) return;
+  cards.innerHTML = `<p class="muted">${currentLanguage === "fr" ? "Chargement des offres actuelles..." : "Loading current deals..."}</p>`;
+  const locationQuery = String(document.getElementById("locationQuery")?.value || "").trim();
+  const compactLocation = locationQuery.toUpperCase().replace(/\s+/g, "");
+  const postalCode = /^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(compactLocation) ? compactLocation : "H3A1A1";
+  const result = await loadCurrentDeals({
+    postal_code: postalCode,
+    category: document.getElementById("dealCategory")?.value || "",
+    chain: document.getElementById("dealChain")?.value || "",
+    sort_by: document.getElementById("dealSort")?.value || "savings",
+  });
+  if (!result.ok) {
+    cards.innerHTML = `<p class="muted">${escapeHtml(result.data.detail || "Deals are unavailable.")}</p>`;
+    return;
+  }
+  const deals = Array.isArray(result.data.deals) ? result.data.deals : [];
+  const coverageRows = Array.isArray(result.data.coverage) ? result.data.coverage : [];
+  coverage.textContent = currentLanguage === "fr"
+    ? `${deals.length} offres verifiees · actualise ${formatDate(result.data.generated_at_utc)}`
+    : `${deals.length} verified deals · updated ${formatDate(result.data.generated_at_utc)}`;
+  const chainSelect = document.getElementById("dealChain");
+  if (chainSelect && chainSelect.options.length === 1) {
+    coverageRows.forEach((row) => {
+      const option = document.createElement("option");
+      option.value = row.chain;
+      option.textContent = row.chain;
+      chainSelect.appendChild(option);
+    });
+  }
+  cards.innerHTML = deals.length ? deals.map((deal) => `
+    <article class="deal-card">
+      ${deal.image_url ? `<img src="${escapeHtml(deal.image_url)}" alt="" loading="lazy" />` : ""}
+      <div class="deal-card-body">
+        <span class="deal-store">${escapeHtml(deal.store_chain || "Store")}</span>
+        <h3>${escapeHtml(deal.product_name || deal.item_name)}</h3>
+        <p><strong>${formatCurrency(deal.unit_price, deal.currency || "CAD")}</strong>${deal.regular_price ? ` <s>${formatCurrency(deal.regular_price, deal.currency || "CAD")}</s>` : ""}</p>
+        <small>${deal.package_label ? `${escapeHtml(deal.package_label)} · ` : ""}${deal.normalized_unit_price ? `${formatCurrency(deal.normalized_unit_price, deal.currency || "CAD")} / ${escapeHtml(deal.normalized_unit_basis)}` : ""}</small>
+        <div class="deal-card-footer"><span>${deal.days_remaining != null ? `${deal.days_remaining} ${currentLanguage === "fr" ? "jour(s)" : "day(s) left"}` : (currentLanguage === "fr" ? "Prix actuel" : "Current price")}</span><button type="button" class="secondary btn-sm add-deal-item" data-item="${escapeHtml(deal.item_name)}">${currentLanguage === "fr" ? "Ajouter" : "Add"}</button></div>
+      </div>
+    </article>
+  `).join("") : `<p class="muted">${currentLanguage === "fr" ? "Aucune offre verifiee ne correspond a ces filtres." : "No verified current deals match these filters."}</p>`;
+}
+
+function addAssistantRecipes(recipes) {
+  const box = document.getElementById("assistantMessages");
+  if (!box || !Array.isArray(recipes) || !recipes.length) return;
+  const wrapper = document.createElement("div");
+  wrapper.className = "assistant-message assistant chef-recipe-stack";
+  wrapper.innerHTML = recipes.map((recipe) => `
+    <article class="chef-recipe-card">
+      <div><strong>${escapeHtml(recipe.name || "Recipe")}</strong><span>${Number(recipe.cook_time_minutes || 0)} min</span></div>
+      <p><b>${currentLanguage === "fr" ? "Du plan" : "From your plan"}:</b> ${escapeHtml((recipe.ingredients_from_plan || []).join(", "))}</p>
+      <p><b>${currentLanguage === "fr" ? "A ajouter" : "Extras"}:</b> ${escapeHtml((recipe.extras_needed || []).join(", ") || (currentLanguage === "fr" ? "Rien" : "None"))}</p>
+      <ol>${(recipe.steps || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}</ol>
+    </article>
+  `).join("");
+  box.appendChild(wrapper);
+  box.scrollTop = box.scrollHeight;
 }
 
 function buildShoppingListText() {
@@ -1282,7 +1404,7 @@ function setChefLoading(loading) {
   const input = document.getElementById("assistantInput");
   if (sendBtn) {
     sendBtn.disabled = loading;
-    sendBtn.textContent = loading ? "Thinking..." : "Send";
+    sendBtn.textContent = loading ? (currentLanguage === "fr" ? "Preparation..." : "Preparing...") : (currentLanguage === "fr" ? "Envoyer" : "Send");
   }
   if (input) {
     input.disabled = loading;
@@ -1309,7 +1431,7 @@ async function sendAssistantPrompt(messageOverride = "") {
   }
   toggleChefPanel(true);
   addAssistantMessage("user", message);
-  const pending = addAssistantMessage("assistant", "The Chef is checking your grocery list...");
+  const pending = addAssistantMessage("assistant", currentLanguage === "fr" ? "Le Chef prepare des recettes..." : "The Chef is building recipes...");
   setChefLoading(true);
 
   const payload = {
@@ -1318,6 +1440,7 @@ async function sendAssistantPrompt(messageOverride = "") {
     likes: lastOptimizationPayload?.likes || [],
     dislikes: lastOptimizationPayload?.dislikes || [],
     health_goals: lastOptimizationPayload?.health_goals || [],
+    language: currentLanguage,
   };
 
   const result = await askMealAssistant(payload);
@@ -1332,6 +1455,7 @@ async function sendAssistantPrompt(messageOverride = "") {
 
   const responseText = String(result.data.response || "");
   addAssistantMessage("assistant", responseText.trim());
+  addAssistantRecipes(result.data.recipes || []);
 }
 
 // Loading state helpers
@@ -1353,9 +1477,41 @@ function setFormLoading(loading) {
   }
 }
 
-document.querySelectorAll(".preset-chip").forEach((button) => {
+document.querySelectorAll(".preset-chip[data-preset]").forEach((button) => {
   button.addEventListener("click", () => {
     applyPreset(button.dataset.preset || "balanced");
+  });
+});
+
+document.getElementById("planViewTab")?.addEventListener("click", () => setResultView("plan"));
+document.getElementById("dealsViewTab")?.addEventListener("click", () => setResultView("deals"));
+document.getElementById("browseDealsHero")?.addEventListener("click", () => {
+  document.getElementById("result")?.classList.remove("hidden");
+  setResultView("deals");
+  document.getElementById("result")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+["dealCategory", "dealChain", "dealSort"].forEach((id) => {
+  document.getElementById(id)?.addEventListener("change", () => void refreshDealsView());
+});
+document.getElementById("dealCards")?.addEventListener("click", (event) => {
+  const button = event.target.closest(".add-deal-item");
+  if (!button) return;
+  const input = document.getElementById("mustHaveItems");
+  const item = String(button.dataset.item || "").trim();
+  if (input && item) {
+    const current = input.value.trim();
+    input.value = current ? `${current}; ${item}` : item;
+    showStatus(currentLanguage === "fr" ? `${item} ajoute aux indispensables.` : `${item} added to must-haves.`, "success");
+  }
+});
+
+document.querySelectorAll(".travel-segment").forEach((button) => {
+  button.addEventListener("click", () => {
+    const mode = button.dataset.travelMode || "transit";
+    document.getElementById("travelMode").value = mode;
+    document.querySelectorAll(".travel-segment").forEach((candidate) => {
+      candidate.classList.toggle("active", candidate === button);
+    });
   });
 });
 
@@ -1390,10 +1546,6 @@ document.querySelectorAll("[data-chef-auto]").forEach((button) => {
   const locations = await loadLocations();
 
   if (Array.isArray(locations) && locations.length > 0) {
-    select.innerHTML = locations
-      .map((loc) => `<option value="${escapeHtml(loc.location_id)}">${escapeHtml(loc.display_name)}</option>`)
-      .join("");
-
     const montreal = locations.find((l) => l.location_id === "montreal");
     if (montreal) {
       select.value = "montreal";
@@ -1407,13 +1559,6 @@ document.querySelectorAll("[data-chef-auto]").forEach((button) => {
     showStatus("Could not load locations. Check that API is running on port 8000.", "error");
   }
 })();
-
-document.getElementById("location").addEventListener("change", async (event) => {
-  const value = event.target.value;
-  const locations = await loadLocations();
-  const selected = locations.find((loc) => loc.location_id === value);
-  setBudgetCurrencyLabel((selected && selected.currency) || "CAD");
-});
 
 // Optimize form submission
 document.getElementById("optForm").addEventListener("submit", async (event) => {
@@ -1437,16 +1582,16 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
     max_items: Number(document.getElementById("maxItems").value),
     strategy: document.getElementById("strategy").value,
     location: document.getElementById("location").value,
-    postal_code: document.getElementById("postalCode").value.trim().replace(/\s+/g, ""),
-    address: document.getElementById("address").value.trim(),
+    location_query: document.getElementById("locationQuery").value.trim(),
     transportation_mode: document.getElementById("travelMode").value,
     country_hint: document.getElementById("countryHint").value,
     required_categories: splitList(document.getElementById("requiredCategories").value),
-    must_have_items: splitList(document.getElementById("mustHaveItems").value),
+    must_have_items: splitMustHaves(document.getElementById("mustHaveItems").value),
     excluded_categories: splitList(document.getElementById("excludedCategories").value),
     likes: splitList(document.getElementById("likes").value),
     dislikes: splitList(document.getElementById("dislikes").value),
     health_goals: splitList(document.getElementById("healthGoals").value),
+    language: currentLanguage,
   };
 
   lastOptimizationPayload = payload;
@@ -1473,7 +1618,8 @@ document.getElementById("optForm").addEventListener("submit", async (event) => {
       clearInterval(livePricingIntervalId);
       livePricingIntervalId = null;
     }
-    if (payload.postal_code || payload.address) {
+    if (payload.location_query) {
+      setTimeout(() => void refreshLivePricing(), 250);
       livePricingIntervalId = setInterval(() => {
         const autoRefresh = document.getElementById("autoRefreshPricing");
         if (autoRefresh && autoRefresh.checked) {
@@ -1593,4 +1739,4 @@ applyLanguage(document.getElementById("languageSelect")?.value || "en");
 document.getElementById("languageSelect")?.addEventListener("change", (event) => {
   applyLanguage(event.target.value);
 });
-showStatus("Set your budget, add postal code or address, choose a travel mode, and click 'Generate plan'.", "info");
+showStatus(currentLanguage === "fr" ? "Definissez votre budget, votre lieu et vos indispensables." : "Set your budget, location, and must-haves, then generate your plan.", "info");

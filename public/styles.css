@@ -247,9 +247,11 @@ h1, h2, h3, h4, h5, h6 {
 .container {
   max-width: 1120px;
   width: 100%;
+  min-width: 0;
   margin: 0 auto;
   padding: 32px 24px 60px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   flex: 1 0 auto;
   align-content: start;
   gap: 24px;
@@ -260,6 +262,7 @@ h1, h2, h3, h4, h5, h6 {
    ========================================================================== */
 
 .card {
+  min-width: 0;
   background: var(--surface);
   border-radius: 18px;
   border: 1px solid var(--border);
@@ -1070,7 +1073,10 @@ hr {
    ========================================================================== */
 
 .table-wrap {
+  min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
@@ -1336,6 +1342,8 @@ tbody tr:last-child td {
 
 #storeMap {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   height: 360px;
   min-height: 320px;
   border: 1px solid rgba(237, 27, 47, 0.22);
@@ -1991,6 +1999,16 @@ pre {
 
 .result-card {
   border-color: rgba(191, 219, 254, 0.9);
+}
+
+.result-card,
+#planResultContent,
+#storeComparison,
+#routeInfo,
+.map-section,
+.nearby-store-directory {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .workspace-card {
@@ -2748,6 +2766,186 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
   font-size: 0.8rem;
 }
 
+.plan-essentials-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.travel-segments {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(76px, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--gray-100);
+}
+
+.travel-segments legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.travel-segment {
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray-600);
+  box-shadow: none;
+  font-size: 0.8rem;
+}
+
+.travel-segment:hover,
+.travel-segment.active {
+  background: #fff;
+  color: var(--brand-dark);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.profile-note {
+  max-width: 480px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.profile-note a { color: var(--brand); font-weight: 700; }
+
+.result-view-tabs {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 4px;
+  margin-bottom: 22px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--gray-100);
+}
+
+.result-view-tab {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray-600);
+  box-shadow: none;
+}
+
+.result-view-tab:hover,
+.result-view-tab.active {
+  background: #fff;
+  color: var(--brand-dark);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.deals-panel { animation: fadeSlideUp 220ms ease both; }
+
+.deals-toolbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.deals-toolbar label {
+  display: grid;
+  gap: 5px;
+  color: var(--gray-600);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.deal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.deal-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.deal-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--red-300);
+  box-shadow: var(--shadow-lg);
+}
+
+.deal-card > img {
+  width: 100%;
+  height: 146px;
+  object-fit: contain;
+  background: var(--gray-50);
+}
+
+.deal-card-body { padding: 14px; }
+.deal-card h3 { min-height: 42px; margin: 6px 0 10px; font-size: 0.92rem; line-height: 1.35; }
+.deal-card p { margin: 0; }
+.deal-card p strong { color: var(--brand-dark); font-size: 1.2rem; }
+.deal-card small { display: block; min-height: 20px; color: var(--muted); }
+.deal-store { color: var(--brand); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; }
+.deal-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+.deal-card-footer > span { color: var(--gray-600); font-size: 0.72rem; font-weight: 700; }
+
+.must-have-warning {
+  display: grid;
+  gap: 3px;
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-left: 4px solid var(--amber-500);
+  background: var(--amber-50);
+  color: var(--gray-800);
+  animation: fadeSlideUp 220ms ease both;
+}
+
+.must-have-warning small { color: var(--gray-600); }
+.table-subline { display: block; margin-top: 3px; color: var(--muted); font-weight: 500; }
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.preference-grid label { display: grid; gap: 6px; font-size: 0.8rem; font-weight: 800; color: var(--gray-700); }
+
+.chef-recipe-stack { display: grid; gap: 10px; max-width: 100%; }
+.chef-recipe-card { border-left: 3px solid var(--brand); padding-left: 10px; }
+.chef-recipe-card > div { display: flex; justify-content: space-between; gap: 12px; }
+.chef-recipe-card > div span { color: var(--brand); font-size: 0.75rem; font-weight: 800; }
+.chef-recipe-card p { margin: 6px 0; font-size: 0.78rem; }
+.chef-recipe-card ol { margin: 7px 0 0; padding-left: 19px; font-size: 0.78rem; }
+.coverage-verified_current { border-color: var(--red-300) !important; background: var(--red-50) !important; }
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 800px) {
   .quick-plan-grid, .optional-fields, .stack-list, .purpose-band, .about-hero-v2 { grid-template-columns: 1fr; }
   .about-hero-v2 { padding-top: 36px; }
@@ -2759,6 +2957,7 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
   .nearby-store-heading, .nearby-store-row { align-items: flex-start; flex-direction: column; }
   .nearby-store-facts { justify-content: flex-start; flex-wrap: wrap; }
   .nearby-store-list { max-height: 520px; }
+  .deal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
@@ -2838,6 +3037,61 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
 
   .site-footer {
     padding: 22px 16px;
+  }
+
+  .plan-essentials-row { align-items: stretch; flex-direction: column; }
+  .profile-note { text-align: left; }
+  .travel-segments { width: 100%; }
+  .deals-toolbar, .deal-grid, .preference-grid { grid-template-columns: 1fr; }
+
+  .table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .table-wrap table,
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table-wrap thead {
+    display: none;
+  }
+
+  .table-wrap tr {
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--brand);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table-wrap td {
+    display: grid;
+    grid-template-columns: minmax(78px, 0.42fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    overflow-wrap: anywhere;
+  }
+
+  .table-wrap td:last-child {
+    border-bottom: 0;
+  }
+
+  .table-wrap td::before {
+    content: attr(data-label);
+    color: var(--gray-500);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
   }
 }
 

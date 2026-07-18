@@ -42,7 +42,7 @@ Pagination contract:
 
 Token model:
 
-- Tokens are generated server-side and stored hashed in SQLite.
+- Tokens are generated server-side and stored hashed in the configured database (PostgreSQL in production, SQLite in local development).
 - Save/list plan endpoints require a valid user token.
 
 ## Suggested Production Architecture

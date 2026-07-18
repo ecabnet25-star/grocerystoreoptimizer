@@ -9,6 +9,7 @@ function updateAccountDisplay() {
   const welcomeCard = document.getElementById("welcomeCard");
   const welcomeName = document.getElementById("welcomeName");
   const copyAccountIdBtn = document.getElementById("copyAccountIdBtn");
+  const preferencesForm = document.getElementById("preferencesForm");
 
   if (Session.isActive()) {
     displayUserId.textContent = Session.userId;
@@ -27,6 +28,8 @@ function updateAccountDisplay() {
     if (createAccountForm) createAccountForm.classList.add("hidden");
     if (loginForm) loginForm.classList.add("hidden");
     if (sessionActions) sessionActions.classList.remove("hidden");
+    if (preferencesForm) preferencesForm.classList.remove("hidden");
+    void populatePreferencesForm();
   } else {
     displayUserId.textContent = tr("Not signed in", "Non connecte");
     displaySessionStatus.textContent = tr("Inactive", "Inactif");
@@ -39,8 +42,47 @@ function updateAccountDisplay() {
     if (createAccountForm) createAccountForm.classList.remove("hidden");
     if (loginForm) loginForm.classList.remove("hidden");
     if (sessionActions) sessionActions.classList.add("hidden");
+    if (preferencesForm) preferencesForm.classList.add("hidden");
   }
 }
+
+function accountSplitList(value) {
+  return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+async function populatePreferencesForm() {
+  if (!Session.isActive()) return;
+  const result = await loadProfilePreferences();
+  if (!result.ok) return;
+  const preferences = result.data.preferences || {};
+  document.getElementById("profileLikes").value = (preferences.likes || []).join(", ");
+  document.getElementById("profileDislikes").value = (preferences.dislikes || []).join(", ");
+  document.getElementById("profileGoals").value = (preferences.health_goals || []).join(", ");
+  document.getElementById("profileExcluded").value = (preferences.excluded_categories || []).join(", ");
+  document.getElementById("profileLanguage").value = preferences.preferred_language || "en";
+}
+
+document.getElementById("preferencesForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = document.getElementById("savePreferencesBtn");
+  const payload = {
+    likes: accountSplitList(document.getElementById("profileLikes").value),
+    dislikes: accountSplitList(document.getElementById("profileDislikes").value),
+    health_goals: accountSplitList(document.getElementById("profileGoals").value),
+    excluded_categories: accountSplitList(document.getElementById("profileExcluded").value),
+    preferred_language: document.getElementById("profileLanguage").value === "fr" ? "fr" : "en",
+  };
+  setButtonLoading(button, true, tr("Save preferences", "Enregistrer les preferences"));
+  const result = await saveProfilePreferences(payload);
+  setButtonLoading(button, false, tr("Save preferences", "Enregistrer les preferences"));
+  if (!result.ok) {
+    showStatus(result.data.detail || tr("Could not save preferences.", "Impossible d'enregistrer les preferences."), "error");
+    return;
+  }
+  setCurrentLanguage(payload.preferred_language);
+  document.getElementById("languageSelect").value = payload.preferred_language;
+  showStatus(tr("Preferences saved and ready for your next plan.", "Preferences enregistrees pour votre prochain plan."), "success");
+});
 
 // Helper to set button loading state
 function setButtonLoading(btn, loading, originalText) {

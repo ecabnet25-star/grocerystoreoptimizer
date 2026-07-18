@@ -14,6 +14,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .cache import LivePriceQuote
+from .flipp import chain_matches, fetch_flipp_search, parse_flipp_quotes
 from .parsing import (
     _close_http_error,
     _extract_flipp_currency,
@@ -69,6 +70,99 @@ class BaseLiveProvider:
         currency_hint: str,
     ) -> LivePriceQuote | None:
         raise NotImplementedError
+
+
+class FlippPublicProvider(BaseLiveProvider):
+    """Current flyer and e-commerce prices from Flipp's public web search feed."""
+
+    def __init__(self, config: dict[str, Any], timeout_seconds: int):
+        super().__init__(config, timeout_seconds)
+        self._search_cache: dict[str, tuple[float, dict[str, Any], str]] = {}
+
+    def health(self) -> ProviderHealth:
+        configured = bool(self.config.get("base_url"))
+        detail = "ready" if configured else "missing base_url"
+        if not self.enabled:
+            detail = "disabled"
+        return ProviderHealth(
+            provider_id=self.provider_id,
+            enabled=self.enabled,
+            provider_type="flipp_public",
+            configured=configured,
+            detail=detail,
+        )
+
+    def _search(self, item_name: str, postal_code: str) -> tuple[dict[str, Any], str]:
+        locale = str(self.config.get("locale", "en-ca"))
+        cache_key = f"{locale}|{postal_code.upper()}|{item_name.lower()}"
+        cached = self._search_cache.get(cache_key)
+        cache_seconds = int(self.config.get("search_cache_seconds", 600))
+        if cached and cached[0] + cache_seconds >= time.time():
+            return cached[1], cached[2]
+        payload, url = fetch_flipp_search(
+            item_name=item_name,
+            postal_code=postal_code,
+            locale=locale,
+            base_url=str(self.config.get("base_url")),
+            timeout_seconds=self.timeout_seconds,
+        )
+        self._search_cache[cache_key] = (time.time(), payload, url)
+        return payload, url
+
+    def fetch_price(
+        self,
+        item_name: str,
+        item_category: str,
+        base_unit_price: float,
+        store_chain: str,
+        store_price_tier: str,
+        postal_code: str,
+        country: str,
+        currency_hint: str,
+    ) -> LivePriceQuote | None:
+        if not self.enabled or country.upper() != "CA" or not postal_code:
+            return None
+        try:
+            payload, url = self._search(item_name, postal_code)
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, ValueError):
+            return None
+        quotes = parse_flipp_quotes(
+            payload,
+            requested_item=item_name,
+            requested_chain=store_chain,
+            item_category=item_category,
+            source_url=url,
+            include_ecommerce=bool(self.config.get("include_ecommerce", True)),
+        )
+        if not quotes:
+            return None
+        quote = quotes[0]
+        return LivePriceQuote(
+            provider_id=self.provider_id,
+            item_name=item_name,
+            currency=str(quote["currency"]),
+            unit_price=float(quote["unit_price"]),
+            confidence=float(quote["confidence"]),
+            fetched_at_utc=str(quote["fetched_at_utc"]),
+            source_url=str(quote["source_url"]),
+            product_name=str(quote["product_name"]),
+            store_chain=str(quote["store_chain"]),
+            package_size=quote.get("package_size"),
+            package_unit=str(quote.get("package_unit", "package")),
+            package_label=str(quote.get("package_label", "")),
+            regular_price=quote.get("regular_price"),
+            on_sale=bool(quote.get("on_sale")),
+            valid_from_utc=str(quote.get("valid_from_utc", "")),
+            valid_to_utc=str(quote.get("valid_to_utc", "")),
+            source_type=str(quote.get("source_type", "flyer_aggregator")),
+            offer_quantity=int(quote.get("offer_quantity", 1)),
+            offer_price=quote.get("offer_price"),
+            normalized_unit_price=quote.get("normalized_unit_price"),
+            normalized_unit_basis=str(quote.get("normalized_unit_basis", "package")),
+            source_item_id=str(quote.get("source_item_id", "")),
+            image_url=str(quote.get("image_url", "")),
+            price_basis_text=str(quote.get("price_basis_text", "")),
+        )
 
 
 class JsonFeedProvider(BaseLiveProvider):
@@ -399,8 +493,11 @@ class LocalSnapshotProvider(BaseLiveProvider):
 
     def health(self) -> ProviderHealth:
         path = self._snapshot_path()
-        configured = path.exists()
-        detail = "ready" if configured else f"missing snapshot file: {path}"
+        payload = self._load_snapshot()
+        issue = self._snapshot_issue(payload)
+        configured = path.exists() and not issue
+        quote_count = len(payload.get("quotes", [])) if isinstance(payload.get("quotes"), list) else 0
+        detail = f"ready ({quote_count} verified rows)" if configured else issue or f"missing snapshot file: {path}"
         if not self.enabled:
             detail = "disabled"
         return ProviderHealth(
@@ -411,57 +508,51 @@ class LocalSnapshotProvider(BaseLiveProvider):
             detail=detail,
         )
 
-    def _tokenize(self, value: str) -> set[str]:
-        return {token for token in re.findall(r"[a-z0-9]+", value.lower()) if len(token) >= 3}
+    @staticmethod
+    def _parse_timestamp(value: Any) -> datetime | None:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=UTC)
+        return parsed.astimezone(UTC)
 
-    def _chain_matches(self, requested_chain: str, row_chain: str) -> bool:
-        requested = requested_chain.strip().lower()
-        candidate = row_chain.strip().lower()
-        if not requested or not candidate:
+    def _snapshot_issue(self, payload: dict[str, Any]) -> str:
+        if not payload:
+            return f"missing or invalid snapshot: {self._snapshot_path()}"
+        if int(payload.get("schema_version", 0) or 0) < 2:
+            return "snapshot schema_version must be at least 2"
+        generated_at = self._parse_timestamp(payload.get("generated_at_utc"))
+        if generated_at is None:
+            return "snapshot generated_at_utc is invalid"
+        max_age_hours = max(1, int(self.config.get("max_age_hours", 48)))
+        age_seconds = (datetime.now(UTC) - generated_at).total_seconds()
+        if age_seconds > max_age_hours * 3600:
+            return f"snapshot is stale (older than {max_age_hours} hours)"
+        rows = payload.get("quotes", [])
+        if not isinstance(rows, list) or not rows:
+            return "snapshot has no verified quotes"
+        return ""
+
+    @staticmethod
+    def _normalize_item(value: str) -> str:
+        return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
+
+    def _row_is_current(self, row: dict[str, Any]) -> bool:
+        now = datetime.now(UTC)
+        valid_from = self._parse_timestamp(row.get("valid_from_utc"))
+        valid_to = self._parse_timestamp(row.get("valid_to_utc"))
+        if valid_from and now < valid_from:
             return False
-        if requested == candidate:
-            return True
-
-        alias_groups = [
-            {"metro", "super c", "superc"},
-            {"provigo", "maxi", "loblaws", "loblaw"},
-            {"walmart", "walmart canada"},
-            {"costco", "costco wholesale"},
-            {"iga"},
-        ]
-        for group in alias_groups:
-            if requested in group and candidate in group:
-                return True
-
-        return requested in candidate or candidate in requested
-
-    def _row_score(self, row: dict[str, Any], item_name: str, store_chain: str, postal_code: str) -> int:
-        score = 0
-        row_item = str(row.get("item_name", ""))
-        row_chain = str(row.get("store_chain", row.get("chain", "")))
-        row_postal = str(row.get("postal_code", ""))
-
-        item_tokens = self._tokenize(item_name)
-        row_tokens = self._tokenize(row_item)
-        overlap = len(item_tokens.intersection(row_tokens))
-        score += overlap * 3
-
-        chain_l = store_chain.strip().lower()
-        row_chain_l = row_chain.strip().lower()
-        if chain_l and row_chain_l:
-            if chain_l == row_chain_l:
-                score += 6
-            elif chain_l in row_chain_l or row_chain_l in chain_l:
-                score += 3
-
-        normalized_postal = postal_code.upper().replace(" ", "")
-        row_postal_n = row_postal.upper().replace(" ", "")
-        if normalized_postal and row_postal_n:
-            if normalized_postal == row_postal_n:
-                score += 3
-            elif normalized_postal[:3] and normalized_postal[:3] == row_postal_n[:3]:
-                score += 1
-        return score
+        if valid_to and now > valid_to:
+            return False
+        fetched = self._parse_timestamp(row.get("fetched_at_utc"))
+        max_age_hours = max(1, int(self.config.get("max_age_hours", 48)))
+        return bool(fetched and (now - fetched).total_seconds() <= max_age_hours * 3600)
 
     def fetch_price(
         self,
@@ -478,27 +569,49 @@ class LocalSnapshotProvider(BaseLiveProvider):
             return None
 
         payload = self._load_snapshot()
+        if self._snapshot_issue(payload):
+            return None
         rows = payload.get("quotes", [])
         if not isinstance(rows, list):
             return None
 
         best_row: dict[str, Any] | None = None
-        best_score = -1
+        normalized_item = self._normalize_item(item_name)
+        normalized_postal = postal_code.upper().replace(" ", "")
+        if not normalized_postal:
+            return None
         for entry in rows:
             if not isinstance(entry, dict):
                 continue
             row_chain = str(entry.get("store_chain", entry.get("chain", "")))
-            if not self._chain_matches(store_chain, row_chain):
+            if not chain_matches(store_chain, row_chain):
+                continue
+            if self._normalize_item(str(entry.get("item_name", ""))) != normalized_item:
+                continue
+            if not str(entry.get("product_name", "")).strip():
+                continue
+            if str(entry.get("source_type", "")) not in {"flyer_aggregator", "retailer_ecommerce"}:
+                continue
+            row_postal = str(entry.get("postal_code", "")).upper().replace(" ", "")
+            if normalized_postal and row_postal and normalized_postal != row_postal:
+                continue
+            if not self._row_is_current(entry):
                 continue
             price = _to_float(entry.get("unit_price"))
             if price is None or price <= 0:
                 continue
-            score = self._row_score(entry, item_name=item_name, store_chain=store_chain, postal_code=postal_code)
-            if score > best_score:
-                best_score = score
+            row_rank = (
+                float(entry.get("confidence", 0.0) or 0.0),
+                -float(price),
+            )
+            best_rank = (
+                float(best_row.get("confidence", 0.0) or 0.0),
+                -float(best_row.get("unit_price", 0.0) or 0.0),
+            ) if best_row else (-1.0, 0.0)
+            if row_rank > best_rank:
                 best_row = entry
 
-        if not best_row or best_score < 4:
+        if not best_row:
             return None
 
         price = _to_float(best_row.get("unit_price"))
@@ -516,6 +629,23 @@ class LocalSnapshotProvider(BaseLiveProvider):
             confidence=max(0.0, min(float(confidence), 1.0)),
             fetched_at_utc=fetched_at,
             source_url=source_url,
+            product_name=str(best_row.get("product_name", "")),
+            store_chain=str(best_row.get("store_chain", "")),
+            package_size=_to_float(best_row.get("package_size")),
+            package_unit=str(best_row.get("package_unit", "package")),
+            package_label=str(best_row.get("package_label", "")),
+            regular_price=_to_float(best_row.get("regular_price")),
+            on_sale=bool(best_row.get("on_sale", False)),
+            valid_from_utc=str(best_row.get("valid_from_utc", "")),
+            valid_to_utc=str(best_row.get("valid_to_utc", "")),
+            source_type=str(best_row.get("source_type", "unknown")),
+            offer_quantity=max(1, int(best_row.get("offer_quantity", 1) or 1)),
+            offer_price=_to_float(best_row.get("offer_price")),
+            normalized_unit_price=_to_float(best_row.get("normalized_unit_price")),
+            normalized_unit_basis=str(best_row.get("normalized_unit_basis", "package")),
+            source_item_id=str(best_row.get("source_item_id", "")),
+            image_url=str(best_row.get("image_url", "")),
+            price_basis_text=str(best_row.get("price_basis_text", "")),
         )
 
 

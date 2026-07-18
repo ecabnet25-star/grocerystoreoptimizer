@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
+from difflib import SequenceMatcher
 from itertools import combinations
 from typing import Any, cast
 
@@ -72,6 +74,62 @@ def _normalize_country_hint(country_hint: str, profile_currency: str) -> str:
     return hint
 
 
+def _normalize_requested_item(value: str) -> str:
+    cleaned = re.sub(
+        r"\b\d+(?:[.,]\d+)?\s*(?:kg|g|lb|lbs|oz|ml|l|pack|pk|count|ct|units?)\b",
+        " ",
+        value.lower(),
+    )
+    return " ".join(re.findall(r"[a-z0-9]+", cleaned))
+
+
+def _match_requested_items(requested: list[str], items: list[Any]) -> tuple[set[str], list[dict[str, Any]], list[str]]:
+    catalog = [(item, _normalize_requested_item(str(item.name))) for item in items]
+    matched_names: set[str] = set()
+    matches: list[dict[str, Any]] = []
+    unmatched: list[str] = []
+    for raw_value in requested:
+        raw = str(raw_value).strip()
+        query = _normalize_requested_item(raw)
+        if not query:
+            continue
+        query_tokens = set(query.split())
+        ranked: list[tuple[float, Any]] = []
+        for item, candidate in catalog:
+            candidate_tokens = set(candidate.split())
+            sequence_score = SequenceMatcher(None, query, candidate).ratio()
+            token_score = len(query_tokens & candidate_tokens) / max(len(query_tokens), 1)
+            score = (sequence_score * 0.55) + (token_score * 0.45)
+            ranked.append((score, item))
+        score, selected = max(ranked, key=lambda row: row[0], default=(0.0, None))
+        if selected is None or score < 0.68:
+            unmatched.append(raw)
+            continue
+        matched_names.add(str(selected.name).strip().lower())
+        matches.append(
+            {
+                "requested": raw,
+                "matched_item": selected.name,
+                "confidence": round(score, 2),
+            }
+        )
+    return matched_names, matches, unmatched
+
+
+def _normalize_location_request(request: OptimizeRequest) -> OptimizeRequest:
+    query = request.location_query.strip()
+    if not query or request.postal_code or request.address:
+        return request
+    compact = query.upper().replace(" ", "")
+    if re.fullmatch(r"[A-Z]\d[A-Z]\d[A-Z]\d", compact):
+        return request.model_copy(update={"postal_code": compact})
+    postal_match = re.search(r"\b([A-Z]\d[A-Z])\s?(\d[A-Z]\d)\b", query.upper())
+    if postal_match:
+        postal_code = "".join(postal_match.groups())
+        return request.model_copy(update={"postal_code": postal_code, "address": query})
+    return request.model_copy(update={"address": query})
+
+
 def _geocode_address_with_fallbacks(address: str, postal_code: str, country_hint: str) -> Any | None:
     normalized_address = address.strip()
     normalized_postal = postal_code.strip()
@@ -126,6 +184,7 @@ def _build_plan_insights(
     store_comparison: list[dict[str, Any]],
     route_info: dict[str, Any] | None,
     currency: str,
+    language: str = "en",
 ) -> dict[str, Any]:
     category_totals: dict[str, dict[str, Any]] = {}
     for item in selected_items:
@@ -140,7 +199,13 @@ def _build_plan_insights(
     best_store = min(store_comparison, key=lambda store: float(store.get("estimated_total", 0.0)), default=None)
     highest_store = max(store_comparison, key=lambda store: float(store.get("estimated_total", 0.0)), default=None)
     estimated_store_savings = 0.0
-    if best_store and highest_store:
+    store_savings_verified = bool(
+        best_store
+        and highest_store
+        and float(best_store.get("live_coverage_percent", 0.0)) == 100.0
+        and float(highest_store.get("live_coverage_percent", 0.0)) == 100.0
+    )
+    if best_store and highest_store and store_savings_verified:
         estimated_store_savings = round(
             float(highest_store.get("estimated_total", 0.0)) - float(best_store.get("estimated_total", 0.0)),
             2,
@@ -148,28 +213,58 @@ def _build_plan_insights(
 
     next_actions: list[str] = []
     if budget_used_percent < 70:
-        next_actions.append("Budget has room left; consider adding shelf-stable staples or higher-protein items.")
+        next_actions.append(
+            "Le budget permet encore d'ajouter des aliments de base ou riches en proteines."
+            if language == "fr"
+            else "Budget has room left; consider adding shelf-stable staples or higher-protein items."
+        )
     elif budget_used_percent > 95:
-        next_actions.append("Plan is close to budget; review premium stores or non-essential items before shopping.")
+        next_actions.append(
+            "Le plan approche le budget; verifiez les articles non essentiels avant de magasiner."
+            if language == "fr"
+            else "Plan is close to budget; review premium stores or non-essential items before shopping."
+        )
     else:
-        next_actions.append("Budget usage is balanced for the selected item count.")
+        next_actions.append(
+            "L'utilisation du budget est equilibree pour ce nombre d'articles."
+            if language == "fr"
+            else "Budget usage is balanced for the selected item count."
+        )
 
     if best_store:
-        next_actions.append(f"Start price checks with {best_store.get('name', 'the lowest estimated store')}.")
+        next_actions.append(
+            f"Commencez la verification des prix chez {best_store.get('name', 'le magasin le moins cher')}."
+            if language == "fr"
+            else f"Start price checks with {best_store.get('name', 'the lowest estimated store')}."
+        )
     if route_info and route_info.get("total_distance_km") is not None:
-        next_actions.append(f"Use the suggested route to keep travel near {route_info.get('total_distance_km')} km.")
+        next_actions.append(
+            f"Suivez l'itineraire suggere pour limiter le trajet a environ {route_info.get('total_distance_km')} km."
+            if language == "fr"
+            else f"Use the suggested route to keep travel near {route_info.get('total_distance_km')} km."
+        )
     if route_info and float(route_info.get("net_route_savings", 0.0) or 0.0) > 0:
         next_actions.append(
-            f"Split items by store only when you want the estimated {currency} {route_info.get('net_route_savings')} net route savings."
+            f"Repartissez les articles pour obtenir environ {route_info.get('net_route_savings')} {currency} d'economie nette."
+            if language == "fr"
+            else f"Split items by store only when you want the estimated {currency} {route_info.get('net_route_savings')} net route savings."
         )
     if sorted_categories:
-        next_actions.append(f"Most spending is in {sorted_categories[0]['category']}; adjust that category first for savings.")
+        next_actions.append(
+            f"La categorie {sorted_categories[0]['category']} coute le plus; ajustez-la en premier."
+            if language == "fr"
+            else f"Most spending is in {sorted_categories[0]['category']}; adjust that category first for savings."
+        )
 
     return {
         "budget_used_percent": budget_used_percent,
         "category_breakdown": sorted_categories,
         "best_store": best_store,
         "estimated_store_savings": estimated_store_savings,
+        "savings_is_verified": bool(
+            store_savings_verified
+            or (route_info and route_info.get("savings_is_verified") and float(route_info.get("net_route_savings", 0.0)) > 0)
+        ),
         "route_distance_km": route_info.get("total_distance_km") if route_info else None,
         "multi_store_item_savings": route_info.get("multi_store_item_savings", 0.0) if route_info else 0.0,
         "estimated_travel_cost": route_info.get("estimated_travel_cost", 0.0) if route_info else 0.0,
@@ -611,6 +706,7 @@ def _build_store_data(
     use_live_pricing: bool = False,
     travel_profile: dict[str, float | int] | None = None,
     transportation_mode: str = "transit",
+    language: str = "en",
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None, dict[str, Any], str]:
     """Build the store-comparison payload, nearby-stores list, route info, and pricing metadata.
 
@@ -630,7 +726,7 @@ def _build_store_data(
         else:
             missing_reason = "No nearby stores found within 20 km."
 
-    store_inputs: list[dict[str, Any]] = []
+    all_store_inputs: list[dict[str, Any]] = []
     for store, distance in nearby:
         store_info = {
             "store_id": store.store_id,
@@ -644,7 +740,27 @@ def _build_store_data(
             "quality_rating": store.quality_rating,
         }
         nearby_stores.append(store_info)
-        store_inputs.append(store_info)
+        all_store_inputs.append(store_info)
+
+    # Price a diverse, nearby subset. Every discovered location remains visible
+    # on the map, while provider work stays bounded and route generation remains fast.
+    selected_ids: set[str] = set()
+    selected_chains: set[str] = set()
+    store_inputs: list[dict[str, Any]] = []
+    for store in all_store_inputs:
+        chain = str(store.get("chain", "")).strip().lower()
+        if chain and chain not in selected_chains:
+            store_inputs.append(store)
+            selected_ids.add(str(store["store_id"]))
+            selected_chains.add(chain)
+        if len(store_inputs) >= 12:
+            break
+    for store in all_store_inputs:
+        if len(store_inputs) >= 12:
+            break
+        if str(store["store_id"]) not in selected_ids:
+            store_inputs.append(store)
+            selected_ids.add(str(store["store_id"]))
 
     country = "US" if profile.currency == "USD" else "CA"
     store_comparison, pricing_meta = build_store_live_pricing_snapshot(
@@ -738,20 +854,71 @@ def _build_store_data(
             "savings_threshold": float(travel_profile.get("min_net_savings", 1.5)),
             "transportation_mode": transportation_mode,
         }
+        if language == "fr":
+            route_info["selection_reason"] = (
+                "Itineraire multi-magasins rentable"
+                if len(route_info["stops"]) > 1
+                else "Meilleur itineraire a un seul magasin"
+            )
+        speed_kmh = {"walk": 4.8, "transit": 18.0, "drive": 30.0}.get(transportation_mode, 18.0)
+        route_minutes = (float(route_info["total_distance_km"]) / speed_kmh) * 60
+        route_minutes += max(0, len(route_info["stops"]) - 1) * 5
+        baseline_distance = min(
+            (float(store.get("distance_km", 0.0)) for store in store_comparison),
+            default=0.0,
+        )
+        baseline_minutes = (baseline_distance / speed_kmh) * 60
+        route_info["estimated_travel_minutes"] = round(route_minutes, 1)
+        route_info["added_travel_minutes"] = round(max(0.0, route_minutes - baseline_minutes), 1)
+        assignments_are_verified = bool(assignments) and all(
+            row.get("pricing_source") == "verified_current" for row in assignments
+        )
+        route_info["savings_is_verified"] = assignments_are_verified
+        if not assignments_are_verified:
+            route_info["net_route_savings"] = 0.0
+
+    verified_by_store: dict[str, int] = {}
+    for quote in pricing_meta.get("item_quotes", []):
+        if isinstance(quote, dict) and quote.get("pricing_source") == "verified_current":
+            store_id = str(quote.get("store_id", ""))
+            verified_by_store[store_id] = verified_by_store.get(store_id, 0) + 1
+    comparison_ids = {str(store.get("store_id", "")) for store in store_comparison}
+    chain_coverage: dict[str, dict[str, Any]] = {}
+    for store in nearby_stores:
+        chain = str(store.get("chain") or store.get("name") or "Independent")
+        row = chain_coverage.setdefault(
+            chain,
+            {"chain": chain, "nearby_locations": 0, "priced_locations": 0, "verified_quotes": 0},
+        )
+        row["nearby_locations"] += 1
+        store_id = str(store.get("store_id", ""))
+        if store_id in comparison_ids:
+            row["priced_locations"] += 1
+        row["verified_quotes"] += verified_by_store.get(store_id, 0)
+    coverage_rows = sorted(chain_coverage.values(), key=lambda row: (-row["verified_quotes"], row["chain"]))
+    for row in coverage_rows:
+        row["status"] = (
+            "verified_current"
+            if row["verified_quotes"]
+            else ("estimate_only" if row["priced_locations"] else "nearby_only")
+        )
+    pricing_meta["coverage_by_chain"] = coverage_rows
 
     return nearby_stores, store_comparison, route_info, pricing_meta, missing_reason
 
 
 def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
+    request = _normalize_location_request(request)
     # 1. Load and price items.
     profile = load_location_profile(request.location)
     items = load_items_from_json(request.catalog_path)
+    if not items:
+        raise ValueError("The grocery catalog is empty or unavailable.")
     priced_items = apply_location_pricing(items, profile)
     travel_profile = _travel_profile(request.transportation_mode)
     country_hint = _normalize_country_hint(request.country_hint, profile.currency)
 
     # 2. Apply preferences.
-    likes = [item.lower() for item in request.likes]
     dislikes = [item.lower() for item in request.dislikes]
     health_goals = [item.lower() for item in request.health_goals]
 
@@ -768,12 +935,11 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
     if any("heart" in goal or "low sodium" in goal or "fiber" in goal for goal in health_goals):
         goal_required.add("produce")
 
-    like_required = {
-        item.category
-        for item in priced_items
-        if any(token in item.name.lower() or token in item.category.lower() for token in likes)
-    }
-    required_categories = goal_required | like_required
+    required_categories = goal_required
+    matched_must_haves, must_have_matches, unmatched_must_haves = _match_requested_items(
+        request.must_have_items, priced_items
+    )
+    preferred_items, _, _ = _match_requested_items(request.likes, priced_items)
 
     # 3. Run optimization AND geo-resolution in parallel.
     #    The optimizer only needs items/budget; geo needs postal/address.
@@ -789,7 +955,8 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             budget=request.budget,
             max_items=request.max_items,
             required_categories=required_categories,
-            required_item_names=set(request.must_have_items),
+            required_item_names=matched_must_haves,
+            preferred_item_names=preferred_items,
             excluded_categories=set(request.excluded_categories),
             strategy=request.strategy,
             weights=OptimizationWeights(
@@ -825,6 +992,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             use_live_pricing=request.include_live_pricing,
             travel_profile=travel_profile,
             transportation_mode=request.transportation_mode,
+            language=request.language,
         )
     else:
         nearby_stores = []
@@ -850,9 +1018,11 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
         store_comparison=store_comparison,
         route_info=route_info,
         currency=profile.currency,
+        language=request.language,
     )
     price_forecast = predict_price_drops(
-        get_live_price_history(normalized_postal, limit=1000) if normalized_postal else []
+        get_live_price_history(normalized_postal, limit=1000) if normalized_postal else [],
+        language=request.language,
     )
     route_assignments = [
         cast(dict[str, Any], row)
@@ -867,6 +1037,12 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
         str(store.get("store_id", "")): store
         for store in store_comparison
     }
+    quotes_by_item: dict[str, list[dict[str, Any]]] = {}
+    for quote in pricing_meta.get("item_quotes", []):
+        if isinstance(quote, dict):
+            quotes_by_item.setdefault(str(quote.get("item_name", "")).lower(), []).append(quote)
+    for quotes in quotes_by_item.values():
+        quotes.sort(key=lambda quote: float(quote.get("line_total", 999999.0)))
 
     return {
         "location": {
@@ -877,6 +1053,7 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             "address": request.address,
             "country_hint": request.country_hint,
             "transportation_mode": request.transportation_mode,
+            "language": request.language,
         },
         "summary": {
             "strategy": result.strategy,
@@ -899,6 +1076,11 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
                 "total_cost": item.total_cost,
                 "nutrition_score": item.nutrition_score,
                 "shelf_life_days": item.shelf_life_days,
+                "package_size": item.package_size,
+                "package_unit": item.package_unit,
+                "package_label": item.package_label,
+                "normalized_unit_price": item.normalized_unit_price,
+                "normalized_unit_basis": item.unit_price_basis,
                 "recommended_store": assignment_by_item.get(item.name.lower(), {}).get("store_name", ""),
                 "recommended_store_id": assignment_by_item.get(item.name.lower(), {}).get("store_id", ""),
                 "recommended_store_address": store_lookup.get(assignment_by_item.get(item.name.lower(), {}).get("store_id", ""), {}).get("address", ""),
@@ -906,18 +1088,33 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
                 "recommended_store_unit_price": assignment_by_item.get(item.name.lower(), {}).get("unit_price", item.price),
                 "store_line_total": assignment_by_item.get(item.name.lower(), {}).get("line_total", item.total_cost),
                 "store_savings": assignment_by_item.get(item.name.lower(), {}).get("gross_savings", 0.0),
+                "price_options": [
+                    {
+                        "store_id": quote.get("store_id", ""),
+                        "store_name": quote.get("store_name", ""),
+                        "unit_price": quote.get("unit_price"),
+                        "line_total": quote.get("line_total"),
+                        "product_name": quote.get("product_name", item.name),
+                        "package_label": quote.get("package_label", item.package_label),
+                        "normalized_unit_price": quote.get("normalized_unit_price"),
+                        "normalized_unit_basis": quote.get("normalized_unit_basis", "package"),
+                        "pricing_source": quote.get("pricing_source", ""),
+                        "on_sale": quote.get("on_sale", False),
+                    }
+                    for quote in quotes_by_item.get(item.name.lower(), [])[:3]
+                ],
             }
             for item in result.selected_items
         ],
         "stores": {
             "nearby": nearby_stores,
             "comparison": store_comparison,
-            "data_source": "Instant store-tier estimates; use Refresh prices for live provider checks"
+            "data_source": "Instant store-tier estimates; use Refresh prices for current flyer checks"
             if not request.include_live_pricing
-            else "Third-party live feeds when available, with store-tier fallback estimates",
+            else "Verified current flyer/e-commerce prices when available, with clearly marked estimates",
             "pricing_mode": "instant_estimate"
             if not request.include_live_pricing
-            else "third_party_live_with_fallback",
+            else "verified_current_with_estimates",
             "last_updated_utc": pricing_meta.get("last_updated_utc", pricing_timestamp),
             "refresh_interval_seconds": 60,
             "available": len(store_comparison) > 0,
@@ -930,12 +1127,18 @@ def optimize_from_request(request: OptimizeRequest) -> dict[str, Any]:
             "total_quote_attempts": pricing_meta.get("total_quote_attempts", 0),
             "item_quotes": pricing_meta.get("item_quotes", []),
             "alerts": pricing_meta.get("alerts", []),
+            "coverage_by_chain": pricing_meta.get("coverage_by_chain", []),
             "auto_discovery_used": any(str(s.get("store_id", "")).startswith("scan-") for s in nearby_stores),
             "retailer_research": retailer_research,
         },
         "route": route_info,
         "price_forecast": price_forecast,
         "insights": insights,
+        "must_haves": {
+            "matches": must_have_matches,
+            "unmatched": unmatched_must_haves,
+            "all_matched": not unmatched_must_haves,
+        },
     }
 
 

@@ -14,15 +14,16 @@ class OptimizationWeights:
 
 def _item_value_score(item: GroceryItem) -> float:
     cost = item.total_cost if item.total_cost > 0 else 0.01
-    freshness_factor = max(item.shelf_life_days, 1) / 7
+    freshness_factor = 1.0 + (min(max(item.shelf_life_days, 1), 45) / 90)
     return (item.nutrition_score * freshness_factor) / cost
 
 
 def _utility_score(item: GroceryItem, weights: OptimizationWeights) -> float:
     cost = item.total_cost if item.total_cost > 0 else 0.01
+    normalized_shelf_life = min(max(item.shelf_life_days, 0), 60) / 6
     weighted_benefit = (
         (item.nutrition_score * weights.nutrition_weight)
-        + (item.shelf_life_days * weights.shelf_life_weight)
+        + (normalized_shelf_life * weights.shelf_life_weight)
     )
     return weighted_benefit - (cost * weights.cost_weight)
 
@@ -95,12 +96,49 @@ def _expand_with_variety(
     return selected, spent
 
 
+def _improve_budget_utilization(
+    selected: list[GroceryItem],
+    candidates: list[GroceryItem],
+    budget: float,
+    spent: float,
+    target_spend_ratio: float,
+    protected_names: set[str],
+) -> tuple[list[GroceryItem], float]:
+    """Swap one optional item when it meaningfully closes an avoidable budget gap."""
+    if spent >= budget * target_spend_ratio:
+        return selected, spent
+    best_swap: tuple[float, int, GroceryItem] | None = None
+    for index, current in enumerate(selected):
+        if current.name.strip().lower() in protected_names:
+            continue
+        for candidate in candidates:
+            if candidate in selected:
+                continue
+            next_spent = spent - current.total_cost + candidate.total_cost
+            gain = next_spent - spent
+            if gain <= 0 or next_spent > budget:
+                continue
+            if best_swap is None or gain > best_swap[0]:
+                best_swap = (gain, index, candidate)
+    if best_swap:
+        gain, index, candidate = best_swap
+        selected[index] = candidate
+        spent += gain
+    return selected, spent
+
+
 def _greedy_select(
     items: list[GroceryItem],
     budget: float,
     max_items: int | None,
+    preferred_item_names: set[str],
 ) -> tuple[list[GroceryItem], float, list[GroceryItem]]:
-    sorted_items = sorted(items, key=_item_value_score, reverse=True)
+    sorted_items = sorted(
+        items,
+        key=lambda item: _item_value_score(item)
+        * (1.3 if item.name.strip().lower() in preferred_item_names else 1.0),
+        reverse=True,
+    )
     selected: list[GroceryItem] = []
     spent = 0.0
 
@@ -120,6 +158,7 @@ def _knapsack_select(
     budget: float,
     max_items: int | None,
     weights: OptimizationWeights,
+    preferred_item_names: set[str],
 ) -> tuple[list[GroceryItem], float, list[GroceryItem]]:
     sorted_items = list(items)
     # Discretize to dimes (10-cent granularity) to reduce state space by 10x
@@ -131,6 +170,8 @@ def _knapsack_select(
     for index, item in enumerate(sorted_items):
         item_cost = int(round(item.total_cost * 10))
         item_utility = _utility_score(item, weights)
+        if item.name.strip().lower() in preferred_item_names:
+            item_utility += 2.5
         # Build new states into a separate dict, then merge -- avoids copying
         # the entire dp dict while also preventing the current item from being
         # considered more than once (0-1 knapsack property).
@@ -174,6 +215,7 @@ def optimize_grocery_list(
     max_items: int | None = None,
     required_categories: set[str] | None = None,
     required_item_names: set[str] | None = None,
+    preferred_item_names: set[str] | None = None,
     excluded_categories: set[str] | None = None,
     strategy: str = "greedy",
     weights: OptimizationWeights | None = None,
@@ -184,23 +226,35 @@ def optimize_grocery_list(
 
     required_categories = required_categories or set()
     required_item_names = {name.strip().lower() for name in (required_item_names or set()) if name.strip()}
+    preferred_item_names = {name.strip().lower() for name in (preferred_item_names or set()) if name.strip()}
     excluded_categories = excluded_categories or set()
     weights = weights or OptimizationWeights()
 
     eligible_items = [item for item in items if item.category not in excluded_categories]
+    if not eligible_items:
+        raise ValueError("No catalog items remain after applying exclusions.")
     required_items = [item for item in eligible_items if item.name.strip().lower() in required_item_names]
+    missing_required = required_item_names - {item.name.strip().lower() for item in required_items}
+    if missing_required:
+        raise ValueError(f"Required items are unavailable: {', '.join(sorted(missing_required))}")
     required_cost = round(sum(item.total_cost for item in required_items), 2)
-    if required_cost > budget or (max_items is not None and len(required_items) > max_items):
-        required_items = []
+    if required_cost > budget:
+        raise ValueError(f"Must-have items cost ${required_cost:.2f}, above the ${budget:.2f} budget.")
+    if max_items is not None and len(required_items) > max_items:
+        raise ValueError("The must-have list contains more items than the plan item limit.")
 
     remaining_items = [item for item in eligible_items if item not in required_items]
     remaining_budget = max(0.0, budget - sum(item.total_cost for item in required_items))
     remaining_limit = None if max_items is None else max(0, max_items - len(required_items))
 
     if strategy == "knapsack":
-        selected, spent, ordered_candidates = _knapsack_select(remaining_items, remaining_budget, remaining_limit, weights)
+        selected, spent, ordered_candidates = _knapsack_select(
+            remaining_items, remaining_budget, remaining_limit, weights, preferred_item_names
+        )
     else:
-        selected, spent, ordered_candidates = _greedy_select(remaining_items, remaining_budget, remaining_limit)
+        selected, spent, ordered_candidates = _greedy_select(
+            remaining_items, remaining_budget, remaining_limit, preferred_item_names
+        )
 
     selected = required_items + selected
     spent += sum(item.total_cost for item in required_items)
@@ -223,11 +277,21 @@ def optimize_grocery_list(
         max_items=max_items,
         target_spend_ratio=target_spend_ratio,
     )
+    selected, spent = _improve_budget_utilization(
+        selected=selected,
+        candidates=ordered_candidates,
+        budget=budget,
+        spent=spent,
+        target_spend_ratio=target_spend_ratio,
+        protected_names=required_item_names,
+    )
 
     total_nutrition = round(sum(item.nutrition_score for item in selected), 2)
     total_shelf_life = sum(item.shelf_life_days for item in selected)
     total_utility_score = round(sum(_utility_score(item, weights) for item in selected), 2)
     spent = round(spent, 2)
+    if not selected:
+        raise ValueError("No eligible catalog items fit within this budget.")
 
     return OptimizationResult(
         selected_items=selected,

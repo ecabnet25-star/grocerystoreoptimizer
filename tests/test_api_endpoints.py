@@ -286,6 +286,29 @@ class TestAPIEndpoints(unittest.TestCase):
         self.assertIn("auth_token", data)
         self.assertTrue(data["auth_token"])
 
+    def test_account_preferences_round_trip(self):
+        email = _unique_email("preferences")
+        created = self.client.post(
+            "/users",
+            json={"name": "Preference User", "email": email, "password": "Password123"},
+        ).json()
+        user_id = created["user"]["id"]
+        headers = {"Authorization": f"Bearer {created['auth_token']}"}
+        preferences = {
+            "likes": ["chicken", "berries"],
+            "dislikes": ["peanuts"],
+            "health_goals": ["high protein"],
+            "excluded_categories": ["dairy"],
+            "preferred_language": "fr",
+        }
+        updated = self.client.patch(
+            f"/users/{user_id}/profile", headers=headers, json=preferences
+        )
+        self.assertEqual(updated.status_code, 200)
+        loaded = self.client.get(f"/users/{user_id}/profile", headers=headers)
+        self.assertEqual(loaded.status_code, 200)
+        self.assertEqual(loaded.json()["preferences"], preferences)
+
     def test_login_unknown_email_returns_401(self):
         login_payload = {"email": "nonexistent@example.com", "password": "Password123"}
         response = self.client.post("/auth/login", json=login_payload)

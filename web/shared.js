@@ -94,6 +94,10 @@ function applyGlobalPageLanguage(language) {
       ["#loginForm .eyebrow", "Welcome back", "Bon retour"],
       ["#loginForm h2", "Sign in", "Se connecter"],
       ["#sessionActions h2", "Session management", "Gestion de session"],
+      ["#preferencesForm .eyebrow", "Your defaults", "Vos reglages"],
+      ["#preferencesForm h2", "Food preferences", "Preferences alimentaires"],
+      ["#preferencesForm .muted", "These are applied automatically whenever you generate a plan while signed in.", "Ces reglages sont appliques automatiquement a chaque plan lorsque vous etes connecte."],
+      ["#savePreferencesBtn", "Save preferences", "Enregistrer les preferences"],
     ],
     "saved.html": [
       ["title", "Saved Plans | unibite.click", "Plans sauvegardes | unibite.click"],
@@ -262,6 +266,10 @@ function formatCurrency(value, currency = "CAD") {
 
 function prettyCategory(name) {
   if (!name) return "-";
+  if (getCurrentLanguage() === "fr") {
+    const translated = { produce: "Fruits et legumes", protein: "Proteines", dairy: "Produits laitiers", grains: "Cereales", pantry: "Garde-manger" };
+    if (translated[name.toLowerCase()]) return translated[name.toLowerCase()];
+  }
   return name[0].toUpperCase() + name.slice(1);
 }
 
@@ -400,10 +408,45 @@ async function logoutAllSessions() {
 }
 
 async function optimizePlan(payload) {
+  const authenticatedPayload = Session.isActive()
+    ? { ...payload, user_id: Session.userId }
+    : payload;
   return await apiRequest("/optimize", {
     method: "POST",
-    body: JSON.stringify(payload),
+    headers: Session.isActive() ? { Authorization: `Bearer ${Session.authToken}` } : {},
+    body: JSON.stringify(authenticatedPayload),
   });
+}
+
+async function loadProfilePreferences() {
+  if (!Session.isActive()) {
+    return { ok: false, data: { detail: "Not signed in" } };
+  }
+  return await apiRequest(`/users/${Session.userId}/profile`, {
+    headers: { Authorization: `Bearer ${Session.authToken}` },
+  });
+}
+
+async function saveProfilePreferences(preferences) {
+  if (!Session.isActive()) {
+    return { ok: false, data: { detail: "Not signed in" } };
+  }
+  return await apiRequest(`/users/${Session.userId}/profile`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${Session.authToken}` },
+    body: JSON.stringify(preferences),
+  });
+}
+
+async function loadCurrentDeals(filters = {}) {
+  const params = new URLSearchParams();
+  params.set("postal_code", filters.postal_code || "H3A1A1");
+  if (filters.category) params.set("category", filters.category);
+  if (filters.chain) params.set("chain", filters.chain);
+  if (filters.q) params.set("q", filters.q);
+  params.set("sort_by", filters.sort_by || "savings");
+  params.set("sale_only", filters.sale_only === false ? "false" : "true");
+  return await apiRequest(`/deals?${params.toString()}`);
 }
 
 async function savePlan(label, optimizeRequest, optimizationResult = null) {

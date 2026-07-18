@@ -6,7 +6,9 @@ from statistics import mean, pstdev
 from typing import Any
 
 
-def predict_price_drops(history: list[dict[str, Any]], *, horizon_days: int = 7) -> dict[str, Any]:
+def predict_price_drops(
+    history: list[dict[str, Any]], *, horizon_days: int = 7, language: str = "en"
+) -> dict[str, Any]:
     """Estimate short-term direction from timestamped observed prices."""
     grouped: dict[tuple[str, str], list[tuple[datetime, float]]] = defaultdict(list)
     for row in history:
@@ -55,11 +57,26 @@ def predict_price_drops(history: list[dict[str, Any]], *, horizon_days: int = 7)
     predictions.sort(key=lambda row: (float(row["change_percent"]), -float(row["confidence"])))
     drops = [row for row in predictions if row["direction"] == "drop" and row["confidence"] >= 0.35]
     if drops:
-        action, recommendation = "wait", "Wait a few days for predicted drops on selected items."
+        action = "wait"
+        recommendation = (
+            "Attendez quelques jours pour les baisses prevues sur certains articles."
+            if language == "fr"
+            else "Wait a few days for predicted drops on selected items."
+        )
     elif predictions:
-        action, recommendation = "shop_now", "Prices look stable; shop when your schedule allows."
+        action = "shop_now"
+        recommendation = (
+            "Les prix semblent stables; magasinez au moment qui vous convient."
+            if language == "fr"
+            else "Prices look stable; shop when your schedule allows."
+        )
     else:
-        action, recommendation = "insufficient_history", "Shop now based on current deals while more price history is collected."
+        action = "insufficient_history"
+        recommendation = (
+            "Utilisez les offres actuelles pendant que nous accumulons plus d'historique."
+            if language == "fr"
+            else "Shop now based on current deals while more price history is collected."
+        )
     return {
         "action": action,
         "recommendation": recommendation,
@@ -68,5 +85,9 @@ def predict_price_drops(history: list[dict[str, Any]], *, horizon_days: int = 7)
         "prediction_count": len(predictions),
         "drops": drops[:5],
         "predictions": predictions[:12],
-        "disclaimer": "Forecasts use observed prices and are estimates, not guaranteed sale dates.",
+        "disclaimer": (
+            "Ces previsions utilisent les prix observes; les dates de rabais ne sont pas garanties."
+            if language == "fr"
+            else "Forecasts use observed prices and are estimates, not guaranteed sale dates."
+        ),
     }

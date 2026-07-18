@@ -95,6 +95,18 @@
       "price_tier": "budget",
       "quality_rating": 4.0,
       "location_id": "montreal"
+    },
+    {
+      "store_id": "pa-du-fort-mtl",
+      "name": "PA du Fort",
+      "chain": "Supermarche PA",
+      "address": "1420 Rue du Fort, Montreal, QC H3H 2C2",
+      "postal_code": "H3H2C2",
+      "latitude": 45.492147,
+      "longitude": -73.582181,
+      "price_tier": "budget",
+      "quality_rating": 4.2,
+      "location_id": "montreal"
     }
   ]
 }

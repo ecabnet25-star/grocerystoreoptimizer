@@ -13,7 +13,7 @@ from typing import Any
 
 DEFAULT_DB_PATH = Path(os.getenv("GROCERY_DB_PATH", "data/grocery_optimizer.db"))
 DEFAULT_TOKEN_TTL_MINUTES = int(os.getenv("GROCERY_TOKEN_TTL_MINUTES", "10080"))
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 class _PostgresCursorAdapter:
@@ -202,6 +202,13 @@ def _apply_migrations(conn: sqlite3.Connection, current_version: int) -> None:
         if "password_hash" not in columns:
             conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
         _set_schema_version(conn, 3)
+        current_version = 3
+
+    if current_version < 4:
+        columns = _table_columns(conn, "users")
+        if "preferences_json" not in columns:
+            conn.execute("ALTER TABLE users ADD COLUMN preferences_json TEXT NOT NULL DEFAULT '{}'")
+        _set_schema_version(conn, 4)
 
 
 def init_db(db_path: str | Path = DEFAULT_DB_PATH) -> None:
@@ -274,6 +281,47 @@ def get_user_by_email(email: str, db_path: str | Path = DEFAULT_DB_PATH) -> dict
         if row is None:
             return None
         return dict(row)
+
+
+def get_user_preferences(user_id: str, db_path: str | Path = DEFAULT_DB_PATH) -> dict[str, Any] | None:
+    _ensure_initialized(db_path)
+    with closing(_connect(db_path)) as conn:
+        row = conn.execute(
+            "SELECT id, name, email, preferences_json, created_at FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    if row is None:
+        return None
+    try:
+        preferences = json.loads(row["preferences_json"] or "{}")
+    except (json.JSONDecodeError, TypeError):
+        preferences = {}
+    if not isinstance(preferences, dict):
+        preferences = {}
+    return {
+        "user": {
+            "id": row["id"],
+            "name": row["name"],
+            "email": row["email"],
+            "created_at": row["created_at"],
+        },
+        "preferences": preferences,
+    }
+
+
+def update_user_preferences(
+    user_id: str,
+    preferences: dict[str, Any],
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> bool:
+    _ensure_initialized(db_path)
+    with closing(_connect(db_path)) as conn:
+        cursor = conn.execute(
+            "UPDATE users SET preferences_json = ? WHERE id = ?",
+            (json.dumps(preferences, separators=(",", ":")), user_id),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
 
 
 def get_user_auth_by_email(email: str, db_path: str | Path = DEFAULT_DB_PATH) -> dict[str, Any] | None:

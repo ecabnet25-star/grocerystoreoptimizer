@@ -23,16 +23,11 @@ def _generate_plan(page: Page, *, budget: str = "46", max_items: str = "8") -> N
     page.goto(f"{WEB_URL}/index.html", wait_until="domcontentloaded")
     page.wait_for_selector("#budget", timeout=10_000)
     page.fill("#budget", budget)
-    # Older UI used a details panel (#prefsBody); newer UI shows fields directly.
-    if page.locator("#prefsBody").count() > 0:
-        page.locator("#prefsBody").evaluate("element => { element.open = true; }")
-    page.fill("#maxItems", max_items)
-    page.fill("#postalCode", "H3A1A1")
-    page.fill("#requiredCategories", "produce,protein")
-    page.fill("#healthGoals", "high protein, savings")
+    page.locator("#maxItems").evaluate("(element, value) => { element.value = value; }", max_items)
+    page.fill("#locationQuery", "H3A1A1")
+    page.fill("#mustHaveItems", "Chicken Breast, 900 g; Romaine Hearts")
     page.click("#generateBtn")
     page.wait_for_selector("#result:not(.hidden)", timeout=20_000)
-    page.wait_for_selector("#savingsCelebration:not(.hidden)", timeout=5_000)
     page.wait_for_selector("#chefWidget:not(.hidden)", timeout=8_000)
     _wait_for_route(page)
 
@@ -86,6 +81,16 @@ def main() -> int:
             page.fill("#loginPassword", password)
             page.click("#loginBtn")
             page.wait_for_selector("#welcomeCard:not(.hidden)", timeout=10_000)
+            current_step = "account preferences"
+            page.wait_for_selector("#preferencesForm:not(.hidden)", timeout=5_000)
+            page.fill("#profileLikes", "chicken, berries")
+            page.fill("#profileDislikes", "peanuts")
+            page.fill("#profileGoals", "high protein")
+            page.click("#savePreferencesBtn")
+            page.wait_for_function(
+                "document.querySelector('#statusBanner')?.textContent.includes('Preferences saved')",
+                timeout=8_000,
+            )
 
             current_step = "initial plan generation"
             _generate_plan(page)
@@ -116,7 +121,7 @@ def main() -> int:
 
             current_step = "reused plan generation"
             page.wait_for_url("**/index.html", timeout=8_000)
-            page.wait_for_function("document.querySelector('#postalCode')?.value === 'H3A1A1'", timeout=8_000)
+            page.wait_for_function("document.querySelector('#locationQuery')?.value === 'H3A1A1'", timeout=8_000)
             page.click("#generateBtn")
             page.wait_for_selector("#result:not(.hidden)", timeout=20_000)
             _wait_for_route(page)
@@ -125,7 +130,13 @@ def main() -> int:
             page.click("#chefLauncher")
             page.fill("#assistantInput", "Give me two fast meals from this exact plan.")
             page.click("#assistantSendBtn")
-            page.wait_for_function("document.querySelectorAll('.assistant-message').length >= 2", timeout=25_000)
+            page.wait_for_selector(".chef-recipe-card", timeout=25_000)
+
+            current_step = "weekly deals"
+            page.click("#dealsViewTab")
+            page.wait_for_selector(".deal-card", timeout=10_000)
+            page.locator(".add-deal-item").first.click()
+            page.click("#planViewTab")
 
             route_stop_count = page.locator(".route-stop").count()
             route_line_count = page.locator("#storeMap .road-route-line, #storeMap .approx-route-line").count()

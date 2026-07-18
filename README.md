@@ -89,231 +89,73 @@ powershell -ExecutionPolicy Bypass -File launch.ps1
 
 ```
 
-## Third-Party Live Pricing Setup
+## Current Pricing and Deals
 
-The project supports real third-party pricing sources through configurable providers.
+The default production path does not require paid pricing keys. It uses structured public
+Flipp flyer results to build `config/live_pricing/snapshots/latest.json`, then serves only
+schema-v2 rows that pass retailer, product-identity, recency, and offer-validity checks.
 
-### Pricing pipeline
+- `verified_current`: a current, traceable flyer or ecommerce quote.
+- `market_estimate`: a non-retailer estimate, never presented as verified savings.
+- `tier_estimate_fallback`: a local store-tier estimate used when no verified quote matches.
 
-UniBite/UniBite.click gets current prices from enabled live-pricing providers first, then falls back to store-tier estimates when a provider cannot return a quote.
+The optimizer returns a fast estimate first. The browser then refreshes the exact same
+request with current prices without blocking the initial plan. Verified savings are shown
+only when all item assignments used for the savings calculation are verified.
 
-Current provider types include:
-
-- public benchmark feeds for generic live validation
-- retailer/provider adapters configured in `config/live_pricing/providers.json`
-- opt-in scraping adapters for feeds that are only exposed through flyer pages or retailer web endpoints
-
-The live snapshot endpoint used by the web app is `GET /pricing/live`. The app also exposes `GET /pricing/providers` so you can verify which providers are enabled and returning quotes. For route planning and map discovery, the app can combine those live prices with public location data and local store catalogs as a fallback.
-
-1. Edit `config/live_pricing/providers.json`.
-2. Enable at least one provider: set `"enabled": true`.
-3. If the provider requires API keys, set env vars before launch.
-
-Example (PowerShell):
-
-```powershell
-$env:LIVE_PRICING_RAPIDAPI_KEY = "your-api-key"
-$env:LIVE_PRICING_ALLOW_SCRAPING = "true"   # only if you intentionally enable html scraping provider
-
-```
-
-Check provider status:
+Useful endpoints:
 
 ```text
-GET http://127.0.0.1:8000/pricing/providers
-
+GET /deals?postal_code=H3A1A1&sort=savings
+GET /pricing/providers
+GET /pricing/history?postal_code=H3A1A1&limit=200
+POST /optimize
 ```
 
-Live pricing snapshot endpoint:
-
-```text
-GET http://127.0.0.1:8000/pricing/live?location=montreal&postal_code=H3A1A1&budget=100&max_items=8&strategy=knapsack
-
-```
-
-Notes:
-
-- If no provider returns quotes, the system automatically falls back to store-tier estimates.
-- HTML scraping is opt-in and requires `LIVE_PRICING_ALLOW_SCRAPING=true`.
-- Respect each retailer's terms of service and robots policy when enabling scraping.
-
-## Free-Only Live Pricing (No Paid APIs)
-
-The project now supports a free-only pipeline by default:
-
-- Free retailer page scraping for Metro, IGA, Maxi, Provigo, and Super C
-- Free Flipp public search-page scraping for flyer deal hints
-- Free Open Food Facts quote coverage (`openfoodfacts_us_ca`)
-- Free benchmark fallback (`public_market_benchmark`)
-
-Scraper source config:
-
-- `config/live_pricing/free_scrape_sources.json`
-
-Snapshot output used by live providers:
-
-- `config/live_pricing/snapshots/latest.json`
-
-Run scraper locally:
+Refresh and validate the free snapshot locally:
 
 ```powershell
-python scripts/scrape_free_prices.py --max-items 30
+python scripts/scrape_free_prices.py
+python scripts/scrape_free_prices.py --validate-only
 ```
 
-### GitHub Actions Auto-Refresh (Free Scheduler)
+The refresh script refuses to overwrite the last known-good snapshot when too many
+queries fail, chain coverage collapses, the contract is invalid, or quote volume is too
+low. `.github/workflows/free-live-pricing.yml` runs the same validation every six hours.
+GitHub Actions must have repository read/write permission for that workflow to commit an
+accepted snapshot.
 
-Workflow:
+`LIVE_PRICING_FLIPP_KEY`, retailer catalog keys, and OCR keys are optional future partner
+integrations. Leave them blank unless a licensed provider has supplied credentials and its
+disabled template has intentionally been enabled.
 
-- `.github/workflows/free-live-pricing.yml`
+## The Chef
 
-It runs every 6 hours and commits snapshot updates back to the repo.
+The Chef uses the generated shopping plan to return concise, structured recipes with a
+name, plan ingredients, optional extras, cook time, and three steps. English and French are
+supported. The built-in deterministic mode is the production default and has no model
+dependency. Set `GROCERY_ASSISTANT_MODE=ollama` only when a local Ollama model is running;
+`hybrid` keeps the fast deterministic behavior.
 
-One-time step you need to do in GitHub:
-
-1. Repository Settings -> Actions -> General
-2. Set Workflow permissions to **Read and write permissions**
-
-Without this setting, the workflow cannot push updated snapshot commits.
-
-### Retailer-Specific Scraper Jobs (Metro, IGA, Maxi, Provigo)
-
-Dedicated provider entries and scheduled jobs are now preconfigured:
-
-- Providers: `metro_qc_html_scraper`, `iga_qc_html_scraper`, `maxi_qc_html_scraper`, `provigo_qc_html_scraper`
-- Jobs file: `config/live_pricing/jobs.json`
-- Job runner: `scripts/run_live_pricing_jobs.py`
-
-Run all due jobs once:
-
-```powershell
-$env:LIVE_PRICING_ALLOW_SCRAPING = "true"
-python scripts/run_live_pricing_jobs.py --once
-```
-
-Force-run all enabled jobs once (ignores schedule intervals):
-
-```powershell
-python scripts/run_live_pricing_jobs.py --once --force --reload-providers
-```
-
-Register recurring Windows Task Scheduler job:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/register_live_pricing_jobs.ps1 -IntervalMinutes 30
-```
-
-Remove scheduled task:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/register_live_pricing_jobs.ps1 -Remove
-```
-
-### No-Paid-API Mode
-
-For strict free-only operation, keep paid/managed providers disabled in `config/live_pricing/providers.json`.
-The default configuration already keeps those entries disabled.
-
-### Historical Median Sanity Filtering
-
-Transient spikes are filtered using historical medians per item + store chain + postal code.
-
-Config knobs in `config/live_pricing/providers.json`:
-
-- `history_min_samples`
-- `history_min_confidence`
-- `history_max_rows`
-- `history_max_deviation_ratio`
-
-## Free Local AI Assistant (Ollama)
-
-The meal assistant can run on a free local model using Ollama.
-
-1. Install Ollama: https://ollama.com/download
-2. Pull a model (recommended fast option):
-
-```powershell
-ollama pull llama3.2:3b
-
-```
-
-1. Set assistant env vars (PowerShell):
-
-```powershell
-$env:GROCERY_ASSISTANT_MODE = "hybrid"   # hybrid or ollama
-$env:GROCERY_ASSISTANT_OLLAMA_MODEL = "llama3.2:3b"
-$env:GROCERY_ASSISTANT_OLLAMA_URL = "http://127.0.0.1:11434"
-
-```
-
-1. Launch app as usual:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File launch.ps1 -Mode Local
-
-```
-
-Assistant APIs:
+Assistant endpoints:
 
 - `POST /assistant/chat`
 - `GET /assistant/status`
 
-If Ollama is unavailable, the assistant automatically falls back to built-in rule-based suggestions.
+## Store Discovery and Routing
 
-## Autonomous Area Scan and Continuous Refresh
+Users enter one postal code or street address. The API resolves that origin, discovers
+nearby grocery locations from public map data, retains all discovered locations for the map
+and directory, and bounds pricing comparisons to the closest diverse candidates. The route
+engine assigns items by store economics, removes stops that do not beat the configured
+travel threshold, and the browser requests road-following geometry from OSRM. Straight-line
+geometry appears only as an explicitly labeled fallback when road routing is unavailable.
 
-The API can now auto-scan a postal-code area and build store candidates without pre-registering stores one-by-one.
+Relevant endpoints:
 
 - `GET /area/scan?postal_code=H3A1A1&radius_km=12`
-  - Uses public map geodata scanning when available.
-  - Falls back to local store catalog by distance when scan provider is unavailable.
-  - This scan is automatically invoked during optimize/live pricing requests when `postal_code` is provided.
-
-- `GET /pricing/history?postal_code=H3A1A1&limit=200`
-  - Returns historical quote records (live + fallback) for analysis.
-
-- `GET /pricing/scheduler/status`
-- `POST /pricing/scheduler/start`
-- `POST /pricing/scheduler/stop`
-  - Background scheduler to continuously refresh pricing snapshots from watchlist areas.
-
-Default scheduler watchlist config:
-
-- `config/live_pricing/watchlist.json`
-
-Runtime reload for provider config updates:
-
-- `POST /pricing/providers/reload`
-
-## Public Data Source Strategy for Non-Scrapable Stores
-
-To maximize automation and avoid scraping-only limitations, the system includes a default enabled provider:
-
-- `public_market_benchmark` (enabled by default)
-  - Uses public market signals and basket multipliers from:
-    - `config/live_pricing/public_benchmarks.json`
-    - World Bank food inflation indicator (`FP.CPI.TOTL.ZG`)
-  - Produces automated non-scraping price estimates per item/store.
-  - Works even when retailer pricing pages block scraping or APIs are unavailable.
-
-You can layer additional providers on top (retailer APIs, approved partner feeds) for higher-confidence direct quotes.
-
-## Concrete US/Canada Partner Adapters Included
-
-The provider chain now includes concrete adapters in priority order:
-
-1. `openfoodfacts_us_ca` (`openfoodfacts_partner`, enabled)
-  - Direct partner adapter for US/Canada product price records from Open Food Facts ecosystem.
-  - Works without private API keys.
-
-1. `flipp_us_ca_partner` (`flipp_partner`, optional)
-  - Concrete adapter for flyer/deal partner APIs (US/CA).
-  - Requires `LIVE_PRICING_FLIPP_KEY` and partner host config.
-
-1. `public_market_benchmark` (`public_market`, enabled)
-  - Public macro-price source fallback using World Bank indicator + basket multipliers.
-
-This chain runs automatically. If a higher-priority direct partner quote is unavailable,
-the system continues down the chain and still returns optimized results.
+- `POST /route/road`
+- `POST /pricing/providers/reload` (admin protected in production)
 
 Windows launch button:
 

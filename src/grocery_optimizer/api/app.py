@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from ..assistant import build_meal_assistant_response
 from ..geo_discovery import discover_food_places
 from ..live_pricing import get_live_price_history, get_live_pricing_engine, reload_live_pricing_engine
+from ..live_pricing.deals import load_verified_deals
 from ..observability import (
     configure_json_logging,
     record_request,
@@ -27,12 +28,19 @@ from ..observability import (
     set_request_id,
 )
 from ..retailer_research import load_retailer_research, summarize_retailer_research
-from .schemas import CreateUserRequest, LoginRequest, OptimizeRequest, SavePlanRequest
+from .schemas import (
+    CreateUserRequest,
+    LoginRequest,
+    OptimizeRequest,
+    SavePlanRequest,
+    UserPreferencesRequest,
+)
 from .service import optimize_from_request
 from .storage import backup_database, database_strategy, get_schema_version
 from .users import (
     create_user_profile,
     delete_saved_plan,
+    get_profile_preferences,
     get_saved_plan,
     get_saved_plans_secure_paginated,
     login_user,
@@ -42,6 +50,7 @@ from .users import (
     rename_saved_plan,
     run_token_cleanup,
     save_optimized_plan,
+    save_profile_preferences,
 )
 
 api_version = os.getenv("GROCERY_API_VERSION", "0.3.0-beta")
@@ -525,8 +534,28 @@ ADMIN_OPEN_ENVIRONMENTS = {"", "dev", "development", "local", "test", "testing"}
 
 
 @app.post("/optimize")
-def optimize(request: OptimizeRequest) -> dict[str, Any]:
-    return optimize_from_request(request)
+def optimize(request: OptimizeRequest, authorization: str = Header(default="")) -> dict[str, Any]:
+    if request.user_id:
+        token = _resolve_auth_token(authorization=authorization)
+        try:
+            stored = get_profile_preferences(request.user_id, token)["preferences"]
+        except ValueError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
+        request = request.model_copy(
+            update={
+                "likes": list(dict.fromkeys([*stored.get("likes", []), *request.likes])),
+                "dislikes": list(dict.fromkeys([*stored.get("dislikes", []), *request.dislikes])),
+                "health_goals": list(dict.fromkeys([*stored.get("health_goals", []), *request.health_goals])),
+                "excluded_categories": list(
+                    dict.fromkeys([*stored.get("excluded_categories", []), *request.excluded_categories])
+                ),
+                "language": stored.get("preferred_language", request.language),
+            }
+        )
+    try:
+        return optimize_from_request(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 class AssistantChatRequest(BaseModel):
@@ -535,6 +564,7 @@ class AssistantChatRequest(BaseModel):
     likes: list[str] = []
     dislikes: list[str] = []
     health_goals: list[str] = []
+    language: Literal["en", "fr"] = "en"
 
 
 class RoutePoint(BaseModel):
@@ -596,6 +626,7 @@ def assistant_chat(request: AssistantChatRequest) -> dict[str, Any]:
         likes=request.likes,
         dislikes=request.dislikes,
         health_goals=request.health_goals,
+        language=request.language,
     )
     return result
 
@@ -613,7 +644,7 @@ def assistant_status() -> dict[str, Any]:
     base_url = os.getenv("GROCERY_ASSISTANT_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
 
     ollama_reachable = False
-    if mode in {"hybrid", "ollama"}:
+    if mode == "ollama":
         try:
             req = UrlRequest(url=f"{base_url}/api/tags", method="GET")
             with urlopen(req, timeout=2):
@@ -676,6 +707,28 @@ def pricing_providers() -> dict[str, Any]:
         "enabled_count": sum(1 for p in health if p.get("enabled")),
         "configured_count": sum(1 for p in health if p.get("configured")),
     }
+
+
+@app.get("/deals")
+def current_deals(
+    postal_code: str = "H3A1A1",
+    category: str = "",
+    chain: str = "",
+    q: str = "",
+    sale_only: bool = True,
+    sort_by: Literal["price", "unit_price", "savings", "ending_soon"] = "savings",
+    limit: int = Query(default=60, ge=1, le=200),
+) -> dict[str, Any]:
+    """Browse current verified flyer and e-commerce deals."""
+    return load_verified_deals(
+        postal_code=postal_code,
+        category=category,
+        chain=chain,
+        query=q,
+        sale_only=sale_only,
+        sort_by=sort_by,
+        limit=limit,
+    )
 
 
 @app.get("/pricing/history")
@@ -810,6 +863,32 @@ def create_user(request: CreateUserRequest) -> dict[str, Any]:
         return create_user_profile(request)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/users/{user_id}/profile")
+def get_user_profile(
+    user_id: str,
+    auth_token: str = "",
+    authorization: str = Header(default=""),
+) -> dict[str, Any]:
+    token = _resolve_auth_token(auth_token=auth_token, authorization=authorization)
+    try:
+        return get_profile_preferences(user_id, token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
+@app.patch("/users/{user_id}/profile")
+def update_user_profile(
+    user_id: str,
+    request: UserPreferencesRequest,
+    authorization: str = Header(default=""),
+) -> dict[str, Any]:
+    token = _resolve_auth_token(authorization=authorization)
+    try:
+        return save_profile_preferences(user_id, request, token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
 @app.post("/auth/login")

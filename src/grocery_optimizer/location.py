@@ -61,6 +61,9 @@ def apply_location_pricing(items: list[GroceryItem], profile: LocationProfile) -
                 nutrition_score=item.nutrition_score,
                 shelf_life_days=item.shelf_life_days,
                 quantity=item.quantity,
+                package_size=item.package_size,
+                package_unit=item.package_unit,
+                package_label=item.package_label,
             )
         )
 

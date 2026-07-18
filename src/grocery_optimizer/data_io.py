@@ -22,6 +22,9 @@ def _load_items_cached(path_str: str) -> tuple[GroceryItem, ...]:
                 nutrition_score=float(raw_item["nutrition_score"]),
                 shelf_life_days=int(raw_item["shelf_life_days"]),
                 quantity=int(raw_item.get("quantity", 1)),
+                package_size=float(raw_item["package_size"]) if raw_item.get("package_size") is not None else None,
+                package_unit=str(raw_item.get("package_unit", "package")),
+                package_label=str(raw_item.get("package_label", "")),
             )
         )
     return tuple(items)

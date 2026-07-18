@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from datetime import UTC, datetime, timedelta
 from email.message import Message
 from io import BytesIO
 from pathlib import Path
@@ -422,29 +423,39 @@ class TestLivePricingParsing(unittest.TestCase):
         self.assertIsNone(selected)
 
     def test_local_snapshot_provider_returns_chain_specific_quote(self):
+        now = datetime.now(UTC)
+        fetched_at = now.isoformat().replace("+00:00", "Z")
+        valid_to = (now + timedelta(days=2)).isoformat().replace("+00:00", "Z")
         snapshot_payload = {
-            "generated_at_utc": "2026-07-16T00:00:00Z",
+            "schema_version": 2,
+            "generated_at_utc": fetched_at,
             "source": "free-scraper",
             "quotes": [
                 {
                     "item_name": "Bananas",
+                    "product_name": "Fresh Bananas 1 kg",
                     "store_chain": "Metro",
                     "postal_code": "H3A1A1",
                     "currency": "CAD",
                     "unit_price": 1.99,
                     "confidence": 0.78,
                     "source_url": "https://example.com/metro",
-                    "fetched_at_utc": "2026-07-16T00:00:00Z",
+                    "fetched_at_utc": fetched_at,
+                    "valid_to_utc": valid_to,
+                    "source_type": "flyer_aggregator",
                 },
                 {
                     "item_name": "Bananas",
+                    "product_name": "Fresh Bananas 1 kg",
                     "store_chain": "IGA",
                     "postal_code": "H3A1A1",
                     "currency": "CAD",
                     "unit_price": 2.49,
                     "confidence": 0.77,
                     "source_url": "https://example.com/iga",
-                    "fetched_at_utc": "2026-07-16T00:00:00Z",
+                    "fetched_at_utc": fetched_at,
+                    "valid_to_utc": valid_to,
+                    "source_type": "flyer_aggregator",
                 },
             ],
         }
@@ -477,6 +488,52 @@ class TestLivePricingParsing(unittest.TestCase):
             self.assertIsNotNone(quote)
             selected = cast(LivePriceQuote, quote)
             self.assertEqual(selected.unit_price, 1.99)
+
+    def test_local_snapshot_does_not_alias_maxi_to_provigo(self):
+        now = datetime.now(UTC)
+        timestamp = now.isoformat().replace("+00:00", "Z")
+        snapshot_payload = {
+            "schema_version": 2,
+            "generated_at_utc": timestamp,
+            "quotes": [
+                {
+                    "item_name": "Milk",
+                    "product_name": "Milk 2 L",
+                    "store_chain": "Maxi",
+                    "postal_code": "H3A1A1",
+                    "currency": "CAD",
+                    "unit_price": 4.49,
+                    "confidence": 0.92,
+                    "source_url": "https://example.com/maxi-milk",
+                    "fetched_at_utc": timestamp,
+                    "source_type": "retailer_ecommerce",
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            snapshot_path = Path(temp_dir) / "latest.json"
+            snapshot_path.write_text(json.dumps(snapshot_payload), encoding="utf-8")
+            provider = LocalSnapshotProvider(
+                {"id": "verified", "type": "local_snapshot", "enabled": True, "snapshot_path": str(snapshot_path)},
+                timeout_seconds=2,
+            )
+            quote = provider.fetch_price(
+                "Milk", "dairy", 4.5, "Provigo", "mid", "H3A1A1", "CA", "CAD"
+            )
+        self.assertIsNone(quote)
+
+    def test_local_snapshot_rejects_legacy_unverified_schema(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            snapshot_path = Path(temp_dir) / "latest.json"
+            snapshot_path.write_text(
+                json.dumps({"generated_at_utc": datetime.now(UTC).isoformat(), "quotes": [{}]}),
+                encoding="utf-8",
+            )
+            provider = LocalSnapshotProvider(
+                {"id": "legacy", "type": "local_snapshot", "enabled": True, "snapshot_path": str(snapshot_path)},
+                timeout_seconds=2,
+            )
+            self.assertFalse(provider.health().configured)
 
 
 if __name__ == "__main__":

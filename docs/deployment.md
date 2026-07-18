@@ -16,8 +16,8 @@
 - `GROCERY_ASSISTANT_OLLAMA_URL`: Ollama base URL (default `http://127.0.0.1:11434`).
 - `GROCERY_ASSISTANT_OLLAMA_MODEL`: Free local model name (default `llama3.2:3b`).
 - `GROCERY_ASSISTANT_OLLAMA_TIMEOUT_SECONDS`: Request timeout for model calls.
-- `LIVE_PRICING_FLIPP_KEY`: Optional Flipp/RapidAPI partner key.
-- `LIVE_PRICING_RETAILER_CATALOG_KEY`: Optional configured retailer catalog partner key.
+- `LIVE_PRICING_FLIPP_KEY`: Optional future licensed Flipp partner key; not required by the default public-flyer snapshot.
+- `LIVE_PRICING_RETAILER_CATALOG_KEY`: Optional future licensed catalog key; not required by the default pipeline.
 
 ## Local API Run
 
@@ -66,7 +66,7 @@ powershell -ExecutionPolicy Bypass -File scripts/beta-smoke.ps1
 - Restrict `GROCERY_API_CORS_ORIGINS` to production frontend domains.
 - Set a long random `GROCERY_ADMIN_TOKEN`; maintenance endpoints are blocked in production without it.
 - Tune token TTL and schedule cleanup for old revoked tokens.
-- Configure real pricing partners in `config/live_pricing/providers.json`; disabled provider templates are safe until keys exist.
+- Keep optional partner templates disabled unless licensed credentials are available. The default verified public-flyer snapshot requires no pricing key.
 
 Maintenance endpoints available:
 

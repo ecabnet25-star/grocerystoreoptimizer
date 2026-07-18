@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from .schemas import CreateUserRequest, LoginRequest, SavePlanRequest
+from .schemas import CreateUserRequest, LoginRequest, SavePlanRequest, UserPreferencesRequest
 from .service import optimize_from_request
 from .storage import (
     DEFAULT_DB_PATH,
@@ -19,11 +19,13 @@ from .storage import (
     get_user,
     get_user_auth_by_email,
     get_user_plan,
+    get_user_preferences,
     list_user_plans,
     revoke_all_user_tokens,
     revoke_user_token,
     save_plan,
     update_user_plan_label,
+    update_user_preferences,
     validate_user_token,
 )
 
@@ -108,6 +110,31 @@ def login_user(request: LoginRequest, db_path: str = "") -> dict[str, Any]:
     token = create_user_token(user["id"], db_path=db)
     user.pop("password_hash", None)
     return {"user": user, "auth_token": token}
+
+
+def get_profile_preferences(user_id: str, auth_token: str, db_path: str = "") -> dict[str, Any]:
+    db = db_path or _default_db_path_str()
+    verify_user_access(user_id, auth_token, db_path=db)
+    profile = get_user_preferences(user_id, db_path=db)
+    if profile is None:
+        raise ValueError("User not found")
+    preferences = profile["preferences"]
+    defaults = UserPreferencesRequest().model_dump()
+    return {**profile, "preferences": {**defaults, **preferences}}
+
+
+def save_profile_preferences(
+    user_id: str,
+    request: UserPreferencesRequest,
+    auth_token: str,
+    db_path: str = "",
+) -> dict[str, Any]:
+    db = db_path or _default_db_path_str()
+    verify_user_access(user_id, auth_token, db_path=db)
+    payload = request.model_dump()
+    if not update_user_preferences(user_id, payload, db_path=db):
+        raise ValueError("User not found")
+    return {"user_id": user_id, "preferences": payload, "updated": True}
 
 
 def refresh_user_token(user_id: str, auth_token: str, db_path: str = "") -> dict[str, Any]:

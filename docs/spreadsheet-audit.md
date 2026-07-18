@@ -4,6 +4,8 @@ Source workbook: `C:\Users\Ethan\Downloads\grocery_2.xlsx`
 
 Inspection date: 2026-06-26
 
+> Historical research record. Current implementation status and pricing-source safeguards are documented in `unibite-workbook-resolution.md`. Since this audit, public map discovery, structured public flyer ingestion, verified quote labeling, and PA du Fort have been implemented; the deferred notes below describe the state at the original inspection date.
+
 ## Sheets Reviewed
 
 1. `0. README & Method`
