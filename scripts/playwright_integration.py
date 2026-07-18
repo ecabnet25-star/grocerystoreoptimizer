@@ -114,12 +114,13 @@ def main() -> int:
             route_stop_count = page.locator(".route-stop").count()
             route_line_count = page.locator("#storeMap .road-route-line, #storeMap .approx-route-line").count()
             chef_message_count = page.locator(".assistant-message").count()
+            nearby_store_count = page.locator(".nearby-store-row").count()
         except TimeoutError as exc:
             errors.append(f"timeout:{exc}")
-            route_stop_count = route_line_count = chef_message_count = saved_count = 0
+            route_stop_count = route_line_count = chef_message_count = nearby_store_count = saved_count = 0
         except AssertionError as exc:
             errors.append(f"assertion:{exc}")
-            route_stop_count = route_line_count = chef_message_count = saved_count = 0
+            route_stop_count = route_line_count = chef_message_count = nearby_store_count = saved_count = 0
         finally:
             browser.close()
 
@@ -134,8 +135,9 @@ def main() -> int:
     print(f"- route stops: {route_stop_count}")
     print(f"- route lines: {route_line_count}")
     print(f"- chef messages: {chef_message_count}")
-    if route_stop_count < 1 or route_line_count < 1 or chef_message_count < 2:
-        print("Playwright integration failed: expected route and Chef evidence was missing")
+    print(f"- nearby stores listed: {nearby_store_count}")
+    if route_stop_count < 1 or route_line_count < 1 or chef_message_count < 2 or nearby_store_count < 2:
+        print("Playwright integration failed: expected route, nearby-store, or Chef evidence was missing")
         return 1
     return 0
 

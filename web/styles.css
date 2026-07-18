@@ -2685,6 +2685,64 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
   flex: 0 0 auto;
 }
 
+.nearby-store-directory {
+  margin-top: 22px;
+  padding: 22px 0 4px;
+  border-top: 1px solid var(--red-200);
+}
+
+.nearby-store-heading,
+.nearby-store-row,
+.nearby-store-facts {
+  display: flex;
+  align-items: center;
+}
+
+.nearby-store-heading,
+.nearby-store-row {
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.nearby-store-heading h4 {
+  margin: 4px 0 0;
+}
+
+.nearby-store-list {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.nearby-store-row {
+  min-height: 74px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nearby-store-row.recommended-store {
+  border-left: 4px solid var(--brand);
+  padding-left: 12px;
+}
+
+.nearby-store-identity {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.nearby-store-identity span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.nearby-store-facts {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
 @media (max-width: 800px) {
   .quick-plan-grid, .optional-fields, .stack-list, .purpose-band, .about-hero-v2 { grid-template-columns: 1fr; }
   .about-hero-v2 { padding-top: 36px; }
@@ -2693,6 +2751,8 @@ input:focus, select:focus { border-color: var(--red-500); box-shadow: 0 0 0 3px 
   .site-footer { flex-direction: column; }
   #storeMap { min-height: 390px; }
   .saved-auth-prompt { align-items: flex-start; flex-direction: column; }
+  .nearby-store-heading, .nearby-store-row { align-items: flex-start; flex-direction: column; }
+  .nearby-store-facts { justify-content: flex-start; flex-wrap: wrap; }
 }
 
 @media (max-width: 600px) {

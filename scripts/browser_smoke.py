@@ -83,6 +83,7 @@ def main() -> int:
         route_marker_count = page.locator(".route-stop-marker").count()
         road_route_count = page.locator("#storeMap .road-route-line").count()
         approx_route_count = page.locator("#storeMap .approx-route-line").count()
+        nearby_store_count = page.locator(".nearby-store-row").count()
 
         mobile_context = browser.new_context(viewport={"width": 390, "height": 844})
         mobile_page = mobile_context.new_page()
@@ -120,6 +121,7 @@ def main() -> int:
     print(f"- route markers: {route_marker_count}")
     print(f"- road routes: {road_route_count}")
     print(f"- approximate routes: {approx_route_count}")
+    print(f"- nearby stores listed: {nearby_store_count}")
     if leaflet_map_count < 1 and fallback_map_count < 1:
         print("Browser smoke failed: no map renderer was visible")
         return 1
@@ -128,6 +130,9 @@ def main() -> int:
         return 1
     if road_route_count < 1 and approx_route_count < 1:
         print("Browser smoke failed: no route line was drawn")
+        return 1
+    if nearby_store_count < 2:
+        print("Browser smoke failed: nearby store directory was not populated")
         return 1
     return 0
 

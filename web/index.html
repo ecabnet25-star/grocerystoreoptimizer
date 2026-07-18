@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="assets/favicon.png?v=20260718-1" />
-  <link rel="shortcut icon" href="assets/favicon.png?v=20260718-1" />
-  <link rel="apple-touch-icon" href="assets/favicon.png?v=20260718-1" />
+  <link rel="icon" type="image/png" href="assets/favicon.png?v=20260718-2" />
+  <link rel="shortcut icon" href="assets/favicon.png?v=20260718-2" />
+  <link rel="apple-touch-icon" href="assets/favicon.png?v=20260718-2" />
   <title>unibite.click | Smart grocery planning</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260718-1" />
+  <link rel="stylesheet" href="styles.css?v=20260718-2" />
 </head>
 <body>
   <nav class="navbar" aria-label="Main navigation">
     <div class="nav-container">
       <a href="index.html" class="nav-brand">
-        <img src="assets/unibite-logo.png?v=20260718-1" alt="" class="brand-logo" />
+        <img src="assets/unibite-logo.png?v=20260718-2" alt="" class="brand-logo" />
         <span>unibite<span class="brand-dot">.click</span></span>
       </a>
       <div class="nav-links">
@@ -290,6 +290,17 @@
           <p id="roadRouteStatus" class="map-note hidden">Loading road route...</p>
           <p id="storeMapEmpty" class="muted hidden">Enter a postal code or street address to see stores on the map.</p>
         </div>
+
+        <section id="nearbyStoreDirectory" class="nearby-store-directory" aria-label="All nearby stores">
+          <div class="nearby-store-heading">
+            <div>
+              <p class="eyebrow">Store directory</p>
+              <h4 id="nearbyStoreDirectoryTitle">All nearby stores</h4>
+            </div>
+            <span id="nearbyStoreCount" class="preview-pill">0 stores</span>
+          </div>
+          <div id="storeCards" class="nearby-store-list" role="list"></div>
+        </section>
       </div>
 
       <div id="routeInfo" class="hidden mt-section">
@@ -318,7 +329,7 @@
 
     <aside id="chefWidget" class="chef-widget hidden" aria-label="The Chef meal assistant">
       <button type="button" id="chefLauncher" class="chef-launcher" aria-expanded="false" aria-controls="chefPanel">
-        <span class="chef-face" aria-hidden="true"><img src="assets/chef-assistant.png?v=20260718-1" alt="" /></span>
+        <span class="chef-face" aria-hidden="true"><img src="assets/chef-assistant.png?v=20260718-2" alt="" /></span>
         <span class="chef-launch-text">Ask The Chef</span>
       </button>
       <section id="chefPanel" class="chef-panel hidden">
@@ -348,8 +359,8 @@
 
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-  <script src="shared.js?v=20260718-1"></script>
+  <script src="shared.js?v=20260718-2"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="plan.js?v=20260718-1"></script>
+  <script src="plan.js?v=20260718-2"></script>
 </body>
 </html>

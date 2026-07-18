@@ -6,7 +6,6 @@ let lastLocationCurrency = "CAD";
 let livePricingIntervalId = null;
 let chefIsResponding = false;
 let routeMap = null;
-const storeChecklistState = new Map();
 const PRESET_BREAKDOWNS = {
   balanced: {
     title: "Balanced split",
@@ -88,6 +87,7 @@ function applyLanguage(language) {
   const forecastEyebrow = document.querySelector("#priceForecast .eyebrow");
   const forecastTitle = document.getElementById("priceForecastTitle");
   const nearbyTitle = document.querySelector("#storeComparison h3");
+  const nearbyDirectoryTitle = document.getElementById("nearbyStoreDirectoryTitle");
   const retailerTitle = document.querySelector("#retailerIntelPanel h4");
   const routeTitle = document.querySelector("#routeInfo h3");
   const routeInfoLine = document.querySelector("#routeInfo .muted");
@@ -125,6 +125,7 @@ function applyLanguage(language) {
   if (forecastEyebrow) forecastEyebrow.textContent = currentLanguage === "fr" ? "Prévision des prix sur 7 jours" : "7-day price outlook";
   if (forecastTitle) forecastTitle.textContent = currentLanguage === "fr" ? "Meilleur moment pour magasiner" : "Best time to shop";
   if (nearbyTitle) nearbyTitle.textContent = currentLanguage === "fr" ? "Magasins proches" : "Nearby stores";
+  if (nearbyDirectoryTitle) nearbyDirectoryTitle.textContent = currentLanguage === "fr" ? "Tous les magasins proches" : "All nearby stores";
   if (retailerTitle) retailerTitle.textContent = currentLanguage === "fr" ? "Priorités de couverture" : "Coverage priorities";
   if (routeTitle) routeTitle.textContent = currentLanguage === "fr" ? "Itinéraire suggéré" : "Suggested route";
   if (routeInfoLine) routeInfoLine.innerHTML = currentLanguage === "fr" ? "<strong>De :</strong> <span id=\"routeOriginLabel\">-</span> &mdash; <strong>Total :</strong> <span id=\"routeTotalDistance\"></span> km" : "<strong>From:</strong> <span id=\"routeOriginLabel\">-</span> &mdash; <strong>Total:</strong> <span id=\"routeTotalDistance\"></span> km";
@@ -172,25 +173,6 @@ function splitList(value) {
 }
 
 // escapeHtml is defined in shared.js
-
-function toKey(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "item";
-}
-
-function updateChecklistProgress(container) {
-  if (!container) {
-    return;
-  }
-  const checks = [...container.querySelectorAll("input.store-check-item")];
-  const selected = checks.filter((c) => c.checked).length;
-  const progress = container.querySelector(".checklist-progress");
-  if (progress) {
-    progress.textContent = `${selected}/${checks.length} selected`;
-  }
-}
 
 function setBudgetCurrencyLabel(currency) {
   const budgetLabelText = document.getElementById("budgetLabelText");
@@ -746,108 +728,48 @@ async function checkApiReady() {
   return true;
 }
 
-function getTierBadgeClass(tier) {
-  const t = String(tier || "").toLowerCase().replace(/[\s_-]+/g, "-");
-  if (t.includes("budget")) return "tier-badge tier-badge-budget";
-  if (t.includes("premium")) return "tier-badge tier-badge-premium";
-  return "tier-badge tier-badge-mid";
-}
-
-function renderStoreCards(stores, itemQuotes, currency, route) {
+function renderNearbyStoreDirectory(nearbyStores, storeComparison, currency, route) {
   const container = document.getElementById("storeCards");
   const meta = document.getElementById("storeComparisonMeta");
-  if (!container || !meta) {
+  const count = document.getElementById("nearbyStoreCount");
+  if (!container || !meta || !count) {
     return;
   }
 
-  const quotesByStore = new Map();
-  (Array.isArray(itemQuotes) ? itemQuotes : []).forEach((quote) => {
-    const key = `${quote.store_id || quote.store_name || ""}`;
-    if (!quotesByStore.has(key)) {
-      quotesByStore.set(key, []);
-    }
-    quotesByStore.get(key).push(quote);
+  const comparisonById = new Map();
+  (Array.isArray(storeComparison) ? storeComparison : []).forEach((store) => {
+    comparisonById.set(String(store.store_id || ""), store);
   });
-
-  const sortedStores = [...(Array.isArray(stores) ? stores : [])].sort((a, b) => {
-    const distanceDelta = Number(a.distance_km || 0) - Number(b.distance_km || 0);
-    if (Math.abs(distanceDelta) > 0.001) {
-      return distanceDelta;
-    }
-    return Number(a.estimated_total || 0) - Number(b.estimated_total || 0);
-  });
-
-  const displayed = sortedStores;
+  const displayed = (Array.isArray(nearbyStores) ? nearbyStores : [])
+    .map((store) => ({ ...store, ...(comparisonById.get(String(store.store_id || "")) || {}) }))
+    .sort((left, right) => Number(left.distance_km || 0) - Number(right.distance_km || 0));
   const routeIds = new Set((route?.stops || []).map((stop) => String(stop.store_id || "")));
-  meta.textContent = `${displayed.length} nearby stores found. Ordered by distance first, then estimated price. Open each card to compare branch-specific prices and pickup details.`;
+  const isFrench = currentLanguage === "fr";
+  count.textContent = isFrench ? `${displayed.length} magasins` : `${displayed.length} stores`;
+  meta.textContent = isFrench
+    ? `${displayed.length} magasins proches affichés sur la carte et dans la liste, classés par distance.`
+    : `${displayed.length} nearby stores shown on the map and listed below, ordered by distance.`;
 
   if (!displayed.length) {
-    container.innerHTML = '<p class="muted">No nearby store pricing available yet.</p>';
+    container.innerHTML = `<p class="muted">${isFrench ? "Aucun magasin proche trouvé pour cette zone." : "No nearby stores found for this area."}</p>`;
     return;
   }
 
   container.innerHTML = displayed
-    .map((store, idx) => {
-      const rows = quotesByStore.get(store.name) || [];
-      const storeKey = toKey(store.store_id || store.name || idx);
-
-      const checklistByItem = new Map();
-      rows.forEach((row) => {
-        const itemKey = toKey(row.item_name);
-        const existing = checklistByItem.get(itemKey);
-        if (!existing || Number(row.line_total || 0) < Number(existing.line_total || 0)) {
-          checklistByItem.set(itemKey, row);
-        }
-      });
-      const checklistItems = [...checklistByItem.values()].slice(0, 40);
-      const selectedCount = checklistItems.filter((row) => storeChecklistState.get(`${storeKey}::${toKey(row.item_name)}`)).length;
-      const storeAddress = [store.address, store.distance_km != null ? `${store.distance_km} km away` : ""].filter(Boolean).join(" · ");
-
-      const checklistPanel = checklistItems.length
-        ? `
-          <div class="store-checklist">
-            <div class="checklist-toolbar">
-              <button type="button" class="secondary btn-sm checklist-select-all" data-store-key="${storeKey}">Select all</button>
-              <button type="button" class="secondary btn-sm checklist-clear" data-store-key="${storeKey}">Clear</button>
-              <span class="muted checklist-progress">${selectedCount}/${checklistItems.length} selected</span>
-            </div>
-            <div class="checklist-items">
-              ${checklistItems
-                .map((row) => {
-                  const itemKey = toKey(row.item_name);
-                  const stateKey = `${storeKey}::${itemKey}`;
-                  const checked = storeChecklistState.get(stateKey) ? "checked" : "";
-                  return `
-                    <label class="checklist-item">
-                      <input
-                        type="checkbox"
-                        class="store-check-item"
-                        data-store-key="${storeKey}"
-                        data-item-key="${itemKey}"
-                        ${checked}
-                      />
-                      <span>${escapeHtml(row.item_name)} x${row.quantity} &mdash; ${formatCurrency(row.line_total, row.currency || currency)}${Number(row.unit_price || 0) > 0 ? ` (${formatCurrency(row.unit_price, row.currency || currency)} / unit)` : ""}</span>
-                    </label>
-                  `;
-                })
-                .join("")}
-            </div>
-          </div>
-        `
-        : '<p class="muted">No items available for this store yet.</p>';
-
-      const tierBadgeClass = getTierBadgeClass(store.price_tier);
-
+    .map((store) => {
+      const isRouteStop = routeIds.has(String(store.store_id || ""));
+      const estimatedTotal = Number(store.estimated_total);
       return `
-        <article class="store-card simple-store-card ${routeIds.has(String(store.store_id || "")) ? "recommended-store" : ""}">
-          <div class="store-card-heading">
-            <div><strong>${escapeHtml(store.name)}</strong><small>${escapeHtml(store.chain)}</small></div>
-            ${routeIds.has(String(store.store_id || "")) ? '<span class="route-badge">Route stop</span>' : ""}
+        <article class="nearby-store-row ${isRouteStop ? "recommended-store" : ""}" role="listitem">
+          <div class="nearby-store-identity">
+            <strong>${escapeHtml(store.name || "Store")}</strong>
+            <span>${escapeHtml([store.chain, store.address].filter(Boolean).join(" · "))}</span>
           </div>
-          <p class="store-address-line">${escapeHtml(storeAddress)}</p>
-          <div class="store-facts"><span>${store.distance_km} km</span><span>${formatCurrency(store.estimated_total, currency)}</span><span class="${tierBadgeClass}">${escapeHtml(store.price_tier)}</span></div>
-          <p class="muted">Quality ${store.quality_rating}/5</p>
-          <details class="item-checklist-details"><summary>View item prices</summary>${checklistPanel}</details>
+          <div class="nearby-store-facts">
+            ${isRouteStop ? `<span class="route-badge">${isFrench ? "Arrêt conseillé" : "Route stop"}</span>` : ""}
+            <strong>${Number.isFinite(estimatedTotal) ? formatCurrency(estimatedTotal, currency) : (isFrench ? "Estimation indisponible" : "Estimate unavailable")}</strong>
+            <span>${Number(store.distance_km || 0).toFixed(2)} km</span>
+          </div>
         </article>
       `;
     })
@@ -1096,6 +1018,7 @@ function renderOptimizationResult(data, caption = "Plan generated.") {
   storeComparison.classList.remove("hidden");
 
   renderRetailerIntel(stores.retailer_research || {});
+  renderNearbyStoreDirectory(stores.nearby || [], storeComparisonData, lastLocationCurrency, route);
 
   // Hidden data holders (kept for compatibility)
   storeDataSource.textContent = stores.data_source || "N/A";
